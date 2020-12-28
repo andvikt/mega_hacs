@@ -145,6 +145,7 @@ class MegaD:
                     ftr.set_result(json.loads(msg.payload).get('value'))
                 except Exception as exc:
                     self.lg.warning(f'could not parse {msg.payload}: {exc}')
+                    ftr.set_result(None)
             unsub = await self.mqtt.async_subscribe(
                 topic=f'{self.mqtt_id}/{port}',
                 msg_callback=cb,

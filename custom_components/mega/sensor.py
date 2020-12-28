@@ -93,7 +93,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
             lg.debug(f'values: %s', values)
             if values is None:
                 continue
-            if not isinstance(values, dict):
+            if isinstance(values, str) and TEMP_PATT.search(values):
+                    values = {TEMP: values}
+            elif not isinstance(values, dict):
                 values = {None: values}
             for key in values:
                 hub.lg.debug(f'add sensor {W1}:{key}')
@@ -165,7 +167,7 @@ class Mega1WSensor(BaseMegaEntity):
 
     def _update(self, payload: dict):
         val = payload.get('value', '')
-        if isinstance(val, str):
+        if isinstance(val, str) and self.patt is not None:
             val = self.patt.findall(val)
             if val:
                 self._value = val[0]
