@@ -1,0 +1,13 @@
+
+
+save:
+  # Description of the service
+  description: Сохраняет текущее состояние портов (?cmd=s)
+  # Different fields that your service accepts
+  fields:
+    # Key of the field
+    mega_id:
+      # Description of the field
+      description: ID меги
+      # Example value that can be passed for this field
+      example: "def"
