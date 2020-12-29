@@ -13,15 +13,18 @@
 ## Устройства
 Поддерживаются устройства: light, switch, binary_sensor, sensor. light может работать как диммер
 ## Установка
-В папке config/custom_components выполнить:
-  ```shell
-  git clone https://github.com/andvikt/mega.git
-  ```
-  Обновление:
-  ```shell
-  git pull
-  ```
+Рекомендованнй способ - через [HACS](https://hacs.xyz/docs/installation/installation).
+После установки HACS, нужно перейти в меню hacs -> integrations, далее в верхнем правом углу
+нажать три точки, где будет `Custom repositories`, открыть, нажать add и добавить `https://github.com/andvikt/mega_hacs.git`
+
+Альтернативный способ установки:
+```shell
+# из папки с конфигом
+wget -q -O - https://raw.githubusercontent.com/andvikt/mega_hacs/master/install.sh | bash -
+```
 Перезагрузить HA
+
+Для обновления повторить
 ## Зависимости
 Перед использованием необходимо настроить интеграцию mqtt в HomeAssistant
 
