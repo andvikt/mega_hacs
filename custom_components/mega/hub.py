@@ -178,7 +178,7 @@ class MegaD:
 
     async def get_all_ports(self):
         for x in range(37):
-            await self.get_port(x)
+            asyncio.create_task(self.get_port(x))
 
     async def reboot(self, save=True):
         await self.save()

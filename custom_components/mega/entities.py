@@ -25,11 +25,12 @@ class BaseMegaEntity(RestoreEntity):
     ):
         self._state: State = None
         self.port = port
-        self._name = name
         self._mega_id = mega_id
         self._lg = None
         self._unique_id = unique_id or f"mega_{mega_id}_{port}" + \
                                        (f"_{id_suffix}" if id_suffix else "")
+        self._name = name or f"{mega_id}_{port}" + \
+                            (f"_{id_suffix}" if id_suffix else "")
 
     @property
     def lg(self) -> logging.Logger:

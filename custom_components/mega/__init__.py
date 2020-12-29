@@ -51,15 +51,31 @@ async def async_setup(hass: HomeAssistant, config: dict):
     """Set up the mega component."""
     conf = config.get(DOMAIN)
     hass.data[DOMAIN] = {}
+    hass.services.async_register(
+        DOMAIN, 'save', _save_service, schema=vol.Schema({
+            vol.Optional('mega_id'): str
+        })
+    )
+    hass.services.async_register(
+        DOMAIN, 'get_port', _get_port, schema=vol.Schema({
+            vol.Optional('mega_id'): str,
+            vol.Optional('port'): int,
+        })
+    )
+    hass.services.async_register(
+        DOMAIN, 'run_cmd', _run_cmd, schema=vol.Schema({
+            vol.Required('port'): int,
+            vol.Required('cmd'): str,
+            vol.Optional('mega_id'): str,
+        })
+    )
     if conf is None:
         return True
     if CONF_HOST in conf:
         conf = {DEF_ID: conf}
     for id, data in conf.items():
         await _add_mega(hass, id, data)
-    hass.services.async_register(
-        DOMAIN, 'save', _save_service,
-    )
+
     for id, hub in hass.data[DOMAIN].__items__():
         _POLL_TASKS[id] = asyncio.create_task(hub.poll())
     return True
@@ -79,7 +95,6 @@ async def _add_mega(hass: HomeAssistant, id, data: dict):
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
-    print(entry.entry_id)
     id = entry.data.get('id', entry.entry_id)
     data = dict(entry.data)
     data.update(entry.options or {})
@@ -119,7 +134,35 @@ async def async_remove_entry(hass, entry) -> None:
 
 
 @bind_hass
-async def _save_service(hass: HomeAssistant, mega_id='def'):
-    hub: MegaD = hass.data[DOMAIN][mega_id]
-    await hub.save()
+async def _save_service(hass: HomeAssistant, mega_id=None):
+    if mega_id:
+        hub: MegaD = hass.data[DOMAIN][mega_id]
+        await hub.save()
+    else:
+        for hub in hass.data[DOMAIN].values():
+            await hub.save()
 
+
+@bind_hass
+async def _get_port(hass: HomeAssistant, port=None, mega_id=None):
+    if mega_id:
+        hub: MegaD = hass.data[DOMAIN][mega_id]
+        if port is None:
+            await hub.get_all_ports()
+        else:
+            await hub.get_port(port)
+    else:
+        for hub in hass.data[DOMAIN].values():
+            if port is None:
+                await hub.get_all_ports()
+            else:
+                await hub.get_port(port)
+
+@bind_hass
+async def _run_cmd(hass: HomeAssistant, port: int, cmd: str, mega_id=None):
+    if mega_id:
+        hub: MegaD = hass.data[DOMAIN][mega_id]
+        await hub.send_command(port=port, cmd=cmd)
+    else:
+        for hub in hass.data[DOMAIN].values():
+            await hub.send_command(port=port, cmd=cmd)
