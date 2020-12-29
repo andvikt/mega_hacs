@@ -15,5 +15,6 @@
   ],
   "codeowners": [
     "@andvikt"
-  ]
+  ],
+  "issue_tracker": "https://github.com/andvikt/mega_hacs/issues"
 }
