@@ -107,6 +107,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
                         CONF_KEY: key,
                     })
                 devices.append(sensor)
+                hub.sensors.append(sensor)
 
     async_add_devices(devices)
 
@@ -134,11 +135,6 @@ class Mega1WSensor(BaseMegaEntity):
         self.patt = patt
         self._device_class = device_class
         self._unit_of_measurement = unit_of_measurement
-
-    async def async_added_to_hass(self) -> None:
-
-        await super(Mega1WSensor, self).async_added_to_hass()
-        self.mega.sensors.append(self)
 
     @property
     def unit_of_measurement(self):

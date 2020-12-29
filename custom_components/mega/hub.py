@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+from datetime import datetime
 from functools import wraps
 
 import aiohttp
@@ -22,12 +23,12 @@ class MegaD:
             host: str,
             password: str,
             mqtt: mqtt.MQTT,
-            lg:logging.Logger,
+            lg: logging.Logger,
             id: str,
             mqtt_id: str = None,
             scan_interval=60,
             port_to_scan=0,
-            inverted:typing.List[int] = None,
+            inverted: typing.List[int] = None,
             **kwargs,
     ):
         """Initialize."""
@@ -47,6 +48,7 @@ class MegaD:
         self.sensors = []
         self.port_to_scan = port_to_scan
         self.inverted = inverted or []
+        self.last_update = datetime.now()
         if not mqtt_id:
             _id = host.split(".")[-1]
             self.mqtt_id = f"megad/{_id}"
@@ -59,10 +61,11 @@ class MegaD:
             self.entities.append(ent)
 
     async def get_sensors(self):
+        self.lg.debug(self.sensors)
         _ports = {x.port for x in self.sensors}
         for x in _ports:
             await self.get_port(x)
-            await asyncio.sleep(self.poll_interval)
+            await asyncio.sleep(0.1)
 
     async def poll(self):
         """
@@ -70,36 +73,37 @@ class MegaD:
         offline
         """
         self._loop = asyncio.get_event_loop()
-        if self.sensors:
-            await self.subscribe(self.sensors[0].port, callback=self._notify)
-        else:
-            await self.subscribe(self.port_to_scan, callback=self._notify)
-        while True:
-            async with self.is_alive:
-                if len(self.sensors) > 0:
-                    await self.get_sensors()
-                else:
-                    await self.get_port(self.port_to_scan)
 
-                try:
-                    await asyncio.wait_for(self.is_alive.wait(), timeout=5)
-                    self.hass.states.async_set(
-                        f'mega.{self.id}',
-                        'online',
-                    )
-                    self.online = True
-                except asyncio.TimeoutError:
-                    self.online = False
+        while True:
+            if len(self.sensors) > 0:
+                await self.get_sensors()
+            else:
+                await self.get_port(self.port_to_scan)
+
+            await asyncio.sleep(1)
+            if (datetime.now() - self.last_update).total_seconds() > self.poll_interval:
+                await self.get_port(self.port_to_scan)
+                await asyncio.sleep(1)
+                if (datetime.now() - self.last_update).total_seconds() > self.poll_interval:
+                    self.lg.warning('mega is offline')
                     self.hass.states.async_set(
                         f'mega.{self.id}',
                         'offline',
                     )
-                for x in self.entities:
-                    try:
-                        await x.async_update_ha_state()
-                    except RuntimeError:
-                        pass
-            await asyncio.sleep(self.poll_interval)
+                    self.online = False
+            else:
+                self.hass.states.async_set(
+                    f'mega.{self.id}',
+                    'online',
+                )
+                self.online = True
+
+            for x in self.entities:
+                try:
+                    await x.async_update_ha_state()
+                except RuntimeError:
+                    pass
+            await asyncio.sleep(self.poll_interval - 1)
 
     async def _async_notify(self):
         async with self.is_alive:
@@ -187,6 +191,7 @@ class MegaD:
             self.lg.debug(
                 'process incomming message: %s', msg
             )
+            self.last_update = datetime.now()
             return callback(msg)
 
         self.lg.debug(

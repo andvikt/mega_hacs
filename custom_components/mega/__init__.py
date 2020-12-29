@@ -11,7 +11,7 @@ from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.service import bind_hass
 from homeassistant.components import mqtt
 from homeassistant.config_entries import ConfigEntry
-from .const import DOMAIN, CONF_INVERT
+from .const import DOMAIN, CONF_INVERT, CONF_RELOAD
 from .hub import MegaD
 
 
@@ -60,6 +60,8 @@ async def async_setup(hass: HomeAssistant, config: dict):
     hass.services.async_register(
         DOMAIN, 'save', _save_service,
     )
+    for id, hub in hass.data[DOMAIN].__items__():
+        _POLL_TASKS[id] = asyncio.create_task(hub.poll())
     return True
 
 
@@ -73,22 +75,25 @@ async def _add_mega(hass: HomeAssistant, id, data: dict):
         raise Exception("not authentificated")
     mid = await hub.get_mqtt_id()
     hub.mqtt_id = mid
-    _POLL_TASKS[id] = asyncio.create_task(hub.poll())
     return hub
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     print(entry.entry_id)
     id = entry.data.get('id', entry.entry_id)
-    hub = await _add_mega(hass, id, dict(entry.data))
+    data = dict(entry.data)
+    data.update(entry.options or {})
+    hub = await _add_mega(hass, id, data)
     _hubs[entry.entry_id] = hub
     _subs[entry.entry_id] = entry.add_update_listener(update)
+
     for platform in PLATFORMS:
         hass.async_create_task(
             hass.config_entries.async_forward_entry_setup(
                 entry, platform
             )
         )
+    _POLL_TASKS[id] = asyncio.create_task(hub.poll())
     return True
 
 
@@ -96,9 +101,9 @@ async def update(hass: HomeAssistant, entry: ConfigEntry):
     hub: MegaD = hass.data[DOMAIN][entry.data[CONF_ID]]
     hub.poll_interval = entry.options[CONF_SCAN_INTERVAL]
     hub.port_to_scan = entry.options[CONF_PORT_TO_SCAN]
-    # hub.inverted = map(lambda x: x.strip(), (
-    #     entry.options.get(CONF_INVERT, '').split(',')
-    # )
+    if entry.options[CONF_RELOAD]:
+        await async_remove_entry(hass, entry)
+        await async_setup_entry(hass, entry)
     return True
 
 
@@ -111,16 +116,10 @@ async def async_remove_entry(hass, entry) -> None:
     _hubs.pop(entry.entry_id)
     unsub = _subs.pop(entry.entry_id)
     unsub()
-    return True
 
 
 @bind_hass
 async def _save_service(hass: HomeAssistant, mega_id='def'):
     hub: MegaD = hass.data[DOMAIN][mega_id]
     await hub.save()
-
-
-async def _is_alive(cond: asyncio.Condition, msg):
-    async with cond:
-        cond.notify_all()
 

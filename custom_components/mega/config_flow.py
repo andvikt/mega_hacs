@@ -104,8 +104,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Optional(CONF_SCAN_INTERVAL, default=e[CONF_SCAN_INTERVAL]): int,
                 vol.Optional(CONF_PORT_TO_SCAN, default=e.get(CONF_PORT_TO_SCAN, 0)): int,
                 vol.Optional(CONF_RELOAD, default=False): bool,
-                vol.Optional(CONF_INVERT): vol.Set(),
+                # vol.Optional(CONF_INVERT, default=''): str,
             }),
         )
-        print(ret)
         return ret
