@@ -119,7 +119,7 @@ class MegaLight(LightEntity, BaseMegaEntity):
         return self._state == 'ON'
 
     async def async_turn_on(self, brightness=None, **kwargs) -> None:
-        brightness = brightness or self.brightness
+        brightness = brightness or self.brightness or 255
         if self.dimmer and brightness == 0:
             cmd = 255
         elif self.dimmer:
