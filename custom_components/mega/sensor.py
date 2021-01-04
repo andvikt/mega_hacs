@@ -1,7 +1,5 @@
 """Platform for light integration."""
 import logging
-
-import typing
 import voluptuous as vol
 
 from homeassistant.components.sensor import (

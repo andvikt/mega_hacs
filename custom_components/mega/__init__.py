@@ -1,13 +1,10 @@
 """The mega integration."""
 import asyncio
 import logging
-import typing
-from functools import partial
 
 import voluptuous as vol
-from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_PLATFORM, CONF_SCAN_INTERVAL, CONF_ID
+from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_SCAN_INTERVAL, CONF_ID
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_component import EntityComponent
 from homeassistant.helpers.service import bind_hass
 from homeassistant.components import mqtt
 from homeassistant.config_entries import ConfigEntry
@@ -74,9 +71,10 @@ async def async_setup(hass: HomeAssistant, config: dict):
     if CONF_HOST in conf:
         conf = {DEF_ID: conf}
     for id, data in conf.items():
+        _LOGGER.warning('YAML configuration is deprecated, please use web-interface')
         await _add_mega(hass, id, data)
 
-    for id, hub in hass.data[DOMAIN].__items__():
+    for id, hub in hass.data[DOMAIN].items():
         _POLL_TASKS[id] = asyncio.create_task(hub.poll())
     return True
 

@@ -1,6 +1,4 @@
 """Platform for light integration."""
-import asyncio
-import json
 import logging
 
 import voluptuous as vol
@@ -18,7 +16,6 @@ from homeassistant.const import (
     CONF_ID
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.restore_state import RestoreEntity
 from .entities import BaseMegaEntity
 
 from .hub import MegaD

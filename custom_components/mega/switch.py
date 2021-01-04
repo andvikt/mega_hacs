@@ -1,5 +1,4 @@
 """Platform for light integration."""
-import json
 import logging
 
 import voluptuous as vol
@@ -13,11 +12,7 @@ from homeassistant.const import (
     CONF_PLATFORM,
     CONF_PORT,
 )
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.restore_state import RestoreEntity
 from .entities import BaseMegaEntity
-
-from .hub import MegaD
 from .const import CONF_DIMMER, CONF_SWITCH
 
 _LOGGER = logging.getLogger(__name__)

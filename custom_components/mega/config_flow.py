@@ -9,7 +9,7 @@ from homeassistant.components import mqtt
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_ID, CONF_PASSWORD, CONF_SCAN_INTERVAL
 from homeassistant.core import callback
-from .const import DOMAIN, CONF_PORT_TO_SCAN, CONF_RELOAD, CONF_INVERT  # pylint:disable=unused-import
+from .const import DOMAIN, CONF_PORT_TO_SCAN, CONF_RELOAD  # pylint:disable=unused-import
 from .hub import MegaD
 from . import exceptions
 
