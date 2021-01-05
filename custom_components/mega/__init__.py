@@ -1,10 +1,11 @@
 """The mega integration."""
 import asyncio
 import logging
+from functools import partial
 
 import voluptuous as vol
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_SCAN_INTERVAL, CONF_ID
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers.service import bind_hass
 from homeassistant.components import mqtt
 from homeassistant.config_entries import ConfigEntry
@@ -49,18 +50,18 @@ async def async_setup(hass: HomeAssistant, config: dict):
     conf = config.get(DOMAIN)
     hass.data[DOMAIN] = {}
     hass.services.async_register(
-        DOMAIN, 'save', _save_service, schema=vol.Schema({
+        DOMAIN, 'save', partial(_save_service, hass), schema=vol.Schema({
             vol.Optional('mega_id'): str
         })
     )
     hass.services.async_register(
-        DOMAIN, 'get_port', _get_port, schema=vol.Schema({
+        DOMAIN, 'get_port', partial(_get_port, hass), schema=vol.Schema({
             vol.Optional('mega_id'): str,
             vol.Optional('port'): int,
         })
     )
     hass.services.async_register(
-        DOMAIN, 'run_cmd', _run_cmd, schema=vol.Schema({
+        DOMAIN, 'run_cmd', partial(_run_cmd, hass), schema=vol.Schema({
             vol.Required('port'): int,
             vol.Required('cmd'): str,
             vol.Optional('mega_id'): str,
@@ -131,8 +132,8 @@ async def async_remove_entry(hass, entry) -> None:
     unsub()
 
 
-@bind_hass
-async def _save_service(hass: HomeAssistant, mega_id=None):
+async def _save_service(hass: HomeAssistant, call: ServiceCall):
+    mega_id = call.data['mega_id']
     if mega_id:
         hub: MegaD = hass.data[DOMAIN][mega_id]
         await hub.save()
@@ -142,7 +143,9 @@ async def _save_service(hass: HomeAssistant, mega_id=None):
 
 
 @bind_hass
-async def _get_port(hass: HomeAssistant, port=None, mega_id=None):
+async def _get_port(hass: HomeAssistant, call: ServiceCall):
+    port = call.data['port']
+    mega_id = call.data['mega_id']
     if mega_id:
         hub: MegaD = hass.data[DOMAIN][mega_id]
         if port is None:
@@ -156,8 +159,12 @@ async def _get_port(hass: HomeAssistant, port=None, mega_id=None):
             else:
                 await hub.get_port(port)
 
+
 @bind_hass
-async def _run_cmd(hass: HomeAssistant, port: int, cmd: str, mega_id=None):
+async def _run_cmd(hass: HomeAssistant, call: ServiceCall):
+    port = call.data['port']
+    mega_id = call.data['mega_id']
+    cmd = call.data['cmd']
     if mega_id:
         hub: MegaD = hass.data[DOMAIN][mega_id]
         await hub.send_command(port=port, cmd=cmd)
