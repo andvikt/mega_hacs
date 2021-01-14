@@ -95,7 +95,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
                 if values is None:
                     continue
                 if isinstance(values, str) and TEMP_PATT.search(values):
-                        values = {TEMP: values}
+                    values = {TEMP: values}
                 elif not isinstance(values, dict):
                     values = {None: values}
                 for key in values:
@@ -112,7 +112,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 
         async_add_devices(devices)
 
-    asyncio.create_task(scan())
+    hass.async_create_task(scan())
 
 
 class Mega1WSensor(BaseMegaEntity):
