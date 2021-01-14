@@ -1,5 +1,4 @@
 """Platform for light integration."""
-import asyncio
 import logging
 import voluptuous as vol
 
