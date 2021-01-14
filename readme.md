@@ -11,40 +11,36 @@
 - Команды выполняются друг за другом без конкурентного доступа к ресурсам megad
 - Поддержка температурных датчиков в режиме шины
 
-## Устройства
-Поддерживаются устройства: light, switch, binary_sensor, sensor. light может работать как диммер
+## Зависимости
+**Важно!!** Перед использованием необходимо настроить интеграцию mqtt в HomeAssistant
 
 ## Установка
-Рекомендованнй способ - через [HACS](https://hacs.xyz/docs/installation/installation).
-После установки HACS, нужно перейти в меню hacs -> integrations, далее в верхнем правом углу
-нажать три точки, где будет `Custom repositories`, открыть, нажать add и добавить `https://github.com/andvikt/mega_hacs.git`
+Рекомендованнй способ с поддержкой обновлений - через [HACS](https://hacs.xyz/docs/installation/installation).
+После установки перейти в меню HACS - Integrations - Explore, в поиске ищем MegaD
 
 Альтернативный способ установки:
 ```shell
 # из папки с конфигом
 wget -q -O - https://raw.githubusercontent.com/andvikt/mega_hacs/master/install.sh | bash -
 ```
-Перезагрузить HA
-
-Для обновления повторить
-
-## Зависимости
-Перед использованием необходимо настроить интеграцию mqtt в HomeAssistant
+Не забываем перезагрузить HA
+## Устройства
+Поддерживаются устройства: light, switch, binary_sensor, sensor. light может работать как диммер
 
 ## Настройка из веб-интерфейса
 `Настройки` -> `Интеграции` -> `Добавить интеграцию` в поиске ищем mega
 
 ## Сервисы
+Все сервисы доступны в меню разработчика с описанием и примерами использования
 ```yaml
-save:
+mega.save:
   description: Сохраняет текущее состояние портов (?cmd=s)
   fields:
-
     mega_id:
       description: ID меги, можно оставить пустым, тогда будут сохранены все зарегистрированные меги
       example: "mega"
 
-get_port:
+mega.get_port:
   description: Запросить текущий статус порта (или всех)
   fields:
     mega_id:
@@ -54,10 +50,9 @@ get_port:
       description: Номер порта (если не заполнять, будут запрошены все порты сразу)
       example: 1
 
-run_cmd:
+mega.run_cmd:
   description: Выполнить любую произвольную команду
   fields:
-
     mega_id:
       description: ID меги
       example: "mega"
@@ -71,7 +66,9 @@ run_cmd:
 ```
 
 ## Отладка
-Если возникают проблемы, можно включить детальный лог, для этого в конфиг добавить:
+Интеграция находится в активной разработке, при возникновении проблем [заводите issue](https://github.com/andvikt/mega_hacs/issues/new/choose)
+
+Просьба прикладывать детальный лог, который можно включить в конфиге так:
 ```yaml
 logger:
   default: info
