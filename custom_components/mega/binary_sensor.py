@@ -70,7 +70,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 
         async_add_devices(devices)
 
-    hass.async_create_task(scan())
+    asyncio.create_task(scan())
+
 
 class MegaBinarySensor(BinarySensorEntity, BaseMegaEntity):
 

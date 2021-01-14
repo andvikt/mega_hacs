@@ -85,7 +85,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
                 devices.append(light)
         async_add_devices(devices)
 
-    hass.async_create_task(scan_ports())
+    asyncio.create_task(scan_ports())
 
 
 class MegaLight(LightEntity, BaseMegaEntity):

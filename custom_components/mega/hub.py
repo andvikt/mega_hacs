@@ -268,8 +268,7 @@ class MegaD:
             return pty, m
 
     async def scan_ports(self,):
-        async with self.lck:
-            for x in range(38):
-                ret = await self.scan_port(x)
-                if ret:
-                    yield [x, *ret]
+        for x in range(38):
+            ret = await self.scan_port(x)
+            if ret:
+                yield [x, *ret]
