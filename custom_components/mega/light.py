@@ -1,6 +1,6 @@
 """Platform for light integration."""
 import logging
-
+import asyncio
 import voluptuous as vol
 
 from homeassistant.components.light import (
@@ -85,7 +85,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
                 devices.append(light)
         async_add_devices(devices)
 
-    await scan_ports()
+    asyncio.create_task(scan_ports())
 
 
 class MegaLight(LightEntity, BaseMegaEntity):

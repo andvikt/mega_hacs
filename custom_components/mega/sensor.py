@@ -1,4 +1,5 @@
 """Platform for light integration."""
+import asyncio
 import logging
 import voluptuous as vol
 
@@ -111,7 +112,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 
         async_add_devices(devices)
 
-    await scan()
+    asyncio.create_task(scan())
 
 
 class Mega1WSensor(BaseMegaEntity):
