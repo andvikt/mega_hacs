@@ -1,4 +1,4 @@
-# MegaD HomeAssistant custom component
+# MegaD HomeAssistant integration
 
 Интеграция с [MegaD-2561](https://www.ab-log.ru/smart-house/ethernet/megad-2561)
 
@@ -13,6 +13,9 @@
 
 ## Зависимости
 **Важно!!** Перед использованием необходимо настроить интеграцию mqtt в HomeAssistant
+
+Для максимальной совместимости необходимо обновить ваш контроллер до последней версии, тк были важные обновления в части
+mqtt
 
 ## Установка
 Рекомендованнй способ с поддержкой обновлений - через [HACS](https://hacs.xyz/docs/installation/installation).
