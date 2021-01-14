@@ -111,7 +111,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 
         async_add_devices(devices)
 
-    hass.async_create_task(scan())
+    await scan()
 
 
 class Mega1WSensor(BaseMegaEntity):
