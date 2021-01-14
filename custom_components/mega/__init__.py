@@ -133,7 +133,7 @@ async def async_remove_entry(hass, entry) -> None:
 
 
 async def _save_service(hass: HomeAssistant, call: ServiceCall):
-    mega_id = call.data['mega_id']
+    mega_id = call.data.get('mega_id')
     if mega_id:
         hub: MegaD = hass.data[DOMAIN][mega_id]
         await hub.save()
@@ -144,8 +144,8 @@ async def _save_service(hass: HomeAssistant, call: ServiceCall):
 
 @bind_hass
 async def _get_port(hass: HomeAssistant, call: ServiceCall):
-    port = call.data['port']
-    mega_id = call.data['mega_id']
+    port = call.data.get('port')
+    mega_id = call.data.get('mega_id')
     if mega_id:
         hub: MegaD = hass.data[DOMAIN][mega_id]
         if port is None:
@@ -162,9 +162,9 @@ async def _get_port(hass: HomeAssistant, call: ServiceCall):
 
 @bind_hass
 async def _run_cmd(hass: HomeAssistant, call: ServiceCall):
-    port = call.data['port']
-    mega_id = call.data['mega_id']
-    cmd = call.data['cmd']
+    port = call.data.get('port')
+    mega_id = call.data.get('mega_id')
+    cmd = call.data.get('cmd')
     if mega_id:
         hub: MegaD = hass.data[DOMAIN][mega_id]
         await hub.send_command(port=port, cmd=cmd)

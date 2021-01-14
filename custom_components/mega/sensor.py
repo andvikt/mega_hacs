@@ -1,4 +1,5 @@
 """Platform for light integration."""
+import asyncio
 import logging
 import voluptuous as vol
 
@@ -85,30 +86,33 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     mid = config_entry.data[CONF_ID]
     hub: MegaD = hass.data['mega'][mid]
     devices = []
-    async for port, pty, m in hub.scan_ports():
-        if pty == "3":
-            values = await hub.get_port(port, get_value=True)
-            lg.debug(f'values: %s', values)
-            if values is None:
-                continue
-            if isinstance(values, str) and TEMP_PATT.search(values):
-                    values = {TEMP: values}
-            elif not isinstance(values, dict):
-                values = {None: values}
-            for key in values:
-                hub.lg.debug(f'add sensor {W1}:{key}')
-                sensor = _make_entity(
-                    mid=mid,
-                    port=port,
-                    conf={
-                        CONF_TYPE: W1,
-                        CONF_KEY: key,
-                    })
-                devices.append(sensor)
-                hub.sensors.append(sensor)
 
-    async_add_devices(devices)
+    async def scan():
+        async for port, pty, m in hub.scan_ports():
+            if pty == "3":
+                values = await hub.get_port(port)
+                lg.debug(f'values: %s', values)
+                if values is None:
+                    continue
+                if isinstance(values, str) and TEMP_PATT.search(values):
+                        values = {TEMP: values}
+                elif not isinstance(values, dict):
+                    values = {None: values}
+                for key in values:
+                    hub.lg.debug(f'add sensor {W1}:{key}')
+                    sensor = _make_entity(
+                        mid=mid,
+                        port=port,
+                        conf={
+                            CONF_TYPE: W1,
+                            CONF_KEY: key,
+                        })
+                    devices.append(sensor)
+                    hub.sensors.append(sensor)
 
+        async_add_devices(devices)
+
+    asyncio.create_task(scan())
 
 class Mega1WSensor(BaseMegaEntity):
 

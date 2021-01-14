@@ -1,4 +1,5 @@
 """Platform for light integration."""
+import asyncio
 import logging
 
 import voluptuous as vol
@@ -60,13 +61,16 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     mid = config_entry.data[CONF_ID]
     hub: MegaD = hass.data['mega'][mid]
     devices = []
-    async for port, pty, m in hub.scan_ports():
-        if pty == "0":
-            sensor = MegaBinarySensor(mega_id=mid, port=port)
-            devices.append(sensor)
 
-    async_add_devices(devices)
+    async def scan():
+        async for port, pty, m in hub.scan_ports():
+            if pty == "0":
+                sensor = MegaBinarySensor(mega_id=mid, port=port)
+                devices.append(sensor)
 
+        async_add_devices(devices)
+
+    asyncio.create_task(scan())
 
 class MegaBinarySensor(BinarySensorEntity, BaseMegaEntity):
 

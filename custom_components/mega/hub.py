@@ -140,36 +140,45 @@ class MegaD:
     async def save(self):
         await self.send_command(cmd='s')
 
-    async def get_port(self, port, get_value=False):
-        if get_value:
-            ftr = asyncio.get_event_loop().create_future()
+    async def get_port(self, port):
+        """
+        Опрашивает порт с помощью mqtt. Ждет ответ, возвращает ответ.
 
-            def cb(msg):
-                try:
-                    ftr.set_result(json.loads(msg.payload).get('value'))
-                except Exception as exc:
-                    self.lg.warning(f'could not parse {msg.payload}: {exc}')
-                    ftr.set_result(None)
-            unsub = await self.mqtt.async_subscribe(
-                topic=f'{self.mqtt_id}/{port}',
-                msg_callback=cb,
-                qos=1,
-            )
+        :param port:
+        :return:
+        """
+        ftr = asyncio.get_event_loop().create_future()
 
-        self.lg.debug(
-            f'get port: %s', port
-        )
-        async with self.lck:
-            await self.mqtt.async_publish(
-                topic=f'{self.mqtt_id}/cmd',
-                payload=f'get:{port}',
-                qos=0,
-                retain=False,
-            )
-            await asyncio.sleep(0.1)
+        def cb(msg):
 
-        if get_value:
             try:
+                if '"value":NA' in msg.payload.decode():
+                    ftr.set_result(None)
+                    return
+                ret = json.loads(msg.payload).get('value')
+                ftr.set_result(ret)
+            except Exception as exc:
+                ret = None
+                self.lg.exception(f'while parsing response from port {port}: {msg.payload}')
+                ftr.set_result(None)
+
+            self.lg.debug(
+                f'port: %s response: %s', port, ret
+            )
+
+        async with self.lck:
+            try:
+                unsub = await self.mqtt.async_subscribe(
+                    topic=f'{self.mqtt_id}/{port}',
+                    msg_callback=cb,
+                    qos=1,
+                )
+                await self.mqtt.async_publish(
+                    topic=f'{self.mqtt_id}/cmd',
+                    payload=f'get:{port}',
+                    qos=1,
+                    retain=False,
+                )
                 return await asyncio.wait_for(ftr, timeout=2)
             except asyncio.TimeoutError:
                 self.lg.warning(f'timeout on port {port}')
@@ -259,7 +268,8 @@ class MegaD:
             return pty, m
 
     async def scan_ports(self,):
-        for x in range(38):
-            ret = await self.scan_port(x)
-            if ret:
-                yield [x, *ret]
+        async with self.lck:
+            for x in range(38):
+                ret = await self.scan_port(x)
+                if ret:
+                    yield [x, *ret]
