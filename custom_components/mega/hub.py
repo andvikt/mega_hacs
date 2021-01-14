@@ -153,10 +153,12 @@ class MegaD:
 
             try:
                 if '"value":NA' in msg.payload.decode():
-                    ftr.set_result(None)
+                    if not ftr.done():
+                        ftr.set_result(None)
                     return
                 ret = json.loads(msg.payload).get('value')
-                ftr.set_result(ret)
+                if not ftr.done():
+                    ftr.set_result(ret)
             except Exception as exc:
                 ret = None
                 self.lg.exception(f'while parsing response from port {port}: {msg.payload}')
@@ -167,12 +169,12 @@ class MegaD:
             )
 
         async with self.lck:
+            unsub = await self.mqtt.async_subscribe(
+                topic=f'{self.mqtt_id}/{port}',
+                msg_callback=cb,
+                qos=1,
+            )
             try:
-                unsub = await self.mqtt.async_subscribe(
-                    topic=f'{self.mqtt_id}/{port}',
-                    msg_callback=cb,
-                    qos=1,
-                )
                 await self.mqtt.async_publish(
                     topic=f'{self.mqtt_id}/cmd',
                     payload=f'get:{port}',
