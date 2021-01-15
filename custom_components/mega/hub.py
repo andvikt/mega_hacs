@@ -238,36 +238,37 @@ class MegaD:
             return await req.text()
 
     async def scan_port(self, port):
-        if port in self._scanned:
-            return self._scanned[port]
-        url = f'http://{self.host}/{self.sec}/?pt={port}'
-        self.lg.debug(
-            f'scan port %s: %s', port, url
-        )
-        async with aiohttp.request('get', url) as req:
-            html = await req.text()
-        tree = BeautifulSoup(html, features="lxml")
-        pty = tree.find('select', attrs={'name': 'pty'})
-        if pty is None:
-            return
-        else:
-            pty = pty.find(selected=True)
-            if pty:
-                pty = pty['value']
-            else:
+        async with self.lck:
+            if port in self._scanned:
+                return self._scanned[port]
+            url = f'http://{self.host}/{self.sec}/?pt={port}'
+            self.lg.debug(
+                f'scan port %s: %s', port, url
+            )
+            async with aiohttp.request('get', url) as req:
+                html = await req.text()
+            tree = BeautifulSoup(html, features="lxml")
+            pty = tree.find('select', attrs={'name': 'pty'})
+            if pty is None:
                 return
-        if pty in ['0', '1']:
-            m = tree.find('select', attrs={'name': 'm'})
-            if m:
-                m = m.find(selected=True)['value']
-            self._scanned[port] = (pty, m)
-            return pty, m
-        elif pty == '3':
-            m = tree.find('select', attrs={'name': 'd'})
-            if m:
-                m = m.find(selected=True)['value']
-            self._scanned[port] = (pty, m)
-            return pty, m
+            else:
+                pty = pty.find(selected=True)
+                if pty:
+                    pty = pty['value']
+                else:
+                    return
+            if pty in ['0', '1']:
+                m = tree.find('select', attrs={'name': 'm'})
+                if m:
+                    m = m.find(selected=True)['value']
+                self._scanned[port] = (pty, m)
+                return pty, m
+            elif pty == '3':
+                m = tree.find('select', attrs={'name': 'd'})
+                if m:
+                    m = m.find(selected=True)['value']
+                self._scanned[port] = (pty, m)
+                return pty, m
 
     async def scan_ports(self,):
         for x in range(38):

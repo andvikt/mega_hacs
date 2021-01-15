@@ -81,7 +81,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     async def scan_ports():
         async for port, pty, m in hub.scan_ports():
             if pty == "1" and m in ['0', '1']:
-                light = MegaLight(mega_id=mid, port=port, dimmer=m == '1')
+                light = MegaLight(mega_id=mid, port=port, dimmer=m == '1', config_entry=config_entry)
                 devices.append(light)
         async_add_devices(devices)
 

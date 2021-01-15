@@ -69,7 +69,7 @@ async def async_setup_platform(hass, config, add_entities, discovery_info=None):
     return True
 
 
-def _make_entity(mid: str, port: int, conf: dict):
+def _make_entity(config_entry, mid: str, port: int, conf: dict):
     key = conf[CONF_KEY]
     return Mega1WSensor(
         key=key,
@@ -78,7 +78,8 @@ def _make_entity(mid: str, port: int, conf: dict):
         patt=PATTERNS.get(key),
         unit_of_measurement=UNITS.get(key, UNITS[TEMP]),  # TODO: make other units, make options in config flow
         device_class=CLASSES.get(key, CLASSES[TEMP]),
-        id_suffix=key
+        id_suffix=key,
+        config_entry=config_entry
     )
 
 
@@ -106,7 +107,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
                         conf={
                             CONF_TYPE: W1,
                             CONF_KEY: key,
-                        })
+                        },
+                        config_entry=config_entry,
+                    )
                     devices.append(sensor)
                     hub.sensors.append(sensor)
 

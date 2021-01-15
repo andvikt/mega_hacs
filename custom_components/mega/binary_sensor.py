@@ -65,7 +65,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     async def scan():
         async for port, pty, m in hub.scan_ports():
             if pty == "0":
-                sensor = MegaBinarySensor(mega_id=mid, port=port)
+                sensor = MegaBinarySensor(mega_id=mid, port=port, config_entry=config_entry)
                 devices.append(sensor)
 
         async_add_devices(devices)

@@ -103,7 +103,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             data_schema=vol.Schema({
                 vol.Optional(CONF_SCAN_INTERVAL, default=e[CONF_SCAN_INTERVAL]): int,
                 vol.Optional(CONF_PORT_TO_SCAN, default=e.get(CONF_PORT_TO_SCAN, 0)): int,
-                vol.Optional(CONF_RELOAD, default=False): bool,
+                # vol.Optional(CONF_RELOAD, default=False): bool,
                 # vol.Optional(CONF_INVERT, default=''): str,
             }),
         )

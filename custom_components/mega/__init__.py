@@ -130,6 +130,7 @@ async def async_remove_entry(hass, entry) -> None:
     _hubs.pop(entry.entry_id)
     unsub = _subs.pop(entry.entry_id)
     unsub()
+    hass.data[DOMAIN].pop(id)
 
 
 async def _save_service(hass: HomeAssistant, call: ServiceCall):

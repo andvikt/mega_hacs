@@ -3,6 +3,7 @@ import asyncio
 import json
 import logging
 
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import State
 from .hub import MegaD
 from homeassistant.helpers.restore_state import RestoreEntity
@@ -19,18 +20,37 @@ class BaseMegaEntity(RestoreEntity):
             self,
             mega_id: str,
             port: int,
+            config_entry: ConfigEntry = None,
             id_suffix=None,
             name=None,
-            unique_id=None
+            unique_id=None,
     ):
         self._state: State = None
         self.port = port
+        self.config_entry = config_entry
         self._mega_id = mega_id
         self._lg = None
         self._unique_id = unique_id or f"mega_{mega_id}_{port}" + \
                                        (f"_{id_suffix}" if id_suffix else "")
         self._name = name or f"{mega_id}_{port}" + \
                             (f"_{id_suffix}" if id_suffix else "")
+
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {
+                # Serial numbers are unique identifiers within a specific domain
+                (DOMAIN, f'{self._mega_id}', self.port),
+            },
+            "config_entries": [
+                self.config_entry,
+            ],
+            "name": f'port {self.port}',
+            "manufacturer": 'ab-log.ru',
+            # "model": self.light.productname,
+            # "sw_version": self.light.swversion,
+            "via_device": (DOMAIN, self._mega_id),
+        }
 
     @property
     def lg(self) -> logging.Logger:
