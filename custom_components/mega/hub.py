@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+from collections import defaultdict
 from datetime import datetime
 from functools import wraps
 
@@ -9,10 +10,27 @@ import typing
 from bs4 import BeautifulSoup
 
 from homeassistant.components import mqtt
+from homeassistant.const import DEVICE_CLASS_TEMPERATURE, DEVICE_CLASS_HUMIDITY
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
+from .const import TEMP, HUM
 from .exceptions import CannotConnect
+import re
 
+TEMP_PATT = re.compile(r'temp:([01234567890\.]+)')
+HUM_PATT = re.compile(r'hum:([01234567890\.]+)')
+PATTERNS = {
+    TEMP: TEMP_PATT,
+    HUM: HUM_PATT,
+}
+UNITS = {
+    TEMP: '°C',
+    HUM: '%'
+}
+CLASSES = {
+    TEMP: DEVICE_CLASS_TEMPERATURE,
+    HUM: DEVICE_CLASS_HUMIDITY
+}
 
 class MegaD:
     """MegaD Hub"""
@@ -275,3 +293,32 @@ class MegaD:
             ret = await self.scan_port(x)
             if ret:
                 yield [x, *ret]
+
+    async def get_config(self):
+        ret = defaultdict(lambda: defaultdict(list))
+        async for port, pty, m in self.scan_ports():
+            if pty == "0":
+                ret['binary_sensor'][port].append({})
+            elif pty == "1" and m in ['0', '1']:
+                ret['light'][port].append({'dimmer': m == '1'})
+            elif pty == '3':
+                values = await self.get_port(port)
+                self.lg.debug(f'values: %s', values)
+                if values is None:
+                    self.lg.warning(f'port {port} is of type sensor but did not respond, skipping it')
+                    continue
+                if isinstance(values, str) and TEMP_PATT.search(values):
+                    values = {TEMP: values}
+                elif not isinstance(values, dict):
+                    values = {None: values}
+                for key in values:
+                    self.lg.debug(f'add sensor {key}')
+                    ret['sensor'][port].append(dict(
+                        key=key,
+                        patt=PATTERNS.get(key),
+                        unit_of_measurement=UNITS.get(key, UNITS[TEMP]),
+                        # TODO: make other units, make options in config flow
+                        device_class=CLASSES.get(key, CLASSES[TEMP]),
+                        id_suffix=key,
+                    ))
+        return ret

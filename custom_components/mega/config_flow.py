@@ -8,8 +8,8 @@ from homeassistant import config_entries, core
 from homeassistant.components import mqtt
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_ID, CONF_PASSWORD, CONF_SCAN_INTERVAL
-from homeassistant.core import callback
-from .const import DOMAIN, CONF_PORT_TO_SCAN, CONF_RELOAD  # pylint:disable=unused-import
+from homeassistant.core import callback, HomeAssistant
+from .const import DOMAIN, CONF_PORT_TO_SCAN, CONF_RELOAD, PLATFORMS  # pylint:disable=unused-import
 from .hub import MegaD
 from . import exceptions
 
@@ -26,6 +26,16 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 )
 
 
+async def get_hub(hass: HomeAssistant, data):
+    _mqtt = hass.data.get(mqtt.DOMAIN)
+    if not isinstance(_mqtt, mqtt.MQTT):
+        raise exceptions.MqttNotConfigured("mqtt must be configured first")
+    hub = MegaD(hass, **data, lg=_LOGGER, mqtt=_mqtt)
+    if not await hub.authenticate():
+        raise exceptions.InvalidAuth
+    return hub
+
+
 async def validate_input(hass: core.HomeAssistant, data):
     """Validate the user input allows us to connect.
 
@@ -33,12 +43,7 @@ async def validate_input(hass: core.HomeAssistant, data):
     """
     if data[CONF_ID] in hass.data.get(DOMAIN, []):
         raise exceptions.DuplicateId('duplicate_id')
-    _mqtt = hass.data.get(mqtt.DOMAIN)
-    if not isinstance(_mqtt, mqtt.MQTT):
-        raise exceptions.MqttNotConfigured("mqtt must be configured first")
-    hub = MegaD(hass, **data, lg=_LOGGER, mqtt=_mqtt)
-    if not await hub.authenticate():
-        raise exceptions.InvalidAuth
+    hub = await get_hub(hass, data)
 
     return hub
 
@@ -46,7 +51,7 @@ async def validate_input(hass: core.HomeAssistant, data):
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for mega."""
 
-    VERSION = 1
+    VERSION = 2
     CONNECTION_CLASS = config_entries.CONN_CLASS_ASSUMED
 
     async def async_step_user(self, user_input=None):
@@ -59,7 +64,14 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
 
         try:
-            await validate_input(self.hass, user_input)
+            hub = await validate_input(self.hass, user_input)
+            config = await hub.get_config()
+            hub.lg.debug(f'config loaded: %s', config)
+            config.update(user_input)
+            return self.async_create_entry(
+                title=user_input.get(CONF_ID, user_input[CONF_HOST]),
+                data=config,
+            )
         except exceptions.CannotConnect:
             errors["base"] = "cannot_connect"
         except exceptions.InvalidAuth:
@@ -69,11 +81,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         except Exception as exc:  # pylint: disable=broad-except
             _LOGGER.exception("Unexpected exception")
             errors[CONF_ID] = str(exc)
-        else:
-            return self.async_create_entry(
-                title=user_input.get(CONF_ID, user_input[CONF_HOST]),
-                data=user_input,
-            )
 
         return self.async_show_form(
             step_id="user", data_schema=STEP_USER_DATA_SCHEMA, errors=errors
@@ -92,10 +99,22 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_init(self, user_input=None):
         """Manage the options."""
+
         if user_input is not None:
+            reload = user_input.pop(CONF_RELOAD)
+            cfg = dict(self.config_entry.data)
+            cfg.update(user_input)
+            hub = await get_hub(self.hass, self.config_entry.data)
+            if reload:
+                new = await hub.get_config()
+                _LOGGER.debug(f'new config: %s', new)
+                cfg = dict(self.config_entry.data)
+                for x in PLATFORMS:
+                    cfg.pop(x, None)
+                cfg.update(new)
             return self.async_create_entry(
                 title='',
-                data={**user_input, **{CONF_ID: self.config_entry.data[CONF_ID]}},
+                data=cfg,
             )
         e = self.config_entry.data
         ret = self.async_show_form(
@@ -103,7 +122,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             data_schema=vol.Schema({
                 vol.Optional(CONF_SCAN_INTERVAL, default=e[CONF_SCAN_INTERVAL]): int,
                 vol.Optional(CONF_PORT_TO_SCAN, default=e.get(CONF_PORT_TO_SCAN, 0)): int,
-                # vol.Optional(CONF_RELOAD, default=False): bool,
+                vol.Optional(CONF_RELOAD, default=False): bool,
                 # vol.Optional(CONF_INVERT, default=''): str,
             }),
         )

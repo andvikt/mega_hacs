@@ -78,14 +78,12 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     hub: MegaD = hass.data['mega'][mid]
     devices = []
 
-    async def scan_ports():
-        async for port, pty, m in hub.scan_ports():
-            if pty == "1" and m in ['0', '1']:
-                light = MegaLight(mega_id=mid, port=port, dimmer=m == '1', config_entry=config_entry)
-                devices.append(light)
-        async_add_devices(devices)
-
-    asyncio.create_task(scan_ports())
+    for port, cfg in config_entry.data.get('light', {}).items():
+        for data in cfg:
+            hub.lg.debug(f'add light on port %s with data %s', port, data)
+            light = MegaLight(mega_id=mid, port=port, config_entry=config_entry, **data)
+            devices.append(light)
+    async_add_devices(devices)
 
 
 class MegaLight(LightEntity, BaseMegaEntity):

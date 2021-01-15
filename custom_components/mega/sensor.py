@@ -88,34 +88,18 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     hub: MegaD = hass.data['mega'][mid]
     devices = []
 
-    async def scan():
-        async for port, pty, m in hub.scan_ports():
-            if pty == "3":
-                values = await hub.get_port(port)
-                lg.debug(f'values: %s', values)
-                if values is None:
-                    continue
-                if isinstance(values, str) and TEMP_PATT.search(values):
-                    values = {TEMP: values}
-                elif not isinstance(values, dict):
-                    values = {None: values}
-                for key in values:
-                    hub.lg.debug(f'add sensor {W1}:{key}')
-                    sensor = _make_entity(
-                        mid=mid,
-                        port=port,
-                        conf={
-                            CONF_TYPE: W1,
-                            CONF_KEY: key,
-                        },
-                        config_entry=config_entry,
-                    )
-                    devices.append(sensor)
-                    hub.sensors.append(sensor)
+    for port, cfg in config_entry.data.get('sensor', {}).items():
+        for data in cfg:
+            hub.lg.debug(f'add sensor on port %s with data %s', port, data)
+            sensor = Mega1WSensor(
+                mega_id=mid,
+                port=port,
+                config_entry=config_entry,
+                **data,
+            )
+            devices.append(sensor)
 
-        async_add_devices(devices)
-
-    asyncio.create_task(scan())
+    async_add_devices(devices)
 
 
 class Mega1WSensor(BaseMegaEntity):

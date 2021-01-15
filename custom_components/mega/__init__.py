@@ -9,7 +9,7 @@ from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers.service import bind_hass
 from homeassistant.components import mqtt
 from homeassistant.config_entries import ConfigEntry
-from .const import DOMAIN, CONF_INVERT, CONF_RELOAD
+from .const import DOMAIN, CONF_INVERT, CONF_RELOAD, PLATFORMS
 from .hub import MegaD
 
 
@@ -33,11 +33,7 @@ CONFIG_SCHEMA = vol.Schema(
     extra=vol.ALLOW_EXTRA,
 )
 
-PLATFORMS = [
-    "light",
-    "binary_sensor",
-    "sensor",
-]
+
 ALIVE_STATE = 'alive'
 DEF_ID = 'def'
 _POLL_TASKS = {}
@@ -80,12 +76,22 @@ async def async_setup(hass: HomeAssistant, config: dict):
     return True
 
 
-async def _add_mega(hass: HomeAssistant, id, data: dict):
+async def get_hub(hass, entry):
+    id = entry.data.get('id', entry.entry_id)
+    data = dict(entry.data)
+    data.update(entry.options or {})
     data.update(id=id)
     _mqtt = hass.data.get(mqtt.DOMAIN)
     if _mqtt is None:
         raise Exception('mqtt not configured, please configure mqtt first')
-    hass.data[DOMAIN][id] = hub = MegaD(hass, **data, mqtt=_mqtt, lg=_LOGGER)
+    hub = MegaD(hass, **data, mqtt=_mqtt, lg=_LOGGER)
+    return hub
+
+
+async def _add_mega(hass: HomeAssistant, entry: ConfigEntry):
+    id = entry.data.get('id', entry.entry_id)
+    hub = await get_hub(hass, entry)
+    hass.data[DOMAIN][id] = hub
     if not await hub.authenticate():
         raise Exception("not authentificated")
     mid = await hub.get_mqtt_id()
@@ -94,12 +100,9 @@ async def _add_mega(hass: HomeAssistant, id, data: dict):
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
-    id = entry.data.get('id', entry.entry_id)
-    data = dict(entry.data)
-    data.update(entry.options or {})
-    hub = await _add_mega(hass, id, data)
+    hub = await _add_mega(hass, entry)
     _hubs[entry.entry_id] = hub
-    _subs[entry.entry_id] = entry.add_update_listener(update)
+    _subs[entry.entry_id] = entry.add_update_listener(updater)
 
     for platform in PLATFORMS:
         hass.async_create_task(
@@ -111,26 +114,57 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     return True
 
 
-async def update(hass: HomeAssistant, entry: ConfigEntry):
+async def updater(hass: HomeAssistant, entry: ConfigEntry):
+    """
+    Обновляется конфигурация
+    :param hass:
+    :param entry:
+    :return:
+    """
     hub: MegaD = hass.data[DOMAIN][entry.data[CONF_ID]]
     hub.poll_interval = entry.options[CONF_SCAN_INTERVAL]
-    hub.port_to_scan = entry.options[CONF_PORT_TO_SCAN]
-    if entry.options[CONF_RELOAD]:
-        await async_remove_entry(hass, entry)
-        await async_setup_entry(hass, entry)
+    hub.port_to_scan = entry.options.get(CONF_PORT_TO_SCAN, 0)
+    entry.data = entry.options
+    await async_remove_entry(hass, entry)
+    await async_setup_entry(hass, entry)
     return True
 
 
 async def async_remove_entry(hass, entry) -> None:
     """Handle removal of an entry."""
     id = entry.data.get('id', entry.entry_id)
-    hass.data[DOMAIN][id].unsubscribe_all()
-    task: asyncio.Task = _POLL_TASKS.pop(id)
-    task.cancel()
+    hub = hass.data[DOMAIN]
+    if hub is None:
+        return
+    _LOGGER.debug(f'remove {id}')
     _hubs.pop(entry.entry_id)
+    task: asyncio.Task = _POLL_TASKS.pop(id, None)
+    if task is None:
+        return
+    task.cancel()
+    if hub is None:
+        return
+    hub.unsubscribe_all()
     unsub = _subs.pop(entry.entry_id)
-    unsub()
-    hass.data[DOMAIN].pop(id)
+    if unsub:
+        unsub()
+
+
+async def async_migrate_entry(hass, config_entry: ConfigEntry):
+    """Migrate old entry."""
+    _LOGGER.debug("Migrating from version %s to version 2", config_entry.version)
+    hub = await get_hub(hass, config_entry)
+    new = dict(config_entry.data)
+    if config_entry.version == 1:
+        cfg = await hub.get_config()
+        new.update(cfg)
+        _LOGGER.debug(f'new config: %s', new)
+        config_entry.data = new
+        config_entry.version = 2
+
+    _LOGGER.info("Migration to version %s successful", config_entry.version)
+
+    return True
 
 
 async def _save_service(hass: HomeAssistant, call: ServiceCall):

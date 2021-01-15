@@ -12,3 +12,8 @@ W1BUS = 'w1bus'
 CONF_PORT_TO_SCAN = 'port_to_scan'
 CONF_RELOAD = 'reload'
 CONF_INVERT = 'invert'
+PLATFORMS = [
+    "light",
+    "binary_sensor",
+    "sensor",
+]

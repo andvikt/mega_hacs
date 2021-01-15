@@ -62,15 +62,11 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     hub: MegaD = hass.data['mega'][mid]
     devices = []
 
-    async def scan():
-        async for port, pty, m in hub.scan_ports():
-            if pty == "0":
-                sensor = MegaBinarySensor(mega_id=mid, port=port, config_entry=config_entry)
-                devices.append(sensor)
-
-        async_add_devices(devices)
-
-    asyncio.create_task(scan())
+    for port, cfg in config_entry.data.get('binary_sensor', {}).items():
+        hub.lg.debug(f'add binary_sensor on port %s', port)
+        sensor = MegaBinarySensor(mega_id=mid, port=port, config_entry=config_entry)
+        devices.append(sensor)
+    async_add_devices(devices)
 
 
 class MegaBinarySensor(BinarySensorEntity, BaseMegaEntity):
