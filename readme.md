@@ -20,8 +20,7 @@ mqtt
 ## Установка
 Рекомендованный способ с поддержкой обновлений - [HACS](https://hacs.xyz/docs/installation/installation):
 
-HACS - Integrations - Explore, в поиске ищем MegaD. После установки перезагружаем HA, далее Настройки - Интеграции - 
-Добавить интеграцию, ищем mega, следуем инструкции.
+HACS - Integrations - Explore, в поиске ищем MegaD. 
 
 Альтернативный способ установки:
 ```shell
@@ -29,10 +28,8 @@ HACS - Integrations - Explore, в поиске ищем MegaD. После уст
 wget -q -O - https://raw.githubusercontent.com/andvikt/mega_hacs/master/install.sh | bash -
 ```
 Не забываем перезагрузить HA
-## Устройства
-Поддерживаются устройства: light, switch, binary_sensor, sensor. light может работать как диммер
 
-## Настройка из веб-интерфейса
+## Настройка
 `Настройки` -> `Интеграции` -> `Добавить интеграцию` в поиске ищем mega
 
 ## Сервисы
