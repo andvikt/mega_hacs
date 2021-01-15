@@ -18,8 +18,10 @@
 mqtt
 
 ## Установка
-Рекомендованнй способ с поддержкой обновлений - через [HACS](https://hacs.xyz/docs/installation/installation).
-После установки перейти в меню HACS - Integrations - Explore, в поиске ищем MegaD
+Рекомендованный способ с поддержкой обновлений - [HACS](https://hacs.xyz/docs/installation/installation):
+
+HACS - Integrations - Explore, в поиске ищем MegaD. После установки перезагружаем HA, далее Настройки - Интеграции - 
+Добавить интеграцию, ищем mega, следуем инструкции.
 
 Альтернативный способ установки:
 ```shell
