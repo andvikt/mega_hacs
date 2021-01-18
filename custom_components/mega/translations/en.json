@@ -21,8 +21,9 @@
                     "port_to_scan": "Port to poll aliveness (needed only if no sensors used)"
                 }
             }
-        },
-        "options": {
+        }
+    },
+    "options": {
         "step": {
             "init": {
                 "data": {
@@ -32,7 +33,6 @@
                 }
             }
         }
-    }
     },
     "title": "mega"
 }
