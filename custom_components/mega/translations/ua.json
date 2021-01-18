@@ -1,0 +1,39 @@
+{
+    "config": {
+        "abort": {
+            "already_configured": "Вже налаштовано"
+        },
+        "error": {
+            "cannot_connect": "Неможливо підключитись",
+            "invalid_auth": "Неправильний пароль",
+            "unknown": "Невідома помилка",
+            "duplicate_id": "Дублікат ID"
+        },
+        "step": {
+            "user": {
+                "data": {
+                    "host": "Хост",
+                    "password": "Пароль",
+                    "username": "Користувач",
+                    "id": "ID",
+                    "mqtt_id": "MQTT id",
+                    "scan_interval": "Період оновлення (сек.)",
+                    "port_to_scan": "Порт для сканування при відсутності датчиків"
+                }
+            }
+        }
+    },
+    "options": {
+        "step": {
+            "init": {
+                "data": {
+                  "scan_interval": "Період оновлення (сек.)",
+                  "port_to_scan": "Порт для сканування при відсутності датчиків",
+                  "reload": "Оновити об'єкти",
+                  "invert": "Список портів з інвертованою логікою (через ,)"
+                }
+            }
+        }
+    },
+    "title": "mega"
+}
