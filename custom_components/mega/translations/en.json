@@ -21,7 +21,18 @@
                     "port_to_scan": "Port to poll aliveness (needed only if no sensors used)"
                 }
             }
+        },
+        "options": {
+        "step": {
+            "init": {
+                "data": {
+                  "scan_interval": "Scan interval (sec) (used for aliveness and sensors)",
+                  "port_to_scan": "Port to poll aliveness (needed only if no sensors used)",
+                  "reload": "Reload objects"
+                }
+            }
         }
+    }
     },
     "title": "mega"
 }
