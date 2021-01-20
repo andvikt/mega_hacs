@@ -98,10 +98,10 @@ class MegaD:
             else:
                 await self.get_port(self.port_to_scan)
 
-            await asyncio.sleep(5)
+            await asyncio.sleep(1)
             if (datetime.now() - self.last_update).total_seconds() > (self.poll_interval + 10):
                 await self.get_port(self.port_to_scan)
-                await asyncio.sleep(5)
+                await asyncio.sleep(1)
                 if (datetime.now() - self.last_update).total_seconds() > (self.poll_interval + 10):
                     self.lg.warning('mega is offline')
                     self.hass.states.async_set(
@@ -168,7 +168,7 @@ class MegaD:
         ftr = asyncio.get_event_loop().create_future()
 
         def cb(msg):
-
+            self.last_update = datetime.now()
             try:
                 if '"value":NA' in msg.payload.decode():
                     if not ftr.done():
