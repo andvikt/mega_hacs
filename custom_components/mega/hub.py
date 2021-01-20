@@ -98,11 +98,11 @@ class MegaD:
             else:
                 await self.get_port(self.port_to_scan)
 
-            await asyncio.sleep(1)
-            if (datetime.now() - self.last_update).total_seconds() > self.poll_interval:
+            await asyncio.sleep(5)
+            if (datetime.now() - self.last_update).total_seconds() > (self.poll_interval + 10):
                 await self.get_port(self.port_to_scan)
-                await asyncio.sleep(1)
-                if (datetime.now() - self.last_update).total_seconds() > self.poll_interval:
+                await asyncio.sleep(5)
+                if (datetime.now() - self.last_update).total_seconds() > (self.poll_interval + 10):
                     self.lg.warning('mega is offline')
                     self.hass.states.async_set(
                         f'mega.{self.id}',
