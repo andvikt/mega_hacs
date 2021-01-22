@@ -4,35 +4,40 @@ import logging
 from functools import partial
 
 import voluptuous as vol
-from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_SCAN_INTERVAL, CONF_ID
+from homeassistant.const import (
+    CONF_SCAN_INTERVAL, CONF_ID, CONF_NAME, CONF_DOMAIN,
+    CONF_UNIT_OF_MEASUREMENT,
+)
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers.service import bind_hass
 from homeassistant.components import mqtt
 from homeassistant.config_entries import ConfigEntry
-from .const import DOMAIN, CONF_INVERT, CONF_RELOAD, PLATFORMS
+from .const import DOMAIN, CONF_INVERT, CONF_RELOAD, PLATFORMS, CONF_PORTS, CONF_CUSTOM, CONF_SKIP, CONF_PORT_TO_SCAN
 from .hub import MegaD
+from .config_flow import ConfigFlow
 
 
 _LOGGER = logging.getLogger(__name__)
-CONF_MQTT_ID = "mqtt_id"
-CONF_PORT_TO_SCAN = 'port_to_scan'
-
-MEGA = {
-        vol.Required(CONF_HOST): str,
-        vol.Required(CONF_PASSWORD): str,
-        vol.Optional(CONF_MQTT_ID, default=""): str,
-        vol.Optional(CONF_SCAN_INTERVAL, default=60): int,
-        vol.Optional(CONF_PORT_TO_SCAN, default=0): int,
-    }
-MEGA_MAPPED = {str: MEGA}
 
 CONFIG_SCHEMA = vol.Schema(
     {
-        DOMAIN: vol.Any(MEGA, MEGA_MAPPED)
+        DOMAIN: {
+            vol.Required(str, description='id меги из веб-интерфейса'): {
+                vol.Optional(int, description='номер порта'): {
+                    vol.Optional(CONF_SKIP, description='исключить порт из сканирования', default=False): bool,
+                    vol.Optional(CONF_INVERT, default=False): bool,
+                    vol.Optional(CONF_NAME): str,
+                    vol.Optional(CONF_DOMAIN): vol.Any('light', 'switch'),
+                    vol.Optional(CONF_UNIT_OF_MEASUREMENT, description='единицы измерений, либо строка либо мепинг'):
+                        vol.Any(str, {
+                            vol.Required(str): str
+                        }),
+                }
+            }
+        }
     },
     extra=vol.ALLOW_EXTRA,
 )
-
 
 ALIVE_STATE = 'alive'
 DEF_ID = 'def'
@@ -42,9 +47,9 @@ _subs = {}
 
 
 async def async_setup(hass: HomeAssistant, config: dict):
-    """Set up the mega component."""
-    conf = config.get(DOMAIN)
-    hass.data[DOMAIN] = {}
+    """YAML-конфигурация содержит только кастомизации портов"""
+    hass.data[DOMAIN] = {CONF_CUSTOM: config.get(DOMAIN, {})}
+
     hass.services.async_register(
         DOMAIN, 'save', partial(_save_service, hass), schema=vol.Schema({
             vol.Optional('mega_id'): str
@@ -63,16 +68,6 @@ async def async_setup(hass: HomeAssistant, config: dict):
             vol.Optional('mega_id'): str,
         })
     )
-    if conf is None:
-        return True
-    if CONF_HOST in conf:
-        conf = {DEF_ID: conf}
-    for id, data in conf.items():
-        _LOGGER.warning('YAML configuration is deprecated, please use web-interface')
-        await _add_mega(hass, id, data)
-
-    for id, hub in hass.data[DOMAIN].items():
-        _POLL_TASKS[id] = asyncio.create_task(hub.poll())
     return True
 
 
@@ -84,7 +79,8 @@ async def get_hub(hass, entry):
     _mqtt = hass.data.get(mqtt.DOMAIN)
     if _mqtt is None:
         raise Exception('mqtt not configured, please configure mqtt first')
-    hub = MegaD(hass, **data, mqtt=_mqtt, lg=_LOGGER)
+    hub = MegaD(hass, **data, mqtt=_mqtt, lg=_LOGGER, loop=asyncio.get_event_loop())
+    hub.mqtt_id = await hub.get_mqtt_id()
     return hub
 
 
@@ -100,17 +96,17 @@ async def _add_mega(hass: HomeAssistant, entry: ConfigEntry):
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
-    hub = await _add_mega(hass, entry)
+    hub: MegaD = await _add_mega(hass, entry)
     _hubs[entry.entry_id] = hub
     _subs[entry.entry_id] = entry.add_update_listener(updater)
-
+    await hub.start()
     for platform in PLATFORMS:
         hass.async_create_task(
             hass.config_entries.async_forward_entry_setup(
                 entry, platform
             )
         )
-    _POLL_TASKS[id] = asyncio.create_task(hub.poll())
+    await hub.updater.async_refresh()
     return True
 
 
@@ -125,6 +121,8 @@ async def updater(hass: HomeAssistant, entry: ConfigEntry):
     hub.poll_interval = entry.options[CONF_SCAN_INTERVAL]
     hub.port_to_scan = entry.options.get(CONF_PORT_TO_SCAN, 0)
     entry.data = entry.options
+    for platform in PLATFORMS:
+        await hass.config_entries.async_forward_entry_unload(entry, platform)
     await async_remove_entry(hass, entry)
     await async_setup_entry(hass, entry)
     return True
@@ -133,34 +131,31 @@ async def updater(hass: HomeAssistant, entry: ConfigEntry):
 async def async_remove_entry(hass, entry) -> None:
     """Handle removal of an entry."""
     id = entry.data.get('id', entry.entry_id)
-    hub = hass.data[DOMAIN]
+    hub: MegaD = hass.data[DOMAIN][id]
     if hub is None:
         return
     _LOGGER.debug(f'remove {id}')
     _hubs.pop(entry.entry_id)
     task: asyncio.Task = _POLL_TASKS.pop(id, None)
-    if task is None:
-        return
-    task.cancel()
+    if task is not None:
+        task.cancel()
     if hub is None:
         return
-    hub.unsubscribe_all()
-    unsub = _subs.pop(entry.entry_id)
-    if unsub:
-        unsub()
+    await hub.stop()
 
 
 async def async_migrate_entry(hass, config_entry: ConfigEntry):
     """Migrate old entry."""
-    _LOGGER.debug("Migrating from version %s to version 2", config_entry.version)
+    _LOGGER.debug("Migrating from version %s to version %s", config_entry.version, ConfigFlow.VERSION)
     hub = await get_hub(hass, config_entry)
     new = dict(config_entry.data)
-    if config_entry.version == 1:
-        cfg = await hub.get_config()
-        new.update(cfg)
-        _LOGGER.debug(f'new config: %s', new)
-        config_entry.data = new
-        config_entry.version = 2
+    await hub.start()
+    cfg = await hub.get_config()
+    await hub.stop()
+    new.update(cfg)
+    _LOGGER.debug(f'new config: %s', new)
+    config_entry.data = new
+    config_entry.version = ConfigFlow.VERSION
 
     _LOGGER.info("Migration to version %s successful", config_entry.version)
 
@@ -189,6 +184,8 @@ async def _get_port(hass: HomeAssistant, call: ServiceCall):
             await hub.get_port(port)
     else:
         for hub in hass.data[DOMAIN].values():
+            if not isinstance(hub, MegaD):
+                continue
             if port is None:
                 await hub.get_all_ports()
             else:

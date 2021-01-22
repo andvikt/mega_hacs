@@ -17,7 +17,7 @@
                     "username": "Username",
                     "id": "ID",
                     "mqtt_id": "MQTT id",
-                    "scan_interval": "Scan interval (sec) (used for aliveness and sensors)",
+                    "scan_interval": "Scan interval (sec), 0 - don't update",
                     "port_to_scan": "Port to poll aliveness (needed only if no sensors used)"
                 }
             }
@@ -27,7 +27,7 @@
         "step": {
             "init": {
                 "data": {
-                  "scan_interval": "Scan interval (sec) (used for aliveness and sensors)",
+                  "scan_interval": "Scan interval (sec), 0 - don't update",
                   "port_to_scan": "Port to poll aliveness (needed only if no sensors used)",
                   "reload": "Reload objects"
                 }

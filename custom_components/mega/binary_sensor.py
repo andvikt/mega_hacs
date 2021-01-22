@@ -1,6 +1,5 @@
 """Platform for light integration."""
 import logging
-import asyncio
 
 import voluptuous as vol
 
@@ -11,15 +10,16 @@ from homeassistant.components.binary_sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_NAME,
-    CONF_PLATFORM,
     CONF_PORT,
     CONF_UNIQUE_ID,
-    CONF_ID
+    CONF_ID,
+    CONF_ENTITY_ID,
 )
 from homeassistant.core import HomeAssistant
-from .entities import BaseMegaEntity
-
+from .const import EVENT_BINARY_SENSOR, DOMAIN, CONF_CUSTOM, CONF_SKIP
+from .entities import  MegaPushEntity
 from .hub import MegaD
+
 
 lg = logging.getLogger(__name__)
 
@@ -40,20 +40,7 @@ PLATFORM_SCHEMA = SENSOR_SCHEMA.extend(
 
 
 async def async_setup_platform(hass, config, add_entities, discovery_info=None):
-    config.pop(CONF_PLATFORM)
-    ents = []
-    for mid, _config in config.items():
-        for x in _config:
-            if isinstance(x, int):
-                ent = MegaBinarySensor(
-                    mega_id=mid, port=x
-                )
-            else:
-                ent = MegaBinarySensor(
-                    mega_id=mid, port=x[CONF_PORT], name=x[CONF_NAME]
-                )
-            ents.append(ent)
-    add_entities(ents)
+    lg.warning('mega integration does not support yaml for binary_sensors, please use UI configuration')
     return True
 
 
@@ -61,15 +48,19 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     mid = config_entry.data[CONF_ID]
     hub: MegaD = hass.data['mega'][mid]
     devices = []
-
+    customize = hass.data.get(DOMAIN, {}).get(CONF_CUSTOM, {})
     for port, cfg in config_entry.data.get('binary_sensor', {}).items():
+        port = int(port)
+        c = customize.get(mid, {}).get(port, {})
+        if c.get(CONF_SKIP, False):
+            continue
         hub.lg.debug(f'add binary_sensor on port %s', port)
-        sensor = MegaBinarySensor(mega_id=mid, port=port, config_entry=config_entry)
+        sensor = MegaBinarySensor(mega=hub, port=port, config_entry=config_entry)
         devices.append(sensor)
     async_add_devices(devices)
 
 
-class MegaBinarySensor(BinarySensorEntity, BaseMegaEntity):
+class MegaBinarySensor(BinarySensorEntity, MegaPushEntity):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -82,5 +73,13 @@ class MegaBinarySensor(BinarySensorEntity, BaseMegaEntity):
         return self._state == 'ON'
 
     def _update(self, payload: dict):
+        data = {CONF_ENTITY_ID: self.entity_id}
+        payload = payload.copy()
+        payload.pop(CONF_PORT)
+        data.update(payload)
+        self.hass.bus.async_fire(
+            EVENT_BINARY_SENSOR,
+            data,
+        )
         val = payload.get("value")
         self._is_on = val == 'ON'

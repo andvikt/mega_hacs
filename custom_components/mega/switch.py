@@ -7,15 +7,19 @@ from homeassistant.components.switch import (
     PLATFORM_SCHEMA as LIGHT_SCHEMA,
     SwitchEntity,
 )
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_NAME,
-    CONF_PLATFORM,
     CONF_PORT,
+    CONF_ID,
+    CONF_DOMAIN,
 )
-from .entities import BaseMegaEntity
-from .const import CONF_DIMMER, CONF_SWITCH
+from homeassistant.core import HomeAssistant
+from .entities import MegaD
+from .entities import MegaOutPort
+from .const import CONF_DIMMER, CONF_SWITCH, DOMAIN, CONF_CUSTOM, CONF_SKIP
 
-_LOGGER = logging.getLogger(__name__)
+_LOGGER = lg = logging.getLogger(__name__)
 
 
 # Validation of the user's configuration
@@ -33,50 +37,29 @@ PLATFORM_SCHEMA = LIGHT_SCHEMA.extend(
     extra=vol.ALLOW_EXTRA,
 )
 
-async def async_setup_platform(hass, config, add_entities, discovery_info=None):
-    config.pop(CONF_PLATFORM)
-    ents = []
-    for mid, _config in config.items():
-        mega = hass.data["mega"][mid]
-        for x in _config:
-            if isinstance(x, int):
-                ent = MegaSwitch(hass, mega=mega, port=x)
-            else:
-                ent = MegaSwitch(
-                    hass, mega=mega, port=x[CONF_PORT], name=x[CONF_NAME]
-                )
-            ents.append(ent)
 
-    add_entities(ents)
+async def async_setup_platform(hass, config, add_entities, discovery_info=None):
+    lg.warning('mega integration does not support yaml for switches, please use UI configuration')
     return True
 
 
-class MegaSwitch(SwitchEntity, BaseMegaEntity):
+async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices):
+    mid = config_entry.data[CONF_ID]
+    hub: MegaD = hass.data['mega'][mid]
+    devices = []
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._is_on = None
+    customize = hass.data.get(DOMAIN, {}).get(CONF_CUSTOM, {})
+    for port, cfg in config_entry.data.get('light', {}).items():
+        port = int(port)
+        c = customize.get(mid, {}).get(port, {})
+        if c.get(CONF_SKIP, False) or c.get(CONF_DOMAIN, 'light') != 'switch':
+            continue
+        for data in cfg:
+            hub.lg.debug(f'add switch on port %s with data %s', port, data)
+            light = MegaSwitch(mega=hub, port=port, config_entry=config_entry, **data)
+            devices.append(light)
+    async_add_devices(devices)
 
-    @property
-    def is_on(self) -> bool:
-        if self._is_on is not None:
-            return self._is_on
-        return self._state == 'ON'
 
-    async def async_turn_on(self, **kwargs) -> None:
-        cmd = 1
-        if await self.mega.send_command(self.port, f"{self.port}:{cmd}"):
-            self._is_on = True
-        await self.async_update_ha_state()
-
-    async def async_turn_off(self, **kwargs) -> None:
-
-        cmd = "0"
-
-        if await self.mega.send_command(self.port, f"{self.port}:{cmd}"):
-            self._is_on = False
-        await self.async_update_ha_state()
-
-    def _update(self, payload: dict):
-        val = payload.get("value")
-        self._is_on = val == 'ON'
+class MegaSwitch(MegaOutPort, SwitchEntity):
+    pass

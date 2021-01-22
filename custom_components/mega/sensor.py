@@ -1,5 +1,4 @@
 """Platform for light integration."""
-import asyncio
 import logging
 import voluptuous as vol
 
@@ -11,14 +10,13 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_NAME,
-    CONF_PLATFORM,
     CONF_PORT,
     CONF_UNIQUE_ID,
     CONF_ID,
-    CONF_TYPE,
+    CONF_TYPE, CONF_UNIT_OF_MEASUREMENT,
 )
 from homeassistant.core import HomeAssistant
-from .entities import BaseMegaEntity
+from .entities import MegaPushEntity
 from .const import CONF_KEY, TEMP, HUM, W1, W1BUS
 from .hub import MegaD
 import re
@@ -59,13 +57,7 @@ PLATFORM_SCHEMA = SENSOR_SCHEMA.extend(
 
 
 async def async_setup_platform(hass, config, add_entities, discovery_info=None):
-    config.pop(CONF_PLATFORM)
-    ents = []
-    for mid, _config in config.items():
-        for x in _config:
-            ent = _make_entity(mid, **x)
-            ents.append(ent)
-    add_entities(ents)
+    lg.warning('mega integration does not support yaml for sensors, please use UI configuration')
     return True
 
 
@@ -87,12 +79,12 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     mid = config_entry.data[CONF_ID]
     hub: MegaD = hass.data['mega'][mid]
     devices = []
-
     for port, cfg in config_entry.data.get('sensor', {}).items():
+        port = int(port)
         for data in cfg:
             hub.lg.debug(f'add sensor on port %s with data %s', port, data)
             sensor = Mega1WSensor(
-                mega_id=mid,
+                mega=hub,
                 port=port,
                 config_entry=config_entry,
                 **data,
@@ -102,13 +94,12 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     async_add_devices(devices)
 
 
-class Mega1WSensor(BaseMegaEntity):
+class Mega1WSensor(MegaPushEntity):
 
     def __init__(
             self,
             unit_of_measurement,
             device_class,
-            patt=None,
             key=None,
             *args,
             **kwargs
@@ -120,15 +111,25 @@ class Mega1WSensor(BaseMegaEntity):
         :param patt: pattern to extract value, must have at least one group that will contain parsed value
         """
         super().__init__(*args, **kwargs)
+        self.mega.sensors.append(self)
         self._value = None
         self.key = key
-        self.patt = patt
         self._device_class = device_class
         self._unit_of_measurement = unit_of_measurement
+        if self.port not in self.mega.sensors:
+            self.mega.sensors.append(self.port)
 
     @property
     def unit_of_measurement(self):
-        return self._unit_of_measurement
+        _u = self.customize.get(CONF_UNIT_OF_MEASUREMENT, None)
+        if _u is None:
+            return self._unit_of_measurement
+        elif isinstance(_u, str):
+            return _u
+        elif isinstance(_u, dict) and self.key in _u:
+            return _u[self.key]
+        else:
+            return self._unit_of_measurement
 
     @property
     def unique_id(self):
@@ -142,26 +143,14 @@ class Mega1WSensor(BaseMegaEntity):
         return self._device_class
 
     @property
-    def should_poll(self):
-        return False
-
-    @property
     def state(self):
-        if self._value is None and self._state is not None:
-            return self._state.state
-        return self._value
+        if self.key:
+            ret = self.mega.values.get(self.port, {}).get('value', {}).get(self.key)
+        else:
+            ret = self.mega.values.get(self.port, {}).get('value')
+        if ret is None and self._state is not None:
+            ret = self._state.state
+        return ret
 
     def _update(self, payload: dict):
-        val = payload.get('value', '')
-        if isinstance(val, str) and self.patt is not None:
-            val = self.patt.findall(val)
-            if val:
-                self._value = val[0]
-            else:
-                self.lg.warning(f'could not parse: {payload}')
-        elif isinstance(val, dict) and self.key is not None:
-            self._value = val.get(self.key)
-        elif isinstance(val, (float, int)):
-            self._value = val
-        else:
-            self.lg.warning(f'could not parse: {payload}')
+        self.mega.values[self.port] = payload
