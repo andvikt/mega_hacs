@@ -76,7 +76,10 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
 
     @property
     def name(self):
-        return self.customize.get(CONF_NAME) or self._name or f"{self.mega.id}_p{self.port}"
+        c = self.customize.get(CONF_NAME)
+        if not isinstance(c, str):
+            c = self._name or f"{self.mega.id}_p{self.port}"
+        return c
 
     @property
     def unique_id(self):
