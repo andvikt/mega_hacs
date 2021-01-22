@@ -41,7 +41,10 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
         if self.hass is None:
             return {}
         if self._customize is None:
-            self._customize = self.hass.data.get(DOMAIN, {}).get(CONF_CUSTOM, {}).get(self._mega_id).get(self.port, {})
+            c = self.hass.data.get(DOMAIN, {}).get(CONF_CUSTOM) or {}
+            c = c.get(self._mega_id) or {}
+            c = c.get(self.port) or {}
+            self._customize = c
         return self._customize
 
     @property
