@@ -38,7 +38,7 @@ wget -q -O - https://raw.githubusercontent.com/andvikt/mega_hacs/master/install.
 
 Все имеющиеся у вас порты будут настроены автоматически. Вы можете менять названия, иконки и entity_id так же из интерфейса.
 
-#### Так же доступна кастомизация устройств с помощью yaml:
+#### Кастомизация устройств с помощью yaml:
 ```yaml
 # configuration.yaml
 
