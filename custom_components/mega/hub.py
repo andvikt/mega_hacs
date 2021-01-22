@@ -195,7 +195,8 @@ class MegaD:
 
     def _process_msg(self, msg):
         try:
-            _, port = msg.topic.split('/')
+            d = msg.topic.split('/')
+            port = d[-1]
         except ValueError:
             self.lg.warning('can not process %s', msg)
             return
