@@ -71,6 +71,7 @@ class MegaD:
         self._callbacks: typing.DefaultDict[int, typing.List[typing.Callable[[dict], typing.Coroutine]]] = defaultdict(list)
         self._loop = loop
         self.values = {}
+        self.last_port = None
         self.updater = DataUpdateCoordinator(
             hass,
             self.lg,
@@ -176,7 +177,7 @@ class MegaD:
                 qos=2,
                 retain=False,
             )
-            await asyncio.wait_for(self.cnd.wait(), timeout=15)
+            await asyncio.wait_for(self.cnd.wait_for(lambda: self.last_port == port), timeout=15)
 
     async def get_all_ports(self):
         for x in range(37):
@@ -189,7 +190,8 @@ class MegaD:
         async with self.cnd:
             self.last_update = datetime.now()
             self.values[port] = value
-            self.cnd.notify()
+            self.last_port = port
+            self.cnd.notify_all()
 
     def _process_msg(self, msg):
         try:
