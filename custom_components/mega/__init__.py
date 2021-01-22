@@ -169,7 +169,8 @@ async def _save_service(hass: HomeAssistant, call: ServiceCall):
         await hub.save()
     else:
         for hub in hass.data[DOMAIN].values():
-            await hub.save()
+            if isinstance(hub, MegaD):
+                await hub.save()
 
 
 @bind_hass
