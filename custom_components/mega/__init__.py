@@ -26,7 +26,9 @@ CONFIG_SCHEMA = vol.Schema(
                 vol.Optional(int, description='номер порта'): {
                     vol.Optional(CONF_SKIP, description='исключить порт из сканирования', default=False): bool,
                     vol.Optional(CONF_INVERT, default=False): bool,
-                    vol.Optional(CONF_NAME): str,
+                    vol.Optional(CONF_NAME): vol.Any(str, {
+                        vol.Required(str): str
+                    }),
                     vol.Optional(CONF_DOMAIN): vol.Any('light', 'switch'),
                     vol.Optional(CONF_UNIT_OF_MEASUREMENT, description='единицы измерений, либо строка либо мепинг'):
                         vol.Any(str, {

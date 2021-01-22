@@ -154,3 +154,9 @@ class Mega1WSensor(MegaPushEntity):
 
     def _update(self, payload: dict):
         self.mega.values[self.port] = payload
+
+    @property
+    def name(self):
+        n = super().name
+        c = self.customize.get(CONF_NAME, {}).get(self.key)
+        return c or n
