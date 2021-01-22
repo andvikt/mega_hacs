@@ -65,6 +65,11 @@ class MegaBinarySensor(BinarySensorEntity, MegaPushEntity):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._is_on = None
+        self._attrs = None
+
+    @property
+    def state_attributes(self):
+        return self._attrs
 
     @property
     def is_on(self) -> bool:
@@ -77,9 +82,11 @@ class MegaBinarySensor(BinarySensorEntity, MegaPushEntity):
         payload = payload.copy()
         payload.pop(CONF_PORT)
         data.update(payload)
-        self.hass.bus.async_fire(
-            EVENT_BINARY_SENSOR,
-            data,
-        )
+        if not self.is_first_update:
+            self.hass.bus.async_fire(
+                EVENT_BINARY_SENSOR,
+                data,
+            )
         val = payload.get("value")
         self._is_on = val == 'ON'
+        self._attrs = data

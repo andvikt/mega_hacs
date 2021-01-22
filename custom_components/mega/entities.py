@@ -93,11 +93,13 @@ class MegaPushEntity(BaseMegaEntity):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.mega.subscribe(self.port, callback=self.__update)
+        self.is_first_update = True
 
     def __update(self, value: dict):
         self._update(value)
         self.async_write_ha_state()
         self.lg.debug(f'state after update %s', self.state)
+        self.is_first_update = False
         return
 
     def _update(self, payload: dict):
