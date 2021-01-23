@@ -177,7 +177,8 @@ class MegaD:
                 qos=2,
                 retain=False,
             )
-            await asyncio.wait_for(self.cnd.wait_for(lambda: self.last_port == port), timeout=15)
+            await asyncio.wait_for(self.cnd.wait(), timeout=15)
+            await asyncio.sleep(0.05)
 
     async def get_all_ports(self):
         for x in range(37):
