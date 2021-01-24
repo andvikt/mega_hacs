@@ -1,4 +1,5 @@
 import logging
+import asyncio
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
 from homeassistant.core import State
@@ -113,7 +114,7 @@ class MegaPushEntity(BaseMegaEntity):
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
-        self.hass.async_create_task(self.mega.get_port(self.port))
+        asyncio.create_task(self.mega.get_port(self.port))
 
 
 class MegaOutPort(MegaPushEntity):
