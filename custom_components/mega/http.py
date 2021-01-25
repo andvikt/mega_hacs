@@ -26,8 +26,7 @@ class MegaView(HomeAssistantView):
     def __init__(self, cfg: dict):
         self._try = 0
         self.allowed_hosts = {'::1'}
-        self.callbacks: typing.DefaultDict[int, typing.List[typing.Callable[[dict], typing.Coroutine]]] \
-            = defaultdict(list)
+        self.callbacks = defaultdict(lambda: defaultdict(list))
         self.templates: typing.Dict[str, typing.Dict[str, Template]] = {
             mid: {
                 pt: cfg[mid][pt][CONF_RESPONSE_TEMPLATE]
@@ -64,7 +63,7 @@ class MegaView(HomeAssistantView):
         data = data.copy()
         ret = 'd'
         if port is not None:
-            for cb in self.callbacks[port]:
+            for cb in self.callbacks[hub.id][port]:
                 cb(data)
             template: Template = self.templates.get(hub.id, {}).get(port)
             if hub.update_all:

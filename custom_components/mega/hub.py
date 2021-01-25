@@ -307,7 +307,7 @@ class MegaD:
         if self.mqtt_inputs:
             self._callbacks[port].append(callback)
         else:
-            self.http.callbacks[port].append(callback)
+            self.http.callbacks[self.id][port].append(callback)
 
     async def authenticate(self) -> bool:
         """Test if we can authenticate with the host."""
