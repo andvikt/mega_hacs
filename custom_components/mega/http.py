@@ -8,10 +8,10 @@ from aiohttp.web_request import Request
 from aiohttp.web_response import Response
 
 from homeassistant.helpers.template import Template
-from .const import EVENT_BINARY_SENSOR, CONF_HTTP, DOMAIN, CONF_CUSTOM, CONF_RESPONSE_TEMPLATE
+from .const import EVENT_BINARY_SENSOR, DOMAIN, CONF_RESPONSE_TEMPLATE
 from homeassistant.components.http import HomeAssistantView
-from homeassistant.core import callback, HomeAssistant
-from . import hub
+from homeassistant.core import HomeAssistant
+from .tools import make_ints
 
 _LOGGER = logging.getLogger(__name__).getChild('http')
 
@@ -61,6 +61,7 @@ class MegaView(HomeAssistantView):
         make_ints(data)
         port = data.get('pt')
         data = data.copy()
+        data['mega_id'] = hub.id
         ret = 'd'
         if port is not None:
             for cb in self.callbacks[hub.id][port]:
@@ -72,8 +73,7 @@ class MegaView(HomeAssistantView):
                 template.hass = hass
                 ret = template.async_render(data)
         _LOGGER.debug('response %s', ret)
-        ret = Response(body=ret or 'd', content_type='text/plain', headers={})
-        ret.headers.clear()
+        ret = Response(body=ret or 'd', content_type='text/plain', headers={'Server': 's', 'Date': 'n'})
         return ret
 
     async def later_update(self, hub):
@@ -82,13 +82,3 @@ class MegaView(HomeAssistantView):
         await hub.updater.async_refresh()
 
 
-def make_ints(d: dict):
-    for x in d:
-        try:
-            d[x] = float(d[x])
-        except ValueError:
-            pass
-    if 'm' not in d:
-        d['m'] = 0
-    if 'click' not in d:
-        d['click'] = 0

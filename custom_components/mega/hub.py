@@ -14,9 +14,10 @@ from homeassistant.const import DEVICE_CLASS_TEMPERATURE, DEVICE_CLASS_HUMIDITY
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from .const import TEMP, HUM, PATT_SPLIT, DOMAIN, CONF_HTTP
+from .const import TEMP, HUM, PATT_SPLIT, DOMAIN, CONF_HTTP, EVENT_BINARY_SENSOR
 from .exceptions import CannotConnect, MqttNotConfigured
 from .http import MegaView
+from .tools import make_ints
 
 TEMP_PATT = re.compile(r'temp:([01234567890\.]+)')
 HUM_PATT = re.compile(r'hum:([01234567890\.]+)')
@@ -290,9 +291,16 @@ class MegaD:
         value = None
         try:
             value = json.loads(msg.payload)
+            value = make_ints(value)
             self.values[port] = value
             for cb in self._callbacks[port]:
                 cb(value)
+            value = value.copy()
+            value['mega_id'] = self.id
+            self.hass.bus.async_fire(
+                EVENT_BINARY_SENSOR,
+                value,
+            )
         except Exception as exc:
             self.lg.warning(f'could not parse json ({msg.payload}): {exc}')
             return
