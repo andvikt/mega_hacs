@@ -125,8 +125,12 @@ class MegaD:
 
     async def get_sensors(self):
         self.lg.debug(self.sensors)
+        ports = []
         for x in self.sensors:
-            await self.get_port(x, force_http=True)
+            if x.port in ports:
+                continue
+            await self.get_port(x.port, force_http=True, http_cmd=x.http_cmd)
+            ports.append(x.port)
 
     @property
     def is_online(self):
@@ -157,6 +161,7 @@ class MegaD:
         self.lg.debug('poll')
         if self.mqtt is None:
             await self.get_all_ports()
+            await self.get_sensors()
             return
         if len(self.sensors) > 0:
             await self.get_sensors()
@@ -209,14 +214,14 @@ class MegaD:
             ret = {'value': ret}
         return ret
 
-    async def get_port(self, port, force_http=False):
+    async def get_port(self, port, force_http=False, http_cmd='get'):
         """
         Запрос состояния порта. Состояние всегда возвращается в виде объекта, всегда сохраняется в центральное
         хранилище values
         """
         self.lg.debug(f'get port %s', port)
         if self.mqtt is None or force_http:
-            ret = await self.request(pt=port, cmd='get')
+            ret = await self.request(pt=port, cmd=http_cmd)
             ret = self.parse_response(ret)
             self.values[port] = ret
             return ret
@@ -361,7 +366,11 @@ class MegaD:
                 ret['light'][port].append({'dimmer': m == '1'})
             elif pty == '3':
                 try:
+                    http_cmd = 'get'
                     values = await self.get_port(port, force_http=True)
+                    if values is None:
+                        values = await self.get_port(port, force_http=True, http_cmd='list')
+                        http_cmd = 'list'
                 except asyncio.TimeoutError:
                     self.lg.warning(f'timout on port {port}')
                     continue
@@ -382,6 +391,7 @@ class MegaD:
                         unit_of_measurement=UNITS.get(key, UNITS[TEMP]),
                         device_class=CLASSES.get(key, CLASSES[TEMP]),
                         id_suffix=key,
+                        http_cmd=http_cmd,
                     ))
         return ret
 

@@ -101,6 +101,7 @@ class Mega1WSensor(MegaPushEntity):
             unit_of_measurement,
             device_class,
             key=None,
+            http_cmd='get',
             *args,
             **kwargs
     ):
@@ -115,8 +116,7 @@ class Mega1WSensor(MegaPushEntity):
         self.key = key
         self._device_class = device_class
         self._unit_of_measurement = unit_of_measurement
-        if self.port not in self.mega.sensors:
-            self.mega.sensors.append(self.port)
+        self.mega.sensors.append(self)
 
     @property
     def unit_of_measurement(self):
