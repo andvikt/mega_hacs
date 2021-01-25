@@ -10,9 +10,7 @@
   "ssdp": [],
   "zeroconf": [],
   "homekit": {},
-  "dependencies": [
-    "mqtt"
-  ],
+  "dependencies": [],
   "codeowners": [
     "@andvikt"
   ],

@@ -7,7 +7,8 @@
             "cannot_connect": "Failed to connect",
             "invalid_auth": "Invalid authentication",
             "unknown": "Unexpected error",
-            "duplicate_id": "Duplicate ID"
+            "duplicate_id": "Duplicate ID",
+            "mqtt_inputs": "Use MQTT"
         },
         "step": {
             "user": {
@@ -18,7 +19,9 @@
                     "id": "ID",
                     "mqtt_id": "MQTT id",
                     "scan_interval": "Scan interval (sec), 0 - don't update",
-                    "port_to_scan": "Port to poll aliveness (needed only if no sensors used)"
+                    "port_to_scan": "Port to poll aliveness (needed only if no sensors used)",
+                    "nports": "Number of ports",
+                    "update_all": "Update all outs when input"
                 }
             }
         }
@@ -29,7 +32,9 @@
                 "data": {
                   "scan_interval": "Scan interval (sec), 0 - don't update",
                   "port_to_scan": "Port to poll aliveness (needed only if no sensors used)",
-                  "reload": "Reload objects"
+                  "reload": "Reload objects",
+                  "mqtt_inputs": "Use MQTT",
+                  "update_all": "Update all outs when input"
                 }
             }
         }

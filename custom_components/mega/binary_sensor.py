@@ -73,20 +73,13 @@ class MegaBinarySensor(BinarySensorEntity, MegaPushEntity):
 
     @property
     def is_on(self) -> bool:
-        if self._is_on is not None:
-            return self._is_on
-        return self._state == 'ON'
+        val = self.mega.values.get(self.port, {}).get("value") \
+              or self.mega.values.get(self.port, {}).get('m')
+        if val is None and self._state is not None:
+            return self._state == 'ON'
+        elif val is not None:
+            return val == 'ON' or val == 1
 
     def _update(self, payload: dict):
-        data = {CONF_ENTITY_ID: self.entity_id}
-        payload = payload.copy()
-        payload.pop(CONF_PORT)
-        data.update(payload)
-        if not self.is_first_update:
-            self.hass.bus.async_fire(
-                EVENT_BINARY_SENSOR,
-                data,
-            )
-        val = payload.get("value")
-        self._is_on = val == 'ON'
-        self._attrs = data
+        self.mega.values[self.port] = payload
+

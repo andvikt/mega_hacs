@@ -11,7 +11,10 @@
           "mqtt_id": "[%key:common::config_flow::data::mqtt_id%]",
           "scan_interval": "[%key:common::config_flow::data::mqtt_id%]",
           "port_to_scan": "[%key:common::config_flow::data::port_to_scan%]",
-          "invert": "[%key:common::config_flow::data::invert%]"
+          "invert": "[%key:common::config_flow::data::invert%]",
+          "mqtt_inputs": "[%key:common::config_flow::data::mqtt_inputs%]",
+          "nports": "[%key:common::config_flow::data::nports%]",
+          "update_all": "[%key:common::config_flow::data::update_all%]"
         }
       }
     },
@@ -32,7 +35,9 @@
           "scan_interval": "[%key:common::config_flow::data::scan_interval%]",
           "port_to_scan": "[%key:common::config_flow::data::port_to_scan%]",
           "reload": "[%key:common::config_flow::data::reload%]",
-          "invert": "[%key:common::config_flow::data::invert%]"
+          "invert": "[%key:common::config_flow::data::invert%]",
+          "mqtt_inputs": "[%key:common::config_flow::data::mqtt_inputs%]",
+          "nports": "[%key:common::config_flow::data::nports%]"
         }
       }
     }

@@ -4,18 +4,22 @@ import logging
 from functools import partial
 
 import voluptuous as vol
+
 from homeassistant.const import (
     CONF_SCAN_INTERVAL, CONF_ID, CONF_NAME, CONF_DOMAIN,
-    CONF_UNIT_OF_MEASUREMENT,
+    CONF_UNIT_OF_MEASUREMENT, CONF_HOST
 )
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers.service import bind_hass
+from homeassistant.helpers.template import Template
+from homeassistant.helpers import config_validation as cv
 from homeassistant.components import mqtt
 from homeassistant.config_entries import ConfigEntry
-from .const import DOMAIN, CONF_INVERT, CONF_RELOAD, PLATFORMS, CONF_PORTS, CONF_CUSTOM, CONF_SKIP, CONF_PORT_TO_SCAN
+from .const import DOMAIN, CONF_INVERT, CONF_RELOAD, PLATFORMS, CONF_PORTS, CONF_CUSTOM, CONF_SKIP, CONF_PORT_TO_SCAN, \
+    CONF_MQTT_INPUTS, CONF_HTTP, CONF_RESPONSE_TEMPLATE, CONF_ACTION, CONF_GET_VALUE
 from .hub import MegaD
 from .config_flow import ConfigFlow
-
+from .http import MegaView
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,6 +38,12 @@ CONFIG_SCHEMA = vol.Schema(
                         vol.Any(str, {
                             vol.Required(str): str
                         }),
+                    vol.Optional(
+                        CONF_RESPONSE_TEMPLATE,
+                        description='шаблон ответа когда на этот порт приходит'
+                                    'сообщение из меги '): cv.template,
+                    vol.Optional(CONF_ACTION): cv.script_action,
+                    vol.Optional(CONF_GET_VALUE, default=True): bool,
                 }
             }
         }
@@ -51,7 +61,8 @@ _subs = {}
 async def async_setup(hass: HomeAssistant, config: dict):
     """YAML-конфигурация содержит только кастомизации портов"""
     hass.data[DOMAIN] = {CONF_CUSTOM: config.get(DOMAIN, {})}
-
+    hass.data[DOMAIN][CONF_HTTP] = view = MegaView(cfg=config.get(DOMAIN, {}))
+    hass.http.register_view(view)
     hass.services.async_register(
         DOMAIN, 'save', partial(_save_service, hass), schema=vol.Schema({
             vol.Optional('mega_id'): str
@@ -70,6 +81,7 @@ async def async_setup(hass: HomeAssistant, config: dict):
             vol.Optional('mega_id'): str,
         })
     )
+
     return True
 
 
@@ -78,9 +90,17 @@ async def get_hub(hass, entry):
     data = dict(entry.data)
     data.update(entry.options or {})
     data.update(id=id)
-    _mqtt = hass.data.get(mqtt.DOMAIN)
-    if _mqtt is None:
-        raise Exception('mqtt not configured, please configure mqtt first')
+    use_mqtt = data.get(CONF_MQTT_INPUTS, True)
+
+    _mqtt = hass.data.get(mqtt.DOMAIN) if use_mqtt else None
+    if _mqtt is None and use_mqtt:
+        for x in range(5):
+            await asyncio.sleep(5)
+            _mqtt = hass.data.get(mqtt.DOMAIN)
+            if _mqtt is not None:
+                break
+        if _mqtt is None:
+            raise Exception('mqtt not configured, please configure mqtt first')
     hub = MegaD(hass, **data, mqtt=_mqtt, lg=_LOGGER, loop=asyncio.get_event_loop())
     hub.mqtt_id = await hub.get_mqtt_id()
     return hub
@@ -89,7 +109,8 @@ async def get_hub(hass, entry):
 async def _add_mega(hass: HomeAssistant, entry: ConfigEntry):
     id = entry.data.get('id', entry.entry_id)
     hub = await get_hub(hass, entry)
-    hass.data[DOMAIN][id] = hub
+    hass.data[DOMAIN][id] = hass.data[DOMAIN]['__def'] = hub
+    hass.data[DOMAIN][entry.data.get(CONF_HOST)] = hub
     if not await hub.authenticate():
         raise Exception("not authentificated")
     mid = await hub.get_mqtt_id()

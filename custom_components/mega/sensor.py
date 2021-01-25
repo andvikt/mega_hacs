@@ -111,7 +111,6 @@ class Mega1WSensor(MegaPushEntity):
         :param patt: pattern to extract value, must have at least one group that will contain parsed value
         """
         super().__init__(*args, **kwargs)
-        self.mega.sensors.append(self)
         self._value = None
         self.key = key
         self._device_class = device_class
@@ -151,9 +150,6 @@ class Mega1WSensor(MegaPushEntity):
         if ret is None and self._state is not None:
             ret = self._state.state
         return ret
-
-    def _update(self, payload: dict):
-        self.mega.values[self.port] = payload
 
     @property
     def name(self):

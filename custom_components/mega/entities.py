@@ -29,6 +29,7 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
         self.port = port
         self.config_entry = config_entry
         self.mega = mega
+        mega.entities.append(self)
         self._mega_id = mega.id
         self._lg = None
         self._unique_id = unique_id or f"mega_{mega.id}_{port}" + \
@@ -90,6 +91,10 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
         await super().async_added_to_hass()
         self._state = await self.async_get_last_state()
 
+    async def get_state(self):
+        if self.mega.mqtt is None:
+            self.async_write_ha_state()
+
 
 class MegaPushEntity(BaseMegaEntity):
 
@@ -114,7 +119,8 @@ class MegaPushEntity(BaseMegaEntity):
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
-        asyncio.create_task(self.mega.get_port(self.port))
+        if self.mega.mqtt is not None:
+            asyncio.create_task(self.mega.get_port(self.port))
 
 
 class MegaOutPort(MegaPushEntity):
@@ -137,16 +143,26 @@ class MegaOutPort(MegaPushEntity):
 
     @property
     def brightness(self):
-        if self._brightness is not None:
-            return self._brightness
-        if self._state:
+        val = self.mega.values.get(self.port, {}).get("value")
+        if val is None and self._state is not None:
             return self._state.attributes.get("brightness")
+        elif val is not None:
+            try:
+                val = int(val)
+                return val
+            except Exception:
+                pass
 
     @property
     def is_on(self) -> bool:
-        if self._is_on is not None:
-            return self._is_on
-        return self._state == 'ON'
+        val = self.mega.values.get(self.port, {}).get("value")
+        if val is None and self._state is not None:
+            return self._state == 'ON'
+        elif val is not None:
+            if not self.invert:
+                return val == 'ON' or str(val) == '1' or (safe_int(val) is not None and safe_int(val) > 0)
+            else:
+                return val == 'OFF' or str(val) == '0' or (safe_int(val) is not None and safe_int(val) == 0)
 
     async def async_turn_on(self, brightness=None, **kwargs) -> None:
         brightness = brightness or self.brightness or 255
@@ -157,31 +173,23 @@ class MegaOutPort(MegaPushEntity):
             cmd = brightness
         else:
             cmd = 1 if not self.invert else 0
-        if await self.mega.send_command(self.port, f"{self.port}:{cmd}"):
-            self._is_on = True
-            self._brightness = brightness
-        await self.async_update_ha_state()
+        await self.mega.send_command(self.port, f"{self.port}:{cmd}")
+        self.mega.values[self.port] = {'value': cmd}
+        await self.get_state()
+
 
     async def async_turn_off(self, **kwargs) -> None:
 
         cmd = "0" if not self.invert else "1"
 
-        if await self.mega.send_command(self.port, f"{self.port}:{cmd}"):
-            self._is_on = False
-        await self.async_update_ha_state()
+        await self.mega.send_command(self.port, f"{self.port}:{cmd}")
+        self.mega.values[self.port] = {'value': cmd}
+        await self.get_state()
 
-    def _update(self, payload: dict):
-        val = payload.get("value")
-        try:
-            val = int(val)
-        except Exception:
-            pass
-        if isinstance(val, int):
-            self._is_on = val
-            if val > 0:
-                self._brightness = val
-        else:
-            if not self.invert:
-                self._is_on = val == 'ON'
-            else:
-                self._is_on = val == 'OFF'
+def safe_int(v):
+    if v in ['ON', 'OFF']:
+        return None
+    try:
+        return int(v)
+    except ValueError:
+        return None
