@@ -126,7 +126,7 @@ class MegaD:
     async def get_sensors(self):
         self.lg.debug(self.sensors)
         for x in self.sensors:
-            await self.get_port(x)
+            await self.get_port(x, force_http=True)
 
     @property
     def is_online(self):
