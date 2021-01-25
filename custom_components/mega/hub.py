@@ -61,7 +61,8 @@ class MegaD:
         """Initialize."""
         if mqtt_inputs is None or mqtt_inputs == 'None' or mqtt_inputs is False:
             self.http = hass.data.get(DOMAIN, {}).get(CONF_HTTP)
-            self.http.allowed_hosts |= {host}
+            if not self.http is None:
+                self.http.allowed_hosts |= {host}
         else:
             self.http = None
         self.update_all = update_all if update_all is not None else True
