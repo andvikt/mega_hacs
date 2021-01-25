@@ -154,5 +154,7 @@ class Mega1WSensor(MegaPushEntity):
     @property
     def name(self):
         n = super().name
-        c = self.customize.get(CONF_NAME, {}).get(self.key)
+        c = self.customize.get(CONF_NAME, {})
+        if isinstance(c, dict):
+            c = c.get(self.key)
         return c or n

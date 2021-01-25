@@ -32,8 +32,8 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 
 async def get_hub(hass: HomeAssistant, data):
     _mqtt = hass.data.get(mqtt.DOMAIN)
-    if not isinstance(_mqtt, mqtt.MQTT):
-        raise exceptions.MqttNotConfigured("mqtt must be configured first")
+    # if not isinstance(_mqtt, mqtt.MQTT):
+    #     raise exceptions.MqttNotConfigured("mqtt must be configured first")
     hub = MegaD(hass, **data, lg=_LOGGER, mqtt=_mqtt, loop=asyncio.get_event_loop())
     hub.mqtt_id = await hub.get_mqtt_id()
     if not await hub.authenticate():
