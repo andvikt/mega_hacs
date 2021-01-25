@@ -372,7 +372,7 @@ class MegaD:
         async for port, pty, m in self.scan_ports(nports):
             if pty == "0":
                 ret['binary_sensor'][port].append({})
-            elif pty == "1" and m in ['0', '1', '3']:
+            elif pty == "1" and (m in ['0', '1', '3'] or m is None):
                 ret['light'][port].append({'dimmer': m == '1'})
             elif pty == '3':
                 try:
