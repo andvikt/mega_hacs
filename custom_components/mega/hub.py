@@ -209,13 +209,13 @@ class MegaD:
             ret = {'value': ret}
         return ret
 
-    async def get_port(self, port):
+    async def get_port(self, port, force_http=False):
         """
         Запрос состояния порта. Состояние всегда возвращается в виде объекта, всегда сохраняется в центральное
         хранилище values
         """
         self.lg.debug(f'get port %s', port)
-        if self.mqtt is None:
+        if self.mqtt is None or force_http:
             ret = await self.request(pt=port, cmd='get')
             ret = self.parse_response(ret)
             self.values[port] = ret
@@ -346,7 +346,7 @@ class MegaD:
                 return pty, m
 
     async def scan_ports(self, nports=37):
-        for x in range(nports+1):
+        for x in range(1, nports+1):
             ret = await self.scan_port(x)
             if ret:
                 yield [x, *ret]
@@ -361,7 +361,7 @@ class MegaD:
                 ret['light'][port].append({'dimmer': m == '1'})
             elif pty == '3':
                 try:
-                    values = await self.get_port(port)
+                    values = await self.get_port(port, force_http=True)
                 except asyncio.TimeoutError:
                     self.lg.warning(f'timout on port {port}')
                     continue
