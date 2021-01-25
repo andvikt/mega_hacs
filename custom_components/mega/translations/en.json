@@ -21,7 +21,8 @@
                     "scan_interval": "Scan interval (sec), 0 - don't update",
                     "port_to_scan": "Port to poll aliveness (needed only if no sensors used)",
                     "nports": "Number of ports",
-                    "update_all": "Update all outs when input"
+                    "update_all": "Update all outs when input",
+                    "mqtt_inputs": "Use MQTT"
                 }
             }
         }

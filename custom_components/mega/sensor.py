@@ -117,6 +117,7 @@ class Mega1WSensor(MegaPushEntity):
         self._device_class = device_class
         self._unit_of_measurement = unit_of_measurement
         self.mega.sensors.append(self)
+        self.http_cmd = http_cmd
 
     @property
     def unit_of_measurement(self):
@@ -143,12 +144,24 @@ class Mega1WSensor(MegaPushEntity):
 
     @property
     def state(self):
+        ret = None
         if self.key:
-            ret = self.mega.values.get(self.port, {}).get('value', {}).get(self.key)
+            try:
+                ret = self.mega.values.get(self.port, {})
+                if isinstance(ret, dict):
+                    ret = ret.get(self.key)
+            except:
+                self.lg.error(self.mega.values.get(self.port, {}).get('value', {}))
+                return
         else:
             ret = self.mega.values.get(self.port, {}).get('value')
         if ret is None and self._state is not None:
             ret = self._state.state
+        try:
+            ret = float(ret)
+            ret = str(ret)
+        except:
+            ret = None
         return ret
 
     @property

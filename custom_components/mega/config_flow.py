@@ -25,7 +25,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Optional(CONF_PORT_TO_SCAN, default=0): int,
         vol.Optional(CONF_MQTT_INPUTS, default=True): bool,
         vol.Optional(CONF_NPORTS, default=37): int,
-        vol.Optional(CONF_UPDATE_ALL, default=True): bool,
+        # vol.Optional(CONF_UPDATE_ALL, default=True): bool,
     },
 )
 

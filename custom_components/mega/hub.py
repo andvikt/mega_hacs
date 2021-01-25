@@ -123,10 +123,12 @@ class MegaD:
         async with self.lck:
             self.entities.append(ent)
 
-    async def get_sensors(self):
+    async def get_sensors(self, only_list=False):
         self.lg.debug(self.sensors)
         ports = []
         for x in self.sensors:
+            if only_list and x.http_cmd != 'list':
+                continue
             if x.port in ports:
                 continue
             await self.get_port(x.port, force_http=True, http_cmd=x.http_cmd)
@@ -161,7 +163,7 @@ class MegaD:
         self.lg.debug('poll')
         if self.mqtt is None:
             await self.get_all_ports()
-            await self.get_sensors()
+            await self.get_sensors(only_list=True)
             return
         if len(self.sensors) > 0:
             await self.get_sensors()
@@ -193,7 +195,9 @@ class MegaD:
                     self.lg.warning('%s returned %s (%s)', url, req.status, await req.text())
                     return None
                 else:
-                    return await req.text()
+                    ret = await req.text()
+                    self.lg.debug('response %s', ret)
+                    return ret
 
     async def save(self):
         await self.send_command(cmd='s')
@@ -223,6 +227,11 @@ class MegaD:
         if self.mqtt is None or force_http:
             ret = await self.request(pt=port, cmd=http_cmd)
             ret = self.parse_response(ret)
+            self.lg.debug('parsed: %s', ret)
+            if http_cmd == 'list' and isinstance(ret, dict) and 'value' in ret:
+                await asyncio.sleep(1)
+                ret = await self.request(pt=port, http_cmd=http_cmd)
+                ret = self.parse_response(ret)
             self.values[port] = ret
             return ret
 
@@ -368,7 +377,7 @@ class MegaD:
                 try:
                     http_cmd = 'get'
                     values = await self.get_port(port, force_http=True)
-                    if values is None:
+                    if values is None or (isinstance(values, dict) and str(values.get('value')) in ('', 'None')):
                         values = await self.get_port(port, force_http=True, http_cmd='list')
                         http_cmd = 'list'
                 except asyncio.TimeoutError:

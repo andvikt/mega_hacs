@@ -37,7 +37,8 @@
           "reload": "[%key:common::config_flow::data::reload%]",
           "invert": "[%key:common::config_flow::data::invert%]",
           "mqtt_inputs": "[%key:common::config_flow::data::mqtt_inputs%]",
-          "nports": "[%key:common::config_flow::data::nports%]"
+          "nports": "[%key:common::config_flow::data::nports%]",
+          "update_all": "[%key:common::config_flow::data::update_all%]"
         }
       }
     }
