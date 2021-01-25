@@ -23,6 +23,7 @@ CONF_RESPONSE_TEMPLATE = 'response_template'
 CONF_ACTION = 'action'
 CONF_UPDATE_ALL = 'update_all'
 CONF_GET_VALUE = 'get_value'
+CONF_ALLOW_HOSTS = 'allow_hosts'
 PLATFORMS = [
     "light",
     "switch",

@@ -16,7 +16,7 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.components import mqtt
 from homeassistant.config_entries import ConfigEntry
 from .const import DOMAIN, CONF_INVERT, CONF_RELOAD, PLATFORMS, CONF_PORTS, CONF_CUSTOM, CONF_SKIP, CONF_PORT_TO_SCAN, \
-    CONF_MQTT_INPUTS, CONF_HTTP, CONF_RESPONSE_TEMPLATE, CONF_ACTION, CONF_GET_VALUE
+    CONF_MQTT_INPUTS, CONF_HTTP, CONF_RESPONSE_TEMPLATE, CONF_ACTION, CONF_GET_VALUE, CONF_ALLOW_HOSTS
 from .hub import MegaD
 from .config_flow import ConfigFlow
 from .http import MegaView
@@ -26,6 +26,7 @@ _LOGGER = logging.getLogger(__name__)
 CONFIG_SCHEMA = vol.Schema(
     {
         DOMAIN: {
+            vol.Optional(CONF_ALLOW_HOSTS): [str],
             vol.Required(str, description='id меги из веб-интерфейса'): {
                 vol.Optional(int, description='номер порта'): {
                     vol.Optional(CONF_SKIP, description='исключить порт из сканирования', default=False): bool,
@@ -62,6 +63,7 @@ async def async_setup(hass: HomeAssistant, config: dict):
     """YAML-конфигурация содержит только кастомизации портов"""
     hass.data[DOMAIN] = {CONF_CUSTOM: config.get(DOMAIN, {})}
     hass.data[DOMAIN][CONF_HTTP] = view = MegaView(cfg=config.get(DOMAIN, {}))
+    view.allowed_hosts |= set(config.get(DOMAIN, {}).get(CONF_ALLOW_HOSTS, []))
     hass.http.register_view(view)
     hass.services.async_register(
         DOMAIN, 'save', partial(_save_service, hass), schema=vol.Schema({
