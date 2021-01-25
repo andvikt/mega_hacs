@@ -59,7 +59,7 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
             "config_entries": [
                 self.config_entry,
             ],
-            "name": f'port {self.port}',
+            "name": f'{self._mega_id} port {self.port}',
             "manufacturer": 'ab-log.ru',
             # "model": self.light.productname,
             # "sw_version": self.light.swversion,
