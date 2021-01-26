@@ -1,5 +1,5 @@
 """Пока не сделано"""
-
+import asyncio
 import logging
 
 import voluptuous as vol
@@ -9,7 +9,8 @@ from homeassistant.components import mqtt
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_ID, CONF_PASSWORD, CONF_SCAN_INTERVAL
 from homeassistant.core import callback, HomeAssistant
-from .const import DOMAIN, CONF_PORT_TO_SCAN, CONF_RELOAD, PLATFORMS  # pylint:disable=unused-import
+from .const import DOMAIN, CONF_PORT_TO_SCAN, CONF_RELOAD, PLATFORMS, CONF_MQTT_INPUTS, \
+    CONF_NPORTS, CONF_UPDATE_ALL  # pylint:disable=unused-import
 from .hub import MegaD
 from . import exceptions
 
@@ -20,17 +21,21 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Required(CONF_ID, default='def'): str,
         vol.Required(CONF_HOST, default="192.168.0.14"): str,
         vol.Required(CONF_PASSWORD, default="sec"): str,
-        vol.Optional(CONF_SCAN_INTERVAL, default=60): int,
+        vol.Optional(CONF_SCAN_INTERVAL, default=0): int,
         vol.Optional(CONF_PORT_TO_SCAN, default=0): int,
+        vol.Optional(CONF_MQTT_INPUTS, default=True): bool,
+        vol.Optional(CONF_NPORTS, default=37): int,
+        # vol.Optional(CONF_UPDATE_ALL, default=True): bool,
     },
 )
 
 
 async def get_hub(hass: HomeAssistant, data):
     _mqtt = hass.data.get(mqtt.DOMAIN)
-    if not isinstance(_mqtt, mqtt.MQTT):
-        raise exceptions.MqttNotConfigured("mqtt must be configured first")
-    hub = MegaD(hass, **data, lg=_LOGGER, mqtt=_mqtt)
+    # if not isinstance(_mqtt, mqtt.MQTT):
+    #     raise exceptions.MqttNotConfigured("mqtt must be configured first")
+    hub = MegaD(hass, **data, lg=_LOGGER, mqtt=_mqtt, loop=asyncio.get_event_loop())
+    hub.mqtt_id = await hub.get_mqtt_id()
     if not await hub.authenticate():
         raise exceptions.InvalidAuth
     return hub
@@ -51,7 +56,7 @@ async def validate_input(hass: core.HomeAssistant, data):
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for mega."""
 
-    VERSION = 2
+    VERSION = 4
     CONNECTION_CLASS = config_entries.CONN_CLASS_ASSUMED
 
     async def async_step_user(self, user_input=None):
@@ -65,7 +70,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         try:
             hub = await validate_input(self.hass, user_input)
-            config = await hub.get_config()
+            await hub.start()
+            config = await hub.get_config(nports=user_input.get(CONF_NPORTS, 37))
+            await hub.stop()
             hub.lg.debug(f'config loaded: %s', config)
             config.update(user_input)
             return self.async_create_entry(
@@ -106,7 +113,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             cfg.update(user_input)
             hub = await get_hub(self.hass, self.config_entry.data)
             if reload:
-                new = await hub.get_config()
+                await hub.start()
+                new = await hub.get_config(nports=user_input.get(CONF_NPORTS, 37))
+                await hub.stop()
+
                 _LOGGER.debug(f'new config: %s', new)
                 cfg = dict(self.config_entry.data)
                 for x in PLATFORMS:
@@ -120,9 +130,12 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         ret = self.async_show_form(
             step_id="init",
             data_schema=vol.Schema({
-                vol.Optional(CONF_SCAN_INTERVAL, default=e[CONF_SCAN_INTERVAL]): int,
+                vol.Optional(CONF_SCAN_INTERVAL, default=e.get(CONF_SCAN_INTERVAL, 0)): int,
                 vol.Optional(CONF_PORT_TO_SCAN, default=e.get(CONF_PORT_TO_SCAN, 0)): int,
+                vol.Optional(CONF_MQTT_INPUTS, default=e.get(CONF_MQTT_INPUTS, True)): bool,
+                vol.Optional(CONF_NPORTS, default=e.get(CONF_NPORTS, 37)): int,
                 vol.Optional(CONF_RELOAD, default=False): bool,
+                # vol.Optional(CONF_UPDATE_ALL, default=e.get(CONF_UPDATE_ALL, True)): bool,
                 # vol.Optional(CONF_INVERT, default=''): str,
             }),
         )
