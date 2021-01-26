@@ -81,11 +81,35 @@ script: "mega" # это api интеграции, к которому будет
       event_type: mega.sensor
       event_data:
         pt: 1
+        click: 2
   action:
     - service: light.toggle
       entity_id: light.some_light
 ```
 Для binary_sensor имеет смысл использовать режим P&R, для остальных режимов - лучше пользоваться событиями.
+
+Примеры использования binary_sensor:
+```yaml
+- alias: обработка долгих/коротких нажатий
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.some_sensor
+      to: on
+      for: 1 # задержка на секунду
+
+  action:
+    - choose:
+          # если кнопка все еще нажата - значит это долгое нажатие
+        - conditions: "{{ is_state('binary_sensor.some_sensor', 'on')}}"
+          sequence:
+          - service: light.turn_on
+            entity_id: light.some_light
+          # если кнопка уже не нажата - значит это короткое нажатие
+        - conditions: "{{ is_state('binary_sensor.some_sensor', 'off')}}"
+          sequence:
+          - service: light.turn_off
+            entity_id: light.some_light
+```
 
 ## Ответ на входящие события от контроллера
 Контроллер ожидает ответ от сервера, который может быть сценарием (по умолчанию интеграция отвечает `d`, что означает 

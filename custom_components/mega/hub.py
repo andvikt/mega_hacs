@@ -291,16 +291,18 @@ class MegaD:
         value = None
         try:
             value = json.loads(msg.payload)
-            value = make_ints(value)
+            if isinstance(value, dict):
+                make_ints(value)
             self.values[port] = value
             for cb in self._callbacks[port]:
                 cb(value)
-            value = value.copy()
-            value['mega_id'] = self.id
-            self.hass.bus.async_fire(
-                EVENT_BINARY_SENSOR,
-                value,
-            )
+            if isinstance(value, dict):
+                value = value.copy()
+                value['mega_id'] = self.id
+                self.hass.bus.async_fire(
+                    EVENT_BINARY_SENSOR,
+                    value,
+                )
         except Exception as exc:
             self.lg.warning(f'could not parse json ({msg.payload}): {exc}')
             return

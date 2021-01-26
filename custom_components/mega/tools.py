@@ -2,7 +2,7 @@ def make_ints(d: dict):
     for x in d:
         try:
             d[x] = float(d[x])
-        except ValueError:
+        except (ValueError, TypeError):
             pass
     if 'm' not in d:
         d['m'] = 0

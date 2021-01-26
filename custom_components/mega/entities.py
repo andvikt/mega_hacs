@@ -155,10 +155,12 @@ class MegaOutPort(MegaPushEntity):
 
     @property
     def is_on(self) -> bool:
-        val = self.mega.values.get(self.port, {}).get("value")
+        val = self.mega.values.get(self.port, {})
+
         if val is None and self._state is not None:
             return self._state == 'ON'
         elif val is not None:
+            val = val.get("value")
             if not self.invert:
                 return val == 'ON' or str(val) == '1' or (safe_int(val) is not None and safe_int(val) > 0)
             else:
@@ -186,10 +188,11 @@ class MegaOutPort(MegaPushEntity):
         self.mega.values[self.port] = {'value': cmd}
         await self.get_state()
 
+
 def safe_int(v):
     if v in ['ON', 'OFF']:
         return None
     try:
         return int(v)
-    except ValueError:
+    except (ValueError, TypeError):
         return None
