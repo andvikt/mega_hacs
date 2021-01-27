@@ -78,7 +78,7 @@ class MegaBinarySensor(BinarySensorEntity, MegaPushEntity):
         if val is None and self._state is not None:
             return self._state == 'ON'
         elif val is not None:
-            return val == 'ON' or val == 1
+            return val == 'ON' or val != 1
 
     def _update(self, payload: dict):
         self.mega.values[self.port] = payload

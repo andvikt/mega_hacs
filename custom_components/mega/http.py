@@ -12,7 +12,7 @@ from .const import EVENT_BINARY_SENSOR, DOMAIN, CONF_RESPONSE_TEMPLATE
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.core import HomeAssistant
 from .tools import make_ints
-
+from . import hub as h
 _LOGGER = logging.getLogger(__name__).getChild('http')
 
 
@@ -37,6 +37,7 @@ class MegaView(HomeAssistantView):
         _LOGGER.debug('templates: %s', self.templates)
 
     async def get(self, request: Request) -> Response:
+
         auth = False
         for x in self.allowed_hosts:
             if request.remote.startswith(x):
@@ -47,7 +48,7 @@ class MegaView(HomeAssistantView):
             return Response(status=401)
 
         hass: HomeAssistant = request.app['hass']
-        hub: 'hub.MegaD' = hass.data.get(DOMAIN).get(request.remote)  # TODO: проверить какой remote
+        hub: 'h.MegaD' = hass.data.get(DOMAIN).get(request.remote)  # TODO: проверить какой remote
         if hub is None and request.remote == '::1':
             hub = hass.data.get(DOMAIN).get('__def')
         if hub is None:
@@ -64,6 +65,7 @@ class MegaView(HomeAssistantView):
         data['mega_id'] = hub.id
         ret = 'd'
         if port is not None:
+            hub.values[port] = data
             for cb in self.callbacks[hub.id][port]:
                 cb(data)
             template: Template = self.templates.get(hub.id, {}).get(port)
@@ -80,5 +82,4 @@ class MegaView(HomeAssistantView):
         _LOGGER.debug('force update')
         await asyncio.sleep(1)
         await hub.updater.async_refresh()
-
 

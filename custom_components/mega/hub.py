@@ -15,8 +15,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from .const import TEMP, HUM, PATT_SPLIT, DOMAIN, CONF_HTTP, EVENT_BINARY_SENSOR
-from .exceptions import CannotConnect, MqttNotConfigured
-from .http import MegaView
+from .exceptions import CannotConnect
 from .tools import make_ints
 
 TEMP_PATT = re.compile(r'temp:([01234567890\.]+)')
@@ -76,6 +75,7 @@ class MegaD:
         self.mqtt = mqtt
         self.id = id
         self.lck = asyncio.Lock()
+        self.last_long = {}
         self._http_lck = asyncio.Lock()
         self._notif_lck = asyncio.Lock()
         self.cnd = asyncio.Condition()

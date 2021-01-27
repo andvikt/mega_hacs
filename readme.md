@@ -167,6 +167,7 @@ curl -v -X GET 'http://192.168.88.1.4:8123/mega?pt=5&m=1'
 При каждом срабатывании `binary_sensor` так же сообщает о событии типа `mega.sensor`.
 События можно использовать в автоматизациях, например так:
 ```yaml
+# Пример события с полями как есть прямо из меги
 - alias: some double click
   trigger:
     - platform: event
@@ -186,6 +187,28 @@ curl -v -X GET 'http://192.168.88.1.4:8123/mega?pt=5&m=1'
 - click: клик (подробнее в документации меги)
 - value: текущее значение (только для mqtt)
 - port: номер порта
+
+Начиная с версии 0.3.7 появилось так же событие типа mega.binary:
+```yaml
+# Пример события с полями как есть прямо из меги
+- alias: some long click
+  trigger:
+    - platform: event
+      event_type: mega.binary
+      event_data:
+        entity_id: binary_sensor.some_id
+        type: long
+  action:
+    - service: light.toggle
+      entity_id: light.some_light
+```
+Возможные варианты поля `type`:
+- `long`: долгое нажатие
+- `release`: размыкание (с гарантией что не было долгого нажатия)
+- `long_release`: размыкание после долгого нажатия
+- `press`: замыкание
+- `single`: одинарный клик (в режиме кликов)
+- `double`: двойной клик
 
 Чтобы понять, какие события происходят, лучше всего воспользоваться панелью разработчика и подписаться
 на вкладке события на событие `mega.sensor`, понажимать кнопки.

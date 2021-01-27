@@ -1,12 +1,14 @@
 import logging
 import asyncio
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
 from homeassistant.core import State
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers.restore_state import RestoreEntity
 from .hub import MegaD
-from .const import DOMAIN, CONF_CUSTOM, CONF_INVERT
+from .const import DOMAIN, CONF_CUSTOM, CONF_INVERT, EVENT_BINARY_SENSOR, LONG, \
+    LONG_RELEASE, RELEASE, PRESS, SINGLE_CLICK, DOUBLE_CLICK
 
 
 class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
@@ -111,7 +113,51 @@ class MegaPushEntity(BaseMegaEntity):
         self._update(value)
         self.async_write_ha_state()
         self.lg.debug(f'state after update %s', self.state)
-        self.is_first_update = False
+        if not self.entity_id.startswith('binary_sensor'):
+            return
+        ll: bool = self.mega.last_long.get(self.port, False)
+        if safe_int(value.get('click', 0)) == 1:
+            self.hass.bus.async_fire(
+                event_type=EVENT_BINARY_SENSOR,
+                event_data={
+                    'entity_id': self.entity_id,
+                    'type': SINGLE_CLICK
+                }
+            )
+        elif safe_int(value.get('click', 0)) == 2:
+            self.hass.bus.async_fire(
+                event_type=EVENT_BINARY_SENSOR,
+                event_data={
+                    'entity_id': self.entity_id,
+                    'type': DOUBLE_CLICK
+                }
+            )
+        elif safe_int(value.get('m', 0)) == 2:
+            self.mega.last_long[self.port] = True
+            self.hass.bus.async_fire(
+                event_type=EVENT_BINARY_SENSOR,
+                event_data={
+                    'entity_id': self.entity_id,
+                    'type': LONG
+                }
+            )
+        elif safe_int(value.get('m', 0)) == 1:
+            self.hass.bus.async_fire(
+                event_type=EVENT_BINARY_SENSOR,
+                event_data={
+                    'entity_id': self.entity_id,
+                    'type': LONG_RELEASE if ll else RELEASE,
+                }
+            )
+        elif safe_int(value.get('m', None)) == 0:
+            self.hass.bus.async_fire(
+                event_type=EVENT_BINARY_SENSOR,
+                event_data={
+                    'entity_id': self.entity_id,
+                    'type': PRESS,
+                }
+            )
+            self.mega.last_long[self.port] = False
         return
 
     def _update(self, payload: dict):

@@ -31,4 +31,13 @@ PLATFORMS = [
     "sensor",
 ]
 EVENT_BINARY_SENSOR = f'{DOMAIN}.sensor'
+EVENT_BINARY = f'{DOMAIN}.binary'
+
 PATT_SPLIT = re.compile('[;/]')
+
+LONG = 'long'
+RELEASE = 'release'
+LONG_RELEASE = 'long_release'
+PRESS = 'press'
+SINGLE_CLICK = 'single'
+DOUBLE_CLICK = 'double'
