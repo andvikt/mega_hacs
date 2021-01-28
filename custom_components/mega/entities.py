@@ -6,7 +6,7 @@ from homeassistant.const import CONF_NAME
 from homeassistant.core import State
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers.restore_state import RestoreEntity
-from .hub import MegaD
+from . import hub as h
 from .const import DOMAIN, CONF_CUSTOM, CONF_INVERT, EVENT_BINARY_SENSOR, LONG, \
     LONG_RELEASE, RELEASE, PRESS, SINGLE_CLICK, DOUBLE_CLICK, EVENT_BINARY
 
@@ -19,6 +19,11 @@ async def _set_events_on():
     _LOGGER.debug('events on')
     _events_on = True
 
+
+def set_events_off():
+    global _events_on
+    _events_on = False
+
 _task_set_ev_on = None
 
 
@@ -30,7 +35,7 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
     """
     def __init__(
             self,
-            mega: MegaD,
+            mega: 'h.MegaD',
             port: int,
             config_entry: ConfigEntry = None,
             id_suffix=None,

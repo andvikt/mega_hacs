@@ -15,7 +15,7 @@ from homeassistant.const import (
     CONF_DOMAIN,
 )
 from homeassistant.core import HomeAssistant
-from .entities import MegaD
+from . import hub as h
 from .entities import MegaOutPort
 from .const import CONF_DIMMER, CONF_SWITCH, DOMAIN, CONF_CUSTOM, CONF_SKIP
 
@@ -45,7 +45,7 @@ async def async_setup_platform(hass, config, add_entities, discovery_info=None):
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_devices):
     mid = config_entry.data[CONF_ID]
-    hub: MegaD = hass.data['mega'][mid]
+    hub: 'h.MegaD' = hass.data['mega'][mid]
     devices = []
 
     customize = hass.data.get(DOMAIN, {}).get(CONF_CUSTOM, {})

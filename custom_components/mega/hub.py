@@ -15,6 +15,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from .const import TEMP, HUM, PATT_SPLIT, DOMAIN, CONF_HTTP, EVENT_BINARY_SENSOR
+from .entities import set_events_off
 from .exceptions import CannotConnect
 from .tools import make_ints
 
@@ -109,6 +110,7 @@ class MegaD:
     async def start(self):
         self.loop = asyncio.get_event_loop()
         if self.mqtt is not None:
+            set_events_off()
             self.subs = await self.mqtt.async_subscribe(
                 topic=f"{self.mqtt_id}/+",
                 msg_callback=self._process_msg,
@@ -232,7 +234,7 @@ class MegaD:
             self.lg.debug('parsed: %s', ret)
             if http_cmd == 'list' and isinstance(ret, dict) and 'value' in ret:
                 await asyncio.sleep(1)
-                ret = await self.request(pt=port, http_cmd=http_cmd)
+                ret = await self.request(pt=port, cmd=http_cmd)
                 ret = self.parse_response(ret)
             self.values[port] = ret
             return ret
