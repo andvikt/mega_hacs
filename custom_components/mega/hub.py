@@ -209,9 +209,9 @@ class MegaD:
             raise NoPort()
         if ':' in ret:
             ret = PATT_SPLIT.split(ret)
-            ret = dict([
+            ret = {'value': dict([
                 x.split(':') for x in ret if x.count(':') == 1
-            ])
+            ])}
         elif 'ON' in ret:
             ret = {'value': 'ON'}
         elif 'OFF' in ret:

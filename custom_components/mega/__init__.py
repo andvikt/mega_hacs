@@ -160,7 +160,7 @@ async def async_remove_entry(hass, entry) -> None:
     if hub is None:
         return
     _LOGGER.debug(f'remove {id}')
-    _hubs.pop(entry.entry_id)
+    _hubs.pop(id, None)
     task: asyncio.Task = _POLL_TASKS.pop(id, None)
     if task is not None:
         task.cancel()
