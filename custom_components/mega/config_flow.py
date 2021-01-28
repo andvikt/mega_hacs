@@ -25,7 +25,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Optional(CONF_PORT_TO_SCAN, default=0): int,
         vol.Optional(CONF_MQTT_INPUTS, default=True): bool,
         vol.Optional(CONF_NPORTS, default=37): int,
-        # vol.Optional(CONF_UPDATE_ALL, default=True): bool,
+        vol.Optional(CONF_UPDATE_ALL, default=True): bool,
     },
 )
 
@@ -135,7 +135,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Optional(CONF_MQTT_INPUTS, default=e.get(CONF_MQTT_INPUTS, True)): bool,
                 vol.Optional(CONF_NPORTS, default=e.get(CONF_NPORTS, 37)): int,
                 vol.Optional(CONF_RELOAD, default=False): bool,
-                # vol.Optional(CONF_UPDATE_ALL, default=e.get(CONF_UPDATE_ALL, True)): bool,
+                vol.Optional(CONF_UPDATE_ALL, default=e.get(CONF_UPDATE_ALL, True)): bool,
                 # vol.Optional(CONF_INVERT, default=''): str,
             }),
         )

@@ -8,7 +8,18 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers.restore_state import RestoreEntity
 from .hub import MegaD
 from .const import DOMAIN, CONF_CUSTOM, CONF_INVERT, EVENT_BINARY_SENSOR, LONG, \
-    LONG_RELEASE, RELEASE, PRESS, SINGLE_CLICK, DOUBLE_CLICK
+    LONG_RELEASE, RELEASE, PRESS, SINGLE_CLICK, DOUBLE_CLICK, EVENT_BINARY
+
+_events_on = False
+_LOGGER = logging.getLogger(__name__)
+
+async def _set_events_on():
+    global _events_on
+    await asyncio.sleep(10)
+    _LOGGER.debug('events on')
+    _events_on = True
+
+_task_set_ev_on = None
 
 
 class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
@@ -90,8 +101,11 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
         return self._unique_id
 
     async def async_added_to_hass(self) -> None:
+        global _task_set_ev_on
         await super().async_added_to_hass()
         self._state = await self.async_get_last_state()
+        if self.mega.mqtt_inputs and _task_set_ev_on is None:
+            _task_set_ev_on = asyncio.create_task(_set_events_on())
 
     async def get_state(self):
         if self.mega.mqtt is None:
@@ -113,12 +127,16 @@ class MegaPushEntity(BaseMegaEntity):
         self._update(value)
         self.async_write_ha_state()
         self.lg.debug(f'state after update %s', self.state)
+        if self.mega.mqtt_inputs and not _events_on:
+            _LOGGER.debug('skip event because events are off')
+            return
         if not self.entity_id.startswith('binary_sensor'):
+            _LOGGER.debug('skip event because not a bnary sens')
             return
         ll: bool = self.mega.last_long.get(self.port, False)
         if safe_int(value.get('click', 0)) == 1:
             self.hass.bus.async_fire(
-                event_type=EVENT_BINARY_SENSOR,
+                event_type=EVENT_BINARY,
                 event_data={
                     'entity_id': self.entity_id,
                     'type': SINGLE_CLICK
@@ -126,7 +144,7 @@ class MegaPushEntity(BaseMegaEntity):
             )
         elif safe_int(value.get('click', 0)) == 2:
             self.hass.bus.async_fire(
-                event_type=EVENT_BINARY_SENSOR,
+                event_type=EVENT_BINARY,
                 event_data={
                     'entity_id': self.entity_id,
                     'type': DOUBLE_CLICK
@@ -135,7 +153,7 @@ class MegaPushEntity(BaseMegaEntity):
         elif safe_int(value.get('m', 0)) == 2:
             self.mega.last_long[self.port] = True
             self.hass.bus.async_fire(
-                event_type=EVENT_BINARY_SENSOR,
+                event_type=EVENT_BINARY,
                 event_data={
                     'entity_id': self.entity_id,
                     'type': LONG
@@ -143,7 +161,7 @@ class MegaPushEntity(BaseMegaEntity):
             )
         elif safe_int(value.get('m', 0)) == 1:
             self.hass.bus.async_fire(
-                event_type=EVENT_BINARY_SENSOR,
+                event_type=EVENT_BINARY,
                 event_data={
                     'entity_id': self.entity_id,
                     'type': LONG_RELEASE if ll else RELEASE,
@@ -151,7 +169,7 @@ class MegaPushEntity(BaseMegaEntity):
             )
         elif safe_int(value.get('m', None)) == 0:
             self.hass.bus.async_fire(
-                event_type=EVENT_BINARY_SENSOR,
+                event_type=EVENT_BINARY,
                 event_data={
                     'entity_id': self.entity_id,
                     'type': PRESS,

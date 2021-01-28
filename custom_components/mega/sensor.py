@@ -149,7 +149,9 @@ class Mega1WSensor(MegaPushEntity):
             try:
                 ret = self.mega.values.get(self.port, {})
                 if isinstance(ret, dict):
-                    ret = ret.get(self.key)
+                    ret = ret.get('value', {})
+                    if isinstance(ret, dict):
+                        ret = ret.get(self.key)
             except:
                 self.lg.error(self.mega.values.get(self.port, {}).get('value', {}))
                 return

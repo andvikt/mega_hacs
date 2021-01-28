@@ -252,7 +252,7 @@ class MegaD:
                 except asyncio.TimeoutError:
                     self.lg.error(f'timeout when getting port {port}')
 
-    async def get_all_ports(self):
+    async def get_all_ports(self, only_out=False):
         if not self.mqtt_inputs:
             ret = await self.request(cmd='all')
             for port, x in enumerate(ret.split(';')):
