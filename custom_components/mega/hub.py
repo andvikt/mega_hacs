@@ -209,6 +209,8 @@ class MegaD:
     def parse_response(self, ret):
         if ret is None:
             raise NoPort()
+        if 'busy' in ret:
+            return None
         if ':' in ret:
             ret = PATT_SPLIT.split(ret)
             ret = {'value': dict([
@@ -229,13 +231,16 @@ class MegaD:
         """
         self.lg.debug(f'get port %s', port)
         if self.mqtt is None or force_http:
-            ret = await self.request(pt=port, cmd=http_cmd)
-            ret = self.parse_response(ret)
-            self.lg.debug('parsed: %s', ret)
-            if http_cmd == 'list' and isinstance(ret, dict) and 'value' in ret:
+            if http_cmd == 'list':
+                await self.request(pt=port, cmd='conv')
                 await asyncio.sleep(1)
-                ret = await self.request(pt=port, cmd=http_cmd)
-                ret = self.parse_response(ret)
+            ret = self.parse_response(await self.request(pt=port, cmd=http_cmd))
+            ntry = 0
+            while http_cmd == 'list' and ret is None and ntry < 3:
+                await asyncio.sleep(1)
+                ret = self.parse_response(await self.request(pt=port, cmd=http_cmd))
+                ntry += 1
+            self.lg.debug('parsed: %s', ret)
             self.values[port] = ret
             return ret
 

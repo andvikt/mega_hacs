@@ -161,6 +161,7 @@ async def async_remove_entry(hass, entry) -> None:
         return
     _LOGGER.debug(f'remove {id}')
     _hubs.pop(id, None)
+    hass.data[DOMAIN].pop(id, None)
     task: asyncio.Task = _POLL_TASKS.pop(id, None)
     if task is not None:
         task.cancel()
