@@ -1,3 +1,6 @@
+[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/custom-components/hacs)
+[![Donate](https://yoomoney.ru/to/410013955329136)
+
 # MegaD HomeAssistant integration
 
 Интеграция с [MegaD-2561](https://www.ab-log.ru/smart-house/ethernet/megad-2561)
