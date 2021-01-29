@@ -13,16 +13,18 @@ from .const import DOMAIN, CONF_CUSTOM, CONF_INVERT, EVENT_BINARY_SENSOR, LONG, 
 _events_on = False
 _LOGGER = logging.getLogger(__name__)
 
+
 async def _set_events_on():
-    global _events_on
+    global _events_on, _task_set_ev_on
     await asyncio.sleep(10)
     _LOGGER.debug('events on')
     _events_on = True
 
 
 def set_events_off():
-    global _events_on
+    global _events_on, _task_set_ev_on
     _events_on = False
+    _task_set_ev_on = None
 
 _task_set_ev_on = None
 
