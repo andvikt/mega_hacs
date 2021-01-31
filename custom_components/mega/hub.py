@@ -376,6 +376,9 @@ class MegaD:
                     m = m.find(selected=True)['value']
                 self._scanned[port] = (pty, m)
                 return pty, m
+            elif pty == '2':
+                self._scanned[port] = (pty, '0')
+                return pty, '0'
 
     async def scan_ports(self, nports=37):
         for x in range(0, nports+1):
@@ -391,7 +394,7 @@ class MegaD:
                 ret['binary_sensor'][port].append({})
             elif pty == "1" and (m in ['0', '1', '3'] or m is None):
                 ret['light'][port].append({'dimmer': m == '1'})
-            elif pty == '3':
+            elif pty in ('3', '2'):
                 try:
                     http_cmd = 'get'
                     values = await self.get_port(port, force_http=True)

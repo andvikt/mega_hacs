@@ -24,6 +24,7 @@ CONF_ACTION = 'action'
 CONF_UPDATE_ALL = 'update_all'
 CONF_GET_VALUE = 'get_value'
 CONF_ALLOW_HOSTS = 'allow_hosts'
+CONF_CONV_TEMPLATE = 'conv_template'
 PLATFORMS = [
     "light",
     "switch",

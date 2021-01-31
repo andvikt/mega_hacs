@@ -16,8 +16,9 @@ from homeassistant.const import (
     CONF_TYPE, CONF_UNIT_OF_MEASUREMENT,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.template import Template
 from .entities import MegaPushEntity
-from .const import CONF_KEY, TEMP, HUM, W1, W1BUS
+from .const import CONF_KEY, TEMP, HUM, W1, W1BUS, CONF_CONV_TEMPLATE
 from .hub import MegaD
 import re
 
@@ -164,6 +165,10 @@ class Mega1WSensor(MegaPushEntity):
             ret = str(ret)
         except:
             ret = None
+        tmpl: Template = self.customize.get(CONF_CONV_TEMPLATE)
+        if tmpl is not None and self.hass is not None:
+            tmpl.hass = self.hass
+            ret = tmpl.async_render({'value': ret})
         return ret
 
     @property
