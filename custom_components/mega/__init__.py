@@ -219,9 +219,12 @@ async def _get_port(hass: HomeAssistant, call: ServiceCall):
             if not isinstance(hub, MegaD):
                 continue
             if port is None:
-                await hub.get_all_ports()
-            else:
+                await hub.get_all_ports(check_skip=True)
+            elif isinstance(port, int):
                 await hub.get_port(port)
+            elif isinstance(port, list):
+                for x in port:
+                    await hub.get_port(x)
 
 
 @bind_hass
