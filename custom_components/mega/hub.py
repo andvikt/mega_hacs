@@ -14,7 +14,7 @@ from homeassistant.const import DEVICE_CLASS_TEMPERATURE, DEVICE_CLASS_HUMIDITY
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from .const import TEMP, HUM, PATT_SPLIT, DOMAIN, CONF_HTTP, EVENT_BINARY_SENSOR
+from .const import TEMP, HUM, PATT_SPLIT, DOMAIN, CONF_HTTP, EVENT_BINARY_SENSOR, CONF_CUSTOM, CONF_SKIP
 from .entities import set_events_off
 from .exceptions import CannotConnect
 from .tools import make_ints
@@ -91,6 +91,7 @@ class MegaD:
         self.last_update = datetime.now()
         self._callbacks: typing.DefaultDict[int, typing.List[typing.Callable[[dict], typing.Coroutine]]] = defaultdict(list)
         self._loop = loop
+        self._customize = None
         self.values = {}
         self.last_port = None
         self.updater = DataUpdateCoordinator(
@@ -137,6 +138,14 @@ class MegaD:
                 continue
             await self.get_port(x.port, force_http=True, http_cmd=x.http_cmd)
             ports.append(x.port)
+
+    @property
+    def customize(self):
+        if self._customize is None:
+            c = self.hass.data.get(DOMAIN, {}).get(CONF_CUSTOM) or {}
+            c = c.get(self.id) or {}
+            self._customize = c
+        return self._customize
 
     @property
     def is_online(self):
@@ -259,14 +268,20 @@ class MegaD:
                 except asyncio.TimeoutError:
                     self.lg.error(f'timeout when getting port {port}')
 
-    async def get_all_ports(self, only_out=False):
+    async def get_all_ports(self, only_out=False, check_skip=False):
         if not self.mqtt_inputs:
             ret = await self.request(cmd='all')
             for port, x in enumerate(ret.split(';')):
+                if check_skip:
+                    if self.customize.get(port, {}).get(CONF_SKIP, False):
+                        continue
                 ret = self.parse_response(x)
                 self.values[port] = ret
         else:
             for x in range(self.nports + 1):
+                if check_skip:
+                    if self.customize.get(x, {}).get(CONF_SKIP, False):
+                        continue
                 await self.get_port(x)
 
     async def reboot(self, save=True):

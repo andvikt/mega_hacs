@@ -75,7 +75,7 @@ async def async_setup(hass: HomeAssistant, config: dict):
     hass.services.async_register(
         DOMAIN, 'get_port', partial(_get_port, hass), schema=vol.Schema({
             vol.Optional('mega_id'): str,
-            vol.Optional('port'): int,
+            vol.Optional('port'): vol.Any(int, [int]),
         })
     )
     hass.services.async_register(
@@ -208,9 +208,12 @@ async def _get_port(hass: HomeAssistant, call: ServiceCall):
     if mega_id:
         hub: MegaD = hass.data[DOMAIN][mega_id]
         if port is None:
-            await hub.get_all_ports()
-        else:
+            await hub.get_all_ports(check_skip=True)
+        elif isinstance(port, int):
             await hub.get_port(port)
+        elif isinstance(port, list):
+            for x in port:
+                await hub.get_port(x)
     else:
         for hub in hass.data[DOMAIN].values():
             if not isinstance(hub, MegaD):
