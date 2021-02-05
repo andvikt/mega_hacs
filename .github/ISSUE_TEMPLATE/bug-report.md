@@ -8,19 +8,26 @@ assignees: ''
 ---
 
 **Описание**
-A clear and concise description of what the bug is.
+Описание проблемы
 
 **Версии систем**
 Enviroment: raspberry/linux/windows/macos/docker
 HA version: 
 mega_hacs version:
 megad firmware version:
+используется mqtt: true/false
 
 **Ожидаемое поведение**
-A clear and concise description of what you expected to happen.
+Описание правильного поведения
 
 **Screenshots**
 If applicable, add screenshots to help explain your problem.
 
 **LOG**
-Прочитайте в документации как включить подробный лог интеграции и приложите его здесь
+Просьба прикладывать детальный лог, который можно включить в конфиге так:
+```yaml
+logger:
+  default: info
+  logs:
+    custom_components.mega: debug
+```
