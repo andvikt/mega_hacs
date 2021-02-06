@@ -10,7 +10,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_ID, CONF_PASSWORD, CONF_SCAN_INTERVAL
 from homeassistant.core import callback, HomeAssistant
 from .const import DOMAIN, CONF_PORT_TO_SCAN, CONF_RELOAD, PLATFORMS, CONF_MQTT_INPUTS, \
-    CONF_NPORTS, CONF_UPDATE_ALL  # pylint:disable=unused-import
+    CONF_NPORTS, CONF_UPDATE_ALL, CONF_POLL_OUTS  # pylint:disable=unused-import
 from .hub import MegaD
 from . import exceptions
 
@@ -22,6 +22,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Required(CONF_HOST, default="192.168.0.14"): str,
         vol.Required(CONF_PASSWORD, default="sec"): str,
         vol.Optional(CONF_SCAN_INTERVAL, default=0): int,
+        vol.Optional(CONF_POLL_OUTS, default=False): bool,
         vol.Optional(CONF_PORT_TO_SCAN, default=0): int,
         vol.Optional(CONF_MQTT_INPUTS, default=True): bool,
         vol.Optional(CONF_NPORTS, default=37): int,
@@ -131,6 +132,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             step_id="init",
             data_schema=vol.Schema({
                 vol.Optional(CONF_SCAN_INTERVAL, default=e.get(CONF_SCAN_INTERVAL, 0)): int,
+                vol.Optional(CONF_POLL_OUTS, default=e.get(CONF_POLL_OUTS, False)): bool,
                 vol.Optional(CONF_PORT_TO_SCAN, default=e.get(CONF_PORT_TO_SCAN, 0)): int,
                 vol.Optional(CONF_MQTT_INPUTS, default=e.get(CONF_MQTT_INPUTS, True)): bool,
                 vol.Optional(CONF_NPORTS, default=e.get(CONF_NPORTS, 37)): int,

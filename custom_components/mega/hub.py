@@ -15,7 +15,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from .const import TEMP, HUM, PATT_SPLIT, DOMAIN, CONF_HTTP, EVENT_BINARY_SENSOR, CONF_CUSTOM, CONF_SKIP
-from .entities import set_events_off
+from .entities import set_events_off, BaseMegaEntity
 from .exceptions import CannotConnect
 from .tools import make_ints
 
@@ -57,6 +57,7 @@ class MegaD:
             nports=38,
             inverted: typing.List[int] = None,
             update_all=True,
+            poll_outs=False,
             **kwargs,
     ):
         """Initialize."""
@@ -66,6 +67,7 @@ class MegaD:
                 self.http.allowed_hosts |= {host}
         else:
             self.http = None
+        self.poll_outs = poll_outs
         self.update_all = update_all if update_all is not None else True
         self.nports = nports
         self.mqtt_inputs = mqtt_inputs
@@ -81,7 +83,7 @@ class MegaD:
         self._notif_lck = asyncio.Lock()
         self.cnd = asyncio.Condition()
         self.online = True
-        self.entities: typing.List[Entity] = []
+        self.entities: typing.List[BaseMegaEntity] = []
         self.poll_interval = scan_interval
         self.subs = None
         self.lg: logging.Logger = lg.getChild(self.id)
@@ -177,8 +179,9 @@ class MegaD:
         if self.mqtt is None:
             await self.get_all_ports()
             await self.get_sensors(only_list=True)
-            return
-        if len(self.sensors) > 0:
+        elif self.poll_outs:
+            await self.get_all_ports(check_skip=True)
+        elif len(self.sensors) > 0:
             await self.get_sensors()
         else:
             await self.get_port(self.port_to_scan)
@@ -268,20 +271,23 @@ class MegaD:
                 except asyncio.TimeoutError:
                     self.lg.error(f'timeout when getting port {port}')
 
+    @property
+    def ports(self):
+        return {e.port for e in self.entities}
+
     async def get_all_ports(self, only_out=False, check_skip=False):
         if not self.mqtt_inputs:
             ret = await self.request(cmd='all')
             for port, x in enumerate(ret.split(';')):
-                if check_skip:
-                    if self.customize.get(port, {}).get(CONF_SKIP, False):
-                        continue
+                if check_skip and not port in self.ports:
+                    continue
                 ret = self.parse_response(x)
                 self.values[port] = ret
-        else:
+        elif not check_skip:
             for x in range(self.nports + 1):
-                if check_skip:
-                    if self.customize.get(x, {}).get(CONF_SKIP, False):
-                        continue
+                await self.get_port(x)
+        else:
+            for x in self.ports:
                 await self.get_port(x)
 
     async def reboot(self, save=True):

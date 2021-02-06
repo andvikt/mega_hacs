@@ -22,7 +22,8 @@
                     "port_to_scan": "Port to poll aliveness (needed only if no sensors used)",
                     "nports": "Number of ports",
                     "update_all": "Update all outs when input",
-                    "mqtt_inputs": "Use MQTT"
+                    "mqtt_inputs": "Use MQTT",
+                    "poll_outs": "Poll outs"
                 }
             }
         }
@@ -35,7 +36,8 @@
                   "port_to_scan": "Port to poll aliveness (needed only if no sensors used)",
                   "reload": "Reload objects",
                   "mqtt_inputs": "Use MQTT",
-                  "update_all": "Update all outs when input"
+                  "update_all": "Update all outs when input",
+                  "poll_outs": "Poll outs"
                 }
             }
         }

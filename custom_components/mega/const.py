@@ -16,6 +16,7 @@ CONF_INVERT = 'invert'
 CONF_PORTS = 'ports'
 CONF_CUSTOM = '__custom'
 CONF_HTTP = '__http'
+CONF_ALL = '__all'
 CONF_SKIP = 'skip'
 CONF_MQTT_INPUTS = 'mqtt_inputs'
 CONF_NPORTS = 'nports'
@@ -25,6 +26,7 @@ CONF_UPDATE_ALL = 'update_all'
 CONF_GET_VALUE = 'get_value'
 CONF_ALLOW_HOSTS = 'allow_hosts'
 CONF_CONV_TEMPLATE = 'conv_template'
+CONF_POLL_OUTS = 'poll_outs'
 PLATFORMS = [
     "light",
     "switch",

@@ -17,7 +17,7 @@ from homeassistant.components import mqtt
 from homeassistant.config_entries import ConfigEntry
 from .const import DOMAIN, CONF_INVERT, CONF_RELOAD, PLATFORMS, CONF_PORTS, CONF_CUSTOM, CONF_SKIP, CONF_PORT_TO_SCAN, \
     CONF_MQTT_INPUTS, CONF_HTTP, CONF_RESPONSE_TEMPLATE, CONF_ACTION, CONF_GET_VALUE, CONF_ALLOW_HOSTS, \
-    CONF_CONV_TEMPLATE
+    CONF_CONV_TEMPLATE, CONF_ALL
 from .hub import MegaD
 from .config_flow import ConfigFlow
 from .http import MegaView
@@ -65,6 +65,7 @@ async def async_setup(hass: HomeAssistant, config: dict):
     """YAML-конфигурация содержит только кастомизации портов"""
     hass.data[DOMAIN] = {CONF_CUSTOM: config.get(DOMAIN, {})}
     hass.data[DOMAIN][CONF_HTTP] = view = MegaView(cfg=config.get(DOMAIN, {}))
+    hass.data[DOMAIN][CONF_ALL] = {}
     view.allowed_hosts |= set(config.get(DOMAIN, {}).get(CONF_ALLOW_HOSTS, []))
     hass.http.register_view(view)
     hass.services.async_register(
@@ -115,6 +116,7 @@ async def _add_mega(hass: HomeAssistant, entry: ConfigEntry):
     hub = await get_hub(hass, entry)
     hass.data[DOMAIN][id] = hass.data[DOMAIN]['__def'] = hub
     hass.data[DOMAIN][entry.data.get(CONF_HOST)] = hub
+    hass.data[DOMAIN][CONF_ALL][id] = hub
     if not await hub.authenticate():
         raise Exception("not authentificated")
     mid = await hub.get_mqtt_id()
@@ -164,6 +166,7 @@ async def async_remove_entry(hass, entry) -> None:
     _LOGGER.debug(f'remove {id}')
     _hubs.pop(id, None)
     hass.data[DOMAIN].pop(id, None)
+    hass.data[DOMAIN][CONF_ALL].pop(id, None)
     task: asyncio.Task = _POLL_TASKS.pop(id, None)
     if task is not None:
         task.cancel()
@@ -215,7 +218,7 @@ async def _get_port(hass: HomeAssistant, call: ServiceCall):
             for x in port:
                 await hub.get_port(x)
     else:
-        for hub in hass.data[DOMAIN].values():
+        for hub in hass.data[DOMAIN][CONF_ALL].values():
             if not isinstance(hub, MegaD):
                 continue
             if port is None:
