@@ -10,30 +10,44 @@ import json
 
 from bs4 import BeautifulSoup
 from homeassistant.components import mqtt
-from homeassistant.const import DEVICE_CLASS_TEMPERATURE, DEVICE_CLASS_HUMIDITY
+from homeassistant.const import (DEVICE_CLASS_TEMPERATURE, DEVICE_CLASS_HUMIDITY, DEVICE_CLASS_PRESSURE, 
+        DEVICE_CLASS_ILLUMINANCE, TEMP_CELSIUS, PERCENTAGE, LIGHT_LUX)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from .const import TEMP, HUM, PATT_SPLIT, DOMAIN, CONF_HTTP, EVENT_BINARY_SENSOR, CONF_CUSTOM, CONF_SKIP
+from .const import TEMP, HUM, PRESS, LUX, PATT_SPLIT, DOMAIN, CONF_HTTP, EVENT_BINARY_SENSOR, CONF_CUSTOM, CONF_SKIP
 from .entities import set_events_off, BaseMegaEntity
 from .exceptions import CannotConnect
 from .tools import make_ints
 
 TEMP_PATT = re.compile(r'temp:([01234567890\.]+)')
 HUM_PATT = re.compile(r'hum:([01234567890\.]+)')
+PRESS_PATT = re.compile(r'press:([01234567890\.]+)')
+LUX_PATT = re.compile(r'lux:([01234567890\.]+)')
 PATTERNS = {
     TEMP: TEMP_PATT,
     HUM: HUM_PATT,
+    PRESS: PRESS_PATT,
+    LUX: LUX_PATT
 }
 UNITS = {
-    TEMP: '°C',
-    HUM: '%'
+    TEMP: TEMP_CELSIUS, 
+    HUM: PERCENTAGE,
+    PRESS: 'mmHg',
+    LUX: LIGHT_LUX
 }
 CLASSES = {
     TEMP: DEVICE_CLASS_TEMPERATURE,
-    HUM: DEVICE_CLASS_HUMIDITY
+    HUM: DEVICE_CLASS_HUMIDITY,
+    PRESS: DEVICE_CLASS_PRESSURE,
+    LUX: DEVICE_CLASS_ILLUMINANCE
 }
-
+I2C_DEVICE_TYPES = {
+    "2":  LUX, # BH1750
+    "3":  LUX, # TSL2591
+    "7":  LUX, # MAX44009
+    "70": LUX, # OPT3001
+}
 class NoPort(Exception):
     pass
 
@@ -398,8 +412,11 @@ class MegaD:
                 self._scanned[port] = (pty, m)
                 return pty, m
             elif pty in ('2', '4'):  # эта часть не очень проработана, тут есть i2c который может работать неправильно
-                self._scanned[port] = (pty, '0')
-                return pty, '0'
+                m = tree.find('select', attrs={'name': 'd'})
+                if m:
+                    m = m.find(selected=True)['value']
+                self._scanned[port] = (pty, m or '0')
+                return pty, m or '0'
 
     async def scan_ports(self, nports=37):
         for x in range(0, nports+1):
@@ -434,7 +451,10 @@ class MegaD:
                 if isinstance(values, str) and TEMP_PATT.search(values):
                     values = {TEMP: values}
                 elif not isinstance(values, dict):
-                    values = {None: values}
+                    if pty == '4' and m in I2C_DEVICE_TYPES:
+                        values = {I2C_DEVICE_TYPES[m]: values}
+                    else:
+                        values = {None: values}
                 for key in values:
                     self.lg.debug(f'add sensor {key}')
                     ret['sensor'][port].append(dict(
