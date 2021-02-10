@@ -246,16 +246,15 @@ class MegaOutPort(MegaPushEntity):
             cmd = brightness
         else:
             cmd = 1 if not self.invert else 0
-        await self.mega.send_command(self.port, f"{self.port}:{cmd}")
+        await self.mega.request(cmd=f"{self.port}:{cmd}")
         self.mega.values[self.port] = {'value': cmd}
         await self.get_state()
-
 
     async def async_turn_off(self, **kwargs) -> None:
 
         cmd = "0" if not self.invert else "1"
 
-        await self.mega.send_command(self.port, f"{self.port}:{cmd}")
+        await self.mega.request(cmd=f"{self.port}:{cmd}")
         self.mega.values[self.port] = {'value': cmd}
         await self.get_state()
 

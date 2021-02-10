@@ -81,7 +81,7 @@ async def async_setup(hass: HomeAssistant, config: dict):
     )
     hass.services.async_register(
         DOMAIN, 'run_cmd', partial(_run_cmd, hass), schema=vol.Schema({
-            vol.Required('port'): int,
+            vol.Optional('port'): int,
             vol.Required('cmd'): str,
             vol.Optional('mega_id'): str,
         })
@@ -232,12 +232,11 @@ async def _get_port(hass: HomeAssistant, call: ServiceCall):
 
 @bind_hass
 async def _run_cmd(hass: HomeAssistant, call: ServiceCall):
-    port = call.data.get('port')
     mega_id = call.data.get('mega_id')
     cmd = call.data.get('cmd')
     if mega_id:
         hub: MegaD = hass.data[DOMAIN][mega_id]
-        await hub.send_command(port=port, cmd=cmd)
+        await hub.request(cmd=cmd)
     else:
         for hub in hass.data[DOMAIN].values():
-            await hub.send_command(port=port, cmd=cmd)
+            await hub.request(cmd=cmd)
