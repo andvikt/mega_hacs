@@ -97,10 +97,12 @@ class MegaBinarySensor(BinarySensorEntity, MegaPushEntity):
         if template is not None:
             template.hass = self.hass
             ret = template.async_render(payload)
+            self.mega.lg.debug(f'response: %s', ret)
             self.hass.async_create_task(
                 self.mega.request(pt=self.port, cmd=ret)
             )
         elif self.mega.force_d:
+            self.mega.lg.debug(f'response d')
             self.hass.async_create_task(
                 self.mega.request(pt=self.port, cmd='d')
             )
