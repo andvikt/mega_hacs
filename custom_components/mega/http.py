@@ -32,7 +32,7 @@ class MegaView(HomeAssistantView):
                 pt: cfg[mid][pt][CONF_RESPONSE_TEMPLATE]
                 for pt in cfg[mid]
                 if CONF_RESPONSE_TEMPLATE in cfg[mid][pt]
-            } for mid in cfg
+            } for mid in cfg if isinstance(cfg[mid], dict)
         }
         _LOGGER.debug('templates: %s', self.templates)
 
