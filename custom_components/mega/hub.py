@@ -15,7 +15,8 @@ from homeassistant.const import (DEVICE_CLASS_TEMPERATURE, DEVICE_CLASS_HUMIDITY
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from .const import TEMP, HUM, PRESS, LUX, PATT_SPLIT, DOMAIN, CONF_HTTP, EVENT_BINARY_SENSOR, CONF_CUSTOM, CONF_SKIP
+from .const import TEMP, HUM, PRESS, LUX, PATT_SPLIT, DOMAIN, CONF_HTTP, EVENT_BINARY_SENSOR, CONF_CUSTOM, CONF_SKIP, \
+    CONF_FORCE_D
 from .entities import set_events_off, BaseMegaEntity
 from .exceptions import CannotConnect
 from .tools import make_ints
@@ -162,6 +163,10 @@ class MegaD:
             c = c.get(self.id) or {}
             self._customize = c
         return self._customize
+
+    @property
+    def force_d(self):
+        return self.customize.get(CONF_FORCE_D, False)
 
     @property
     def is_online(self):

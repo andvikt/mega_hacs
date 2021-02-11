@@ -17,7 +17,7 @@ from homeassistant.components import mqtt
 from homeassistant.config_entries import ConfigEntry
 from .const import DOMAIN, CONF_INVERT, CONF_RELOAD, PLATFORMS, CONF_PORTS, CONF_CUSTOM, CONF_SKIP, CONF_PORT_TO_SCAN, \
     CONF_MQTT_INPUTS, CONF_HTTP, CONF_RESPONSE_TEMPLATE, CONF_ACTION, CONF_GET_VALUE, CONF_ALLOW_HOSTS, \
-    CONF_CONV_TEMPLATE, CONF_ALL
+    CONF_CONV_TEMPLATE, CONF_ALL, CONF_FORCE_D
 from .hub import MegaD
 from .config_flow import ConfigFlow
 from .http import MegaView
@@ -28,6 +28,7 @@ CONFIG_SCHEMA = vol.Schema(
     {
         DOMAIN: {
             vol.Optional(CONF_ALLOW_HOSTS): [str],
+            vol.Optional(CONF_FORCE_D, description='Принудительно слать d после срабатывания входа', default=False): bool,
             vol.Required(str, description='id меги из веб-интерфейса'): {
                 vol.Optional(int, description='номер порта'): {
                     vol.Optional(CONF_SKIP, description='исключить порт из сканирования', default=False): bool,
@@ -44,7 +45,7 @@ CONFIG_SCHEMA = vol.Schema(
                         CONF_RESPONSE_TEMPLATE,
                         description='шаблон ответа когда на этот порт приходит'
                                     'сообщение из меги '): cv.template,
-                    vol.Optional(CONF_ACTION): cv.script_action,
+                    vol.Optional(CONF_ACTION): cv.script_action, # пока не реализовано
                     vol.Optional(CONF_GET_VALUE, default=True): bool,
                     vol.Optional(CONF_CONV_TEMPLATE): cv.template
                 }

@@ -27,6 +27,7 @@ CONF_GET_VALUE = 'get_value'
 CONF_ALLOW_HOSTS = 'allow_hosts'
 CONF_CONV_TEMPLATE = 'conv_template'
 CONF_POLL_OUTS = 'poll_outs'
+CONF_FORCE_D = 'force_d'
 PLATFORMS = [
     "light",
     "switch",

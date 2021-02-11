@@ -16,7 +16,8 @@ from homeassistant.const import (
     CONF_ENTITY_ID,
 )
 from homeassistant.core import HomeAssistant
-from .const import EVENT_BINARY_SENSOR, DOMAIN, CONF_CUSTOM, CONF_SKIP, CONF_INVERT
+from homeassistant.helpers.template import Template
+from .const import EVENT_BINARY_SENSOR, DOMAIN, CONF_CUSTOM, CONF_SKIP, CONF_INVERT, CONF_RESPONSE_TEMPLATE
 from .entities import  MegaPushEntity
 from .hub import MegaD
 
@@ -89,4 +90,18 @@ class MegaBinarySensor(BinarySensorEntity, MegaPushEntity):
 
     def _update(self, payload: dict):
         self.mega.values[self.port] = payload
+        if not self.mega.mqtt_inputs:
+            return
+
+        template: Template = self.customize.get(CONF_RESPONSE_TEMPLATE, None)
+        if template is not None:
+            template.hass = self.hass
+            ret = template.async_render(payload)
+            self.hass.async_create_task(
+                self.mega.request(pt=self.port, cmd=ret)
+            )
+        elif self.mega.force_d:
+            self.hass.async_create_task(
+                self.mega.request(pt=self.port, cmd='d')
+            )
 
