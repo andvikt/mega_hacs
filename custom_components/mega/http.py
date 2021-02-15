@@ -61,7 +61,9 @@ class MegaView(HomeAssistantView):
         make_ints(data)
         port = data.get('pt')
         data = data.copy()
+        update_all = True
         if 'v' in data:
+            update_all = False
             data['value'] = data.pop('v')
         data['mega_id'] = hub.id
         ret = 'd'
@@ -70,7 +72,7 @@ class MegaView(HomeAssistantView):
             for cb in self.callbacks[hub.id][port]:
                 cb(data)
             template: Template = self.templates.get(hub.id, {}).get(port)
-            if hub.update_all:
+            if hub.update_all and update_all:
                 asyncio.create_task(self.later_update(hub))
             if template is not None:
                 template.hass = hass
