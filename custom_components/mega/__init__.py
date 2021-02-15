@@ -28,8 +28,9 @@ CONFIG_SCHEMA = vol.Schema(
     {
         DOMAIN: {
             vol.Optional(CONF_ALLOW_HOSTS): [str],
-            vol.Optional(CONF_FORCE_D, description='Принудительно слать d после срабатывания входа', default=False): bool,
+            # vol.Optional(CONF_FORCE_D, description='Принудительно слать d после срабатывания входа', default=False): bool,
             vol.Required(str, description='id меги из веб-интерфейса'): {
+                vol.Optional(CONF_FORCE_D, description='Принудительно слать d после срабатывания входа', default=False): bool,
                 vol.Optional(int, description='номер порта'): {
                     vol.Optional(CONF_SKIP, description='исключить порт из сканирования', default=False): bool,
                     vol.Optional(CONF_INVERT, default=False): bool,

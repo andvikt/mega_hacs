@@ -10,15 +10,19 @@ import json
 
 from bs4 import BeautifulSoup
 from homeassistant.components import mqtt
-from homeassistant.const import (DEVICE_CLASS_TEMPERATURE, DEVICE_CLASS_HUMIDITY, DEVICE_CLASS_PRESSURE, 
-        DEVICE_CLASS_ILLUMINANCE, TEMP_CELSIUS, PERCENTAGE, LIGHT_LUX)
+from homeassistant.const import (
+    DEVICE_CLASS_TEMPERATURE, DEVICE_CLASS_HUMIDITY, DEVICE_CLASS_PRESSURE,
+    DEVICE_CLASS_ILLUMINANCE, TEMP_CELSIUS, PERCENTAGE, LIGHT_LUX
+)
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from .const import TEMP, HUM, PRESS, LUX, PATT_SPLIT, DOMAIN, CONF_HTTP, EVENT_BINARY_SENSOR, CONF_CUSTOM, CONF_SKIP, \
-    CONF_FORCE_D
+from .const import (
+    TEMP, HUM, PRESS,
+    LUX, PATT_SPLIT, DOMAIN,
+    CONF_HTTP, EVENT_BINARY_SENSOR, CONF_CUSTOM, CONF_FORCE_D
+)
 from .entities import set_events_off, BaseMegaEntity
-from .exceptions import CannotConnect
+from .exceptions import CannotConnect, NoPort
 from .tools import make_ints
 
 TEMP_PATT = re.compile(r'temp:([01234567890\.]+)')
@@ -44,13 +48,11 @@ CLASSES = {
     LUX: DEVICE_CLASS_ILLUMINANCE
 }
 I2C_DEVICE_TYPES = {
-    "2":  LUX, # BH1750
-    "3":  LUX, # TSL2591
-    "7":  LUX, # MAX44009
-    "70": LUX, # OPT3001
+    "2":  LUX,  # BH1750
+    "3":  LUX,  # TSL2591
+    "7":  LUX,  # MAX44009
+    "70": LUX,  # OPT3001
 }
-class NoPort(Exception):
-    pass
 
 
 class MegaD:
@@ -191,8 +193,7 @@ class MegaD:
 
     async def poll(self):
         """
-        Send get port 0 every poll_interval. When answer is received, mega.<id> becomes online else mega.<id> becomes
-        offline
+        Polling ports
         """
         self.lg.debug('poll')
         if self.mqtt is None:

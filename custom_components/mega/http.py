@@ -8,16 +8,15 @@ from aiohttp.web_request import Request
 from aiohttp.web_response import Response
 
 from homeassistant.helpers.template import Template
-from .const import EVENT_BINARY_SENSOR, DOMAIN, CONF_RESPONSE_TEMPLATE
 from homeassistant.components.http import HomeAssistantView
 from homeassistant.core import HomeAssistant
+from .const import EVENT_BINARY_SENSOR, DOMAIN, CONF_RESPONSE_TEMPLATE
 from .tools import make_ints
 from . import hub as h
 _LOGGER = logging.getLogger(__name__).getChild('http')
 
 
 class MegaView(HomeAssistantView):
-    """Handle Yandex Smart Home unauthorized requests."""
 
     url = '/mega'
     name = 'mega'
@@ -31,7 +30,7 @@ class MegaView(HomeAssistantView):
             mid: {
                 pt: cfg[mid][pt][CONF_RESPONSE_TEMPLATE]
                 for pt in cfg[mid]
-                if CONF_RESPONSE_TEMPLATE in cfg[mid][pt]
+                if isinstance(pt, int) and CONF_RESPONSE_TEMPLATE in cfg[mid][pt]
             } for mid in cfg if isinstance(cfg[mid], dict)
         }
         _LOGGER.debug('templates: %s', self.templates)
