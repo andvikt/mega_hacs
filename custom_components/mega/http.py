@@ -61,6 +61,8 @@ class MegaView(HomeAssistantView):
         make_ints(data)
         port = data.get('pt')
         data = data.copy()
+        if 'v' in data:
+            data['value'] = data.pop('v')
         data['mega_id'] = hub.id
         ret = 'd'
         if port is not None:
