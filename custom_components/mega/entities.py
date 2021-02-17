@@ -43,6 +43,9 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
             id_suffix=None,
             name=None,
             unique_id=None,
+            http_cmd='get',
+            addr: str=None,
+            index=None,
     ):
         super().__init__(mega.updater)
         self._state: State = None
@@ -57,6 +60,9 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
         self._name = name or f"{mega.id}_{port}" + \
                             (f"_{id_suffix}" if id_suffix else "")
         self._customize: dict = None
+        self.http_cmd = http_cmd
+        self.index = index
+        self.addr = addr
 
     @property
     def customize(self):
@@ -66,7 +72,11 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
             c = self.hass.data.get(DOMAIN, {}).get(CONF_CUSTOM) or {}
             c = c.get(self._mega_id) or {}
             c = c.get(self.port) or {}
+            if self.addr is not None and self.index is not None and isinstance(c, dict):
+                idx = self.addr.lower() + f'_a' if self.index == 0 else '_b'
+                c = c.get(idx, {})
             self._customize = c
+
         return self._customize
 
     @property
@@ -208,12 +218,17 @@ class MegaOutPort(MegaPushEntity):
         self._is_on = None
         self.dimmer = dimmer
 
+    def assumed_state(self) -> bool:
+        return True if self.index is not None or self.mega.mqtt is None else False
+
     @property
     def invert(self):
         return self.customize.get(CONF_INVERT, False)
 
     @property
     def brightness(self):
+        if not self.dimmer:
+            return
         val = self.mega.values.get(self.port, {}).get("value")
         if val is None and self._state is not None:
             return self._state.attributes.get("brightness")
@@ -232,10 +247,32 @@ class MegaOutPort(MegaPushEntity):
             return self._state == 'ON'
         elif val is not None:
             val = val.get("value")
+            if self.index and self.addr:
+                _val = val.get(self.addr)
+                if not isinstance(val, str):
+                    self.mega.lg.warning(f'{self} has wrong state: {val}')
+                    return
+                _val = _val.split('/')
+                if len(_val) >= 2:
+                    val = val[self.index]
+                else:
+                    self.mega.lg.warning(f'{self} has wrong state: {val}')
+                    return
+            elif self.index and self.addr is None:
+                self.mega.lg.warning(f'{self} does not has addr')
+                return
+
             if not self.invert:
                 return val == 'ON' or str(val) == '1' or (safe_int(val) is not None and safe_int(val) > 0)
             else:
                 return val == 'OFF' or str(val) == '0' or (safe_int(val) is not None and safe_int(val) == 0)
+
+    @property
+    def cmd_port(self):
+        if self.index is not None:
+            return f'{self.port}A' if self.index == 0 else f'{self.port}B'
+        else:
+            return self.port
 
     async def async_turn_on(self, brightness=None, **kwargs) -> None:
         brightness = brightness or self.brightness or 255
@@ -246,16 +283,39 @@ class MegaOutPort(MegaPushEntity):
             cmd = brightness
         else:
             cmd = 1 if not self.invert else 0
-        await self.mega.request(cmd=f"{self.port}:{cmd}")
-        self.mega.values[self.port] = {'value': cmd}
+        cmd = {"cmd": f"{self.cmd_port}:{cmd}"}
+        if self.addr:
+            cmd['addr'] = self.addr
+        await self.mega.request(**cmd)
+        if self.index is not None:
+            # обновление текущего стейта для ds2413
+            self.hass.async_create_task(self.mega.get_port(
+                port=self.port,
+                force_http=True,
+                conv=False,
+                http_cmd='list',
+            ))
+        else:
+            self.mega.values[self.port] = {'value': cmd}
         await self.get_state()
 
     async def async_turn_off(self, **kwargs) -> None:
 
         cmd = "0" if not self.invert else "1"
-
-        await self.mega.request(cmd=f"{self.port}:{cmd}")
-        self.mega.values[self.port] = {'value': cmd}
+        cmd = {"cmd": f"{self.cmd_port}:{cmd}"}
+        if self.addr:
+            cmd['addr'] = self.addr
+        await self.mega.request(**cmd)
+        if self.index is not None:
+            # обновление текущего стейта для ds2413
+            self.hass.async_create_task(self.mega.get_port(
+                port=self.port,
+                force_http=True,
+                conv=False,
+                http_cmd='list',
+            ))
+        else:
+            self.mega.values[self.port] = {'value': cmd}
         await self.get_state()
 
 

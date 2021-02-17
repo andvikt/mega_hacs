@@ -196,6 +196,15 @@ class MegaD:
         Polling ports
         """
         self.lg.debug('poll')
+        for x in self.entities:
+            # обновление ds2413 устройств
+            if x.http_cmd == 'ds2413':
+                await self.get_port(
+                    port=x.port,
+                    force_http=True,
+                    http_cmd='list',
+                    conv=False
+                )
         if self.mqtt is None:
             await self.get_all_ports()
             await self.get_sensors(only_list=True)
@@ -256,14 +265,14 @@ class MegaD:
             ret = {'value': ret}
         return ret
 
-    async def get_port(self, port, force_http=False, http_cmd='get'):
+    async def get_port(self, port, force_http=False, http_cmd='get', conv=True):
         """
         Запрос состояния порта. Состояние всегда возвращается в виде объекта, всегда сохраняется в центральное
         хранилище values
         """
         self.lg.debug(f'get port %s', port)
         if self.mqtt is None or force_http:
-            if http_cmd == 'list':
+            if http_cmd == 'list' and conv:
                 await self.request(pt=port, cmd='conv')
                 await asyncio.sleep(1)
             ret = self.parse_response(await self.request(pt=port, cmd=http_cmd))
@@ -438,6 +447,18 @@ class MegaD:
                 ret['binary_sensor'][port].append({})
             elif pty == "1" and (m in ['0', '1', '3'] or m is None):
                 ret['light'][port].append({'dimmer': m == '1'})
+            elif pty == "1" and m == "2":
+                # ds2413
+                _data = await self.get_port(port=port, force_http=True, http_cmd='list', conv=False)
+                data = _data.get('value', {})
+                if not isinstance(data, dict):
+                    self.lg.warning(f'can not add ds2413 on port {port}, it has wrong data: {_data}')
+                    continue
+                for addr, state in data.items():
+                    ret['light'][port].append([
+                        {"index": 0, "addr": addr, "id_suffix": f'{addr}_a', "http_cmd": 'ds2413'},
+                        {"index": 1, "addr": addr, "id_suffix": f'{addr}_b', "http_cmd": 'ds2413'},
+                    ])
             elif pty in ('3', '2', '4'):
                 try:
                     http_cmd = 'get'

@@ -24,6 +24,29 @@ from .http import MegaView
 
 _LOGGER = logging.getLogger(__name__)
 
+CUSTOMIZE_PORT = vol.Schema({
+    vol.Optional(CONF_SKIP, description='исключить порт из сканирования', default=False): bool,
+    vol.Optional(CONF_INVERT, default=False): bool,
+    vol.Optional(CONF_NAME): vol.Any(str, {
+        vol.Required(str): str
+    }),
+    vol.Optional(CONF_DOMAIN): vol.Any('light', 'switch'),
+    vol.Optional(CONF_UNIT_OF_MEASUREMENT, description='единицы измерений, либо строка либо мепинг'):
+        vol.Any(str, {
+            vol.Required(str): str
+        }),
+    vol.Optional(
+        CONF_RESPONSE_TEMPLATE,
+        description='шаблон ответа когда на этот порт приходит'
+                    'сообщение из меги '): cv.template,
+    vol.Optional(CONF_ACTION): cv.script_action, # пока не реализовано
+    vol.Optional(CONF_GET_VALUE, default=True): bool,
+    vol.Optional(CONF_CONV_TEMPLATE): cv.template
+})
+CUSTOMIZE_DS2413 = vol.Schema({
+    vol.Optional(str.lower, description='адрес и индекс устройства'): CUSTOMIZE_PORT
+})
+
 CONFIG_SCHEMA = vol.Schema(
     {
         DOMAIN: {
@@ -31,25 +54,10 @@ CONFIG_SCHEMA = vol.Schema(
             # vol.Optional(CONF_FORCE_D, description='Принудительно слать d после срабатывания входа', default=False): bool,
             vol.Required(str, description='id меги из веб-интерфейса'): {
                 vol.Optional(CONF_FORCE_D, description='Принудительно слать d после срабатывания входа', default=False): bool,
-                vol.Optional(int, description='номер порта'): {
-                    vol.Optional(CONF_SKIP, description='исключить порт из сканирования', default=False): bool,
-                    vol.Optional(CONF_INVERT, default=False): bool,
-                    vol.Optional(CONF_NAME): vol.Any(str, {
-                        vol.Required(str): str
-                    }),
-                    vol.Optional(CONF_DOMAIN): vol.Any('light', 'switch'),
-                    vol.Optional(CONF_UNIT_OF_MEASUREMENT, description='единицы измерений, либо строка либо мепинг'):
-                        vol.Any(str, {
-                            vol.Required(str): str
-                        }),
-                    vol.Optional(
-                        CONF_RESPONSE_TEMPLATE,
-                        description='шаблон ответа когда на этот порт приходит'
-                                    'сообщение из меги '): cv.template,
-                    vol.Optional(CONF_ACTION): cv.script_action, # пока не реализовано
-                    vol.Optional(CONF_GET_VALUE, default=True): bool,
-                    vol.Optional(CONF_CONV_TEMPLATE): cv.template
-                }
+                vol.Optional(int, description='номер порта'): vol.Any(
+                    CUSTOMIZE_PORT,
+                    CUSTOMIZE_DS2413,
+                )
             }
         }
     },
