@@ -460,7 +460,7 @@ class MegaD:
                     self.lg.warning(f'can not add ds2413 on port {port}, it has wrong data: {_data}')
                     continue
                 for addr, state in data.items():
-                    ret['light'][port].append([
+                    ret['light'][port].extend([
                         {"index": 0, "addr": addr, "id_suffix": f'{addr}_a', "http_cmd": 'ds2413'},
                         {"index": 1, "addr": addr, "id_suffix": f'{addr}_b', "http_cmd": 'ds2413'},
                     ])
