@@ -24,10 +24,4 @@ megad firmware version:
 If applicable, add screenshots to help explain your problem.
 
 **LOG**
-Просьба прикладывать детальный лог, который можно включить в конфиге так:
-```yaml
-logger:
-  default: info
-  logs:
-    custom_components.mega: debug
-```
+Просьба прикладывать детальный лог, подробный инструкции как включать отладку по [ссылке](https://github.com/andvikt/mega_hacs/wiki/Отладка)
