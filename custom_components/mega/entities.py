@@ -218,9 +218,9 @@ class MegaOutPort(MegaPushEntity):
         self._is_on = None
         self.dimmer = dimmer
 
-    @property
-    def assumed_state(self) -> bool:
-        return True if self.index is not None or self.mega.mqtt is None else False
+    # @property
+    # def assumed_state(self) -> bool:
+    #     return True if self.index is not None or self.mega.mqtt is None else False
 
     @property
     def invert(self):
@@ -290,12 +290,12 @@ class MegaOutPort(MegaPushEntity):
         await self.mega.request(**cmd)
         if self.index is not None:
             # обновление текущего стейта для ds2413
-            self.hass.async_create_task(self.mega.get_port(
+            await self.mega.get_port(
                 port=self.port,
                 force_http=True,
                 conv=False,
                 http_cmd='list',
-            ))
+            )
         else:
             self.mega.values[self.port] = {'value': cmd}
         await self.get_state()
@@ -309,12 +309,12 @@ class MegaOutPort(MegaPushEntity):
         await self.mega.request(**cmd)
         if self.index is not None:
             # обновление текущего стейта для ds2413
-            self.hass.async_create_task(self.mega.get_port(
+            await self.mega.get_port(
                 port=self.port,
                 force_http=True,
                 conv=False,
                 http_cmd='list',
-            ))
+            )
         else:
             self.mega.values[self.port] = {'value': cmd}
         await self.get_state()

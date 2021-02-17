@@ -196,15 +196,20 @@ class MegaD:
         Polling ports
         """
         self.lg.debug('poll')
+        ds2413_polled = []
         for x in self.entities:
             # обновление ds2413 устройств
             if x.http_cmd == 'ds2413':
+                self.lg.debug(f'poll ds2413 for {x.entity_id}')
+                if x.port in ds2413_polled:
+                    continue
                 await self.get_port(
                     port=x.port,
                     force_http=True,
                     http_cmd='list',
                     conv=False
                 )
+                ds2413_polled.append(x.port)
         if self.mqtt is None:
             await self.get_all_ports()
             await self.get_sensors(only_list=True)
@@ -253,7 +258,7 @@ class MegaD:
         if 'busy' in ret:
             return None
         if ':' in ret:
-            ret = PATT_SPLIT.split(ret)
+            ret = ret.split(';')
             ret = {'value': dict([
                 x.split(':') for x in ret if x.count(':') == 1
             ])}
