@@ -125,7 +125,8 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
             _task_set_ev_on = asyncio.create_task(_set_events_on())
 
     async def get_state(self):
-        if self.mega.mqtt is None:
+        self.lg.debug(f'state is %s', self.state)
+        if not self.mega.mqtt_inputs:
             self.async_write_ha_state()
 
 
@@ -249,6 +250,9 @@ class MegaOutPort(MegaPushEntity):
         elif val is not None:
             val = val.get("value")
             if self.index and self.addr:
+                if not isinstance(val, dict):
+                    self.mega.lg.warning(f'{self} has wrong state: {val}')
+                    return
                 _val = val.get(self.addr)
                 if not isinstance(val, str):
                     self.mega.lg.warning(f'{self} has wrong state: {val}')
@@ -284,10 +288,10 @@ class MegaOutPort(MegaPushEntity):
             cmd = brightness
         else:
             cmd = 1 if not self.invert else 0
-        cmd = {"cmd": f"{self.cmd_port}:{cmd}"}
+        _cmd = {"cmd": f"{self.cmd_port}:{cmd}"}
         if self.addr:
-            cmd['addr'] = self.addr
-        await self.mega.request(**cmd)
+            _cmd['addr'] = self.addr
+        await self.mega.request(**_cmd)
         if self.index is not None:
             # обновление текущего стейта для ds2413
             await self.mega.get_port(
@@ -303,10 +307,10 @@ class MegaOutPort(MegaPushEntity):
     async def async_turn_off(self, **kwargs) -> None:
 
         cmd = "0" if not self.invert else "1"
-        cmd = {"cmd": f"{self.cmd_port}:{cmd}"}
+        _cmd = {"cmd": f"{self.cmd_port}:{cmd}"}
         if self.addr:
-            cmd['addr'] = self.addr
-        await self.mega.request(**cmd)
+            _cmd['addr'] = self.addr
+        await self.mega.request(**_cmd)
         if self.index is not None:
             # обновление текущего стейта для ds2413
             await self.mega.get_port(

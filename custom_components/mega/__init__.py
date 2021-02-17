@@ -24,7 +24,7 @@ from .http import MegaView
 
 _LOGGER = logging.getLogger(__name__)
 
-CUSTOMIZE_PORT = vol.Schema({
+CUSTOMIZE_PORT = {
     vol.Optional(CONF_SKIP, description='исключить порт из сканирования', default=False): bool,
     vol.Optional(CONF_INVERT, default=False): bool,
     vol.Optional(CONF_NAME): vol.Any(str, {
@@ -42,16 +42,15 @@ CUSTOMIZE_PORT = vol.Schema({
     vol.Optional(CONF_ACTION): cv.script_action, # пока не реализовано
     vol.Optional(CONF_GET_VALUE, default=True): bool,
     vol.Optional(CONF_CONV_TEMPLATE): cv.template
-})
-CUSTOMIZE_DS2413 = vol.Schema({
+}
+CUSTOMIZE_DS2413 = {
     vol.Optional(str.lower, description='адрес и индекс устройства'): CUSTOMIZE_PORT
-})
+}
 
 CONFIG_SCHEMA = vol.Schema(
     {
         DOMAIN: {
             vol.Optional(CONF_ALLOW_HOSTS): [str],
-            # vol.Optional(CONF_FORCE_D, description='Принудительно слать d после срабатывания входа', default=False): bool,
             vol.Required(str, description='id меги из веб-интерфейса'): {
                 vol.Optional(CONF_FORCE_D, description='Принудительно слать d после срабатывания входа', default=False): bool,
                 vol.Optional(int, description='номер порта'): vol.Any(
