@@ -218,6 +218,7 @@ class MegaOutPort(MegaPushEntity):
         self._is_on = None
         self.dimmer = dimmer
 
+    @property
     def assumed_state(self) -> bool:
         return True if self.index is not None or self.mega.mqtt is None else False
 
