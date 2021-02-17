@@ -24,4 +24,4 @@ megad firmware version:
 If applicable, add screenshots to help explain your problem.
 
 **LOG**
-Просьба прикладывать детальный лог, подробный инструкции как включать отладку по [ссылке](https://github.com/andvikt/mega_hacs/wiki/Отладка)
+Просьба прикладывать детальный лог, подробная инструкция как включать отладку по [ссылке](https://github.com/andvikt/mega_hacs/wiki/Отладка)
