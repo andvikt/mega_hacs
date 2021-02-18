@@ -48,6 +48,8 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
             index=None,
     ):
         super().__init__(mega.updater)
+
+        self.http_cmd = http_cmd
         if self.http_cmd == 'ds2413':
             self.mega.ds2413_ports |= {self.port}
         self._state: State = None
@@ -62,7 +64,6 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
         self._name = name or f"{mega.id}_{port}" + \
                             (f"_{id_suffix}" if id_suffix else "")
         self._customize: dict = None
-        self.http_cmd = http_cmd
         self.index = index
         self.addr = addr
 
