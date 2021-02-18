@@ -263,6 +263,7 @@ class MegaOutPort(MegaPushEntity):
                     return
                 _val = _val.split('/')
                 if len(_val) >= 2:
+                    self.mega.lg.debug('%s parsed values: %s[%s]="%s"', self.entity_id, _val, self.index, _val)
                     val = _val[self.index]
                 else:
                     self.mega.lg.warning(f'{self.entity_id}: {_val} has wrong length')
@@ -270,7 +271,7 @@ class MegaOutPort(MegaPushEntity):
             elif self.index and self.addr is None:
                 self.mega.lg.warning(f'{self.entity_id} does not has addr')
                 return
-
+            self.mega.lg.debug('%s.state = %s', self.entity_id, val)
             if not self.invert:
                 return val == 'ON' or str(val) == '1' or (safe_int(val) is not None and safe_int(val) > 0)
             else:
