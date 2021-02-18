@@ -253,7 +253,7 @@ class MegaOutPort(MegaPushEntity):
             return self._state == 'ON'
         elif val is not None:
             val = val.get("value")
-            if self.index is not None and self.addr is not None:
+            if not isinstance(val, str) and self.index is not None and self.addr is not None:
                 if not isinstance(val, dict):
                     self.mega.lg.warning(f'{self.entity_id}: {val} is not a dict')
                     return

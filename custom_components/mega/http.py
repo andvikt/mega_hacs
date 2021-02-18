@@ -66,7 +66,7 @@ class MegaView(HomeAssistantView):
             update_all = False
             data['value'] = data.pop('v')
         data['mega_id'] = hub.id
-        ret = 'd'
+        ret = 'd' if hub.force_d else ''
         if port is not None:
             hub.values[port] = data
             for cb in self.callbacks[hub.id][port]:
@@ -79,7 +79,8 @@ class MegaView(HomeAssistantView):
                 ret = template.async_render(data)
         _LOGGER.debug('response %s', ret)
         Response(body='', content_type='text/plain', headers={'Server': 's', 'Date': 'n'})
-        await hub.request(cmd=ret)
+        if ret:
+            await hub.request(cmd=ret)
         return ret
 
     async def later_update(self, hub):
