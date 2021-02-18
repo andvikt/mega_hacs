@@ -56,8 +56,8 @@ CONFIG_SCHEMA = vol.Schema(
                 vol.Optional(
                     CONF_DEF_RESPONSE,
                     description='Ответ по умолчанию',
-                    default=''
-                ): cv.template,
+                    default=None
+                ): vol.Any(cv.template, None),
                 vol.Optional(int, description='номер порта'): vol.Any(
                     CUSTOMIZE_PORT,
                     CUSTOMIZE_DS2413,
