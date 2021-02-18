@@ -255,17 +255,17 @@ class MegaOutPort(MegaPushEntity):
             val = val.get("value")
             if self.index and self.addr:
                 if not isinstance(val, dict):
-                    self.mega.lg.warning(f'{self.entity_id} has wrong state: {val}')
+                    self.mega.lg.warning(f'{self.entity_id}: {val} is not a dict')
                     return
                 _val = val.get(self.addr)
                 if not isinstance(val, str):
-                    self.mega.lg.warning(f'{self.entity_id} has wrong state: {val}')
+                    self.mega.lg.warning(f'{self.entity_id}: can not get {self.addr} from {val}')
                     return
                 _val = _val.split('/')
                 if len(_val) >= 2:
-                    val = val[self.index]
+                    val = _val[self.index]
                 else:
-                    self.mega.lg.warning(f'{self.entity_id} has wrong state: {val}')
+                    self.mega.lg.warning(f'{self.entity_id}: {_val} has wrong length')
                     return
             elif self.index and self.addr is None:
                 self.mega.lg.warning(f'{self.entity_id} does not has addr')
