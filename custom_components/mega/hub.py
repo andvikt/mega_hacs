@@ -101,6 +101,7 @@ class MegaD:
         self.cnd = asyncio.Condition()
         self.online = True
         self.entities: typing.List[BaseMegaEntity] = []
+        self.ds2413_ports = set()
         self.poll_interval = scan_interval
         self.subs = None
         self.lg: logging.Logger = lg.getChild(self.id)
@@ -191,25 +192,26 @@ class MegaD:
             )
             self.online = True
 
+    async def _get_ds2413(self):
+        """
+        обновление ds2413 устройств
+        :return:
+        """
+        for x in self.ds2413_ports:
+            if x.http_cmd == 'ds2413':
+                self.lg.debug(f'poll ds2413 for %s', x)
+                await self.get_port(
+                    port=x,
+                    force_http=True,
+                    http_cmd='list',
+                    conv=False
+                )
+
     async def poll(self):
         """
         Polling ports
         """
         self.lg.debug('poll')
-        ds2413_polled = []
-        for x in self.entities:
-            # обновление ds2413 устройств
-            if x.http_cmd == 'ds2413':
-                self.lg.debug(f'poll ds2413 for {x.entity_id}')
-                if x.port in ds2413_polled:
-                    continue
-                await self.get_port(
-                    port=x.port,
-                    force_http=True,
-                    http_cmd='list',
-                    conv=False
-                )
-                ds2413_polled.append(x.port)
         if self.mqtt is None:
             await self.get_all_ports()
             await self.get_sensors(only_list=True)
@@ -219,6 +221,7 @@ class MegaD:
             await self.get_sensors()
         else:
             await self.get_port(self.port_to_scan)
+        await self._get_ds2413()
         return self.values
 
     async def get_mqtt_id(self):
@@ -313,6 +316,8 @@ class MegaD:
         if not self.mqtt_inputs:
             ret = await self.request(cmd='all')
             for port, x in enumerate(ret.split(';')):
+                if port in self.ds2413_ports:
+                    continue
                 if check_skip and not port in self.ports:
                     continue
                 ret = self.parse_response(x)
