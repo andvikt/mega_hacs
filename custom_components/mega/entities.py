@@ -253,7 +253,7 @@ class MegaOutPort(MegaPushEntity):
             return self._state == 'ON'
         elif val is not None:
             val = val.get("value")
-            if self.index and self.addr:
+            if self.index is not None and self.addr is not None:
                 if not isinstance(val, dict):
                     self.mega.lg.warning(f'{self.entity_id}: {val} is not a dict')
                     return
@@ -268,7 +268,7 @@ class MegaOutPort(MegaPushEntity):
                 else:
                     self.mega.lg.warning(f'{self.entity_id}: {_val} has wrong length')
                     return
-            elif self.index and self.addr is None:
+            elif self.index is not None and self.addr is None:
                 self.mega.lg.warning(f'{self.entity_id} does not has addr')
                 return
             self.mega.lg.debug('%s.state = %s', self.entity_id, val)
