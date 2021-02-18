@@ -258,7 +258,7 @@ class MegaD:
     async def save(self):
         await self.send_command(cmd='s')
 
-    def parse_response(self, ret):
+    def parse_response(self, ret, cmd='get'):
         if ret is None:
             raise NoPort()
         if 'busy' in ret:
@@ -266,7 +266,7 @@ class MegaD:
         if ':' in ret:
             if ';' in ret:
                 ret = ret.split(';')
-            elif '/' in ret:
+            elif '/' in ret and not cmd == 'list':
                 ret = ret.split('/')
             else:
                 ret = [ret]
@@ -291,7 +291,7 @@ class MegaD:
             if http_cmd == 'list' and conv:
                 await self.request(pt=port, cmd='conv')
                 await asyncio.sleep(1)
-            ret = self.parse_response(await self.request(pt=port, cmd=http_cmd))
+            ret = self.parse_response(await self.request(pt=port, cmd=http_cmd), cmd=http_cmd)
             ntry = 0
             while http_cmd == 'list' and ret is None and ntry < 3:
                 await asyncio.sleep(1)
