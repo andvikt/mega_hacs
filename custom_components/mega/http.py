@@ -78,7 +78,8 @@ class MegaView(HomeAssistantView):
                 template.hass = hass
                 ret = template.async_render(data)
         _LOGGER.debug('response %s', ret)
-        ret = Response(body=ret or 'd', content_type='text/plain', headers={'Server': 's', 'Date': 'n'})
+        ret = Response(body='', content_type='text/plain', headers={'Server': 's', 'Date': 'n'})
+        await hub.request(cmd=ret)
         return ret
 
     async def later_update(self, hub):
