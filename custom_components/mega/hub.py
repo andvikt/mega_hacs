@@ -486,9 +486,9 @@ class MegaD:
                         http_cmd = 'list'
                     else:
                         values = await self.get_port(port, force_http=True)
-                    if values is None or (isinstance(values, dict) and str(values.get('value')) in ('', 'None')):
-                        values = await self.get_port(port, force_http=True, http_cmd='list')
-                        http_cmd = 'list'
+                        if values is None or (isinstance(values, dict) and str(values.get('value')) in ('', 'None')):
+                            values = await self.get_port(port, force_http=True, http_cmd='list')
+                            http_cmd = 'list'
                 except asyncio.TimeoutError:
                     self.lg.warning(f'timout on port {port}')
                     continue
