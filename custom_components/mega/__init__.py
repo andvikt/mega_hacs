@@ -17,7 +17,7 @@ from homeassistant.components import mqtt
 from homeassistant.config_entries import ConfigEntry
 from .const import DOMAIN, CONF_INVERT, CONF_RELOAD, PLATFORMS, CONF_PORTS, CONF_CUSTOM, CONF_SKIP, CONF_PORT_TO_SCAN, \
     CONF_MQTT_INPUTS, CONF_HTTP, CONF_RESPONSE_TEMPLATE, CONF_ACTION, CONF_GET_VALUE, CONF_ALLOW_HOSTS, \
-    CONF_CONV_TEMPLATE, CONF_ALL, CONF_FORCE_D
+    CONF_CONV_TEMPLATE, CONF_ALL, CONF_FORCE_D, CONF_DEF_RESPONSE
 from .hub import MegaD
 from .config_flow import ConfigFlow
 from .http import MegaView
@@ -53,6 +53,11 @@ CONFIG_SCHEMA = vol.Schema(
             vol.Optional(CONF_ALLOW_HOSTS): [str],
             vol.Required(str, description='id меги из веб-интерфейса'): {
                 vol.Optional(CONF_FORCE_D, description='Принудительно слать d после срабатывания входа', default=False): bool,
+                vol.Optional(
+                    CONF_DEF_RESPONSE,
+                    description='Ответ по умолчанию',
+                    default=''
+                ): cv.template,
                 vol.Optional(int, description='номер порта'): vol.Any(
                     CUSTOMIZE_PORT,
                     CUSTOMIZE_DS2413,

@@ -19,7 +19,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from .const import (
     TEMP, HUM, PRESS,
     LUX, PATT_SPLIT, DOMAIN,
-    CONF_HTTP, EVENT_BINARY_SENSOR, CONF_CUSTOM, CONF_FORCE_D
+    CONF_HTTP, EVENT_BINARY_SENSOR, CONF_CUSTOM, CONF_FORCE_D, CONF_DEF_RESPONSE
 )
 from .entities import set_events_off, BaseMegaEntity
 from .exceptions import CannotConnect, NoPort
@@ -172,6 +172,10 @@ class MegaD:
         return self.customize.get(CONF_FORCE_D, False)
 
     @property
+    def def_response(self):
+        return self.customize.get(CONF_DEF_RESPONSE, None)
+
+    @property
     def is_online(self):
         return (datetime.now() - self.last_update).total_seconds() < (self.poll_interval + 10)
 
@@ -264,6 +268,8 @@ class MegaD:
                 ret = ret.split(';')
             elif '/' in ret:
                 ret = ret.split('/')
+            else:
+                ret = [ret]
             ret = {'value': dict([
                 x.split(':') for x in ret if x.count(':') == 1
             ])}

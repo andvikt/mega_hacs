@@ -71,7 +71,7 @@ class MegaView(HomeAssistantView):
             hub.values[port] = data
             for cb in self.callbacks[hub.id][port]:
                 cb(data)
-            template: Template = self.templates.get(hub.id, {}).get(port)
+            template: Template = self.templates.get(hub.id, {}).get(port, hub.def_response)
             if hub.update_all and update_all:
                 asyncio.create_task(self.later_update(hub))
             if template is not None:
@@ -79,8 +79,10 @@ class MegaView(HomeAssistantView):
                 ret = template.async_render(data)
         _LOGGER.debug('response %s', ret)
         Response(body='', content_type='text/plain', headers={'Server': 's', 'Date': 'n'})
-        if ret:
+        if 'd' in ret:
             await hub.request(pt=port, cmd=ret)
+        else:
+            await hub.request(cmd=ret)
         return ret
 
     async def later_update(self, hub):
