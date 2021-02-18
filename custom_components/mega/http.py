@@ -80,7 +80,7 @@ class MegaView(HomeAssistantView):
         _LOGGER.debug('response %s', ret)
         Response(body='', content_type='text/plain', headers={'Server': 's', 'Date': 'n'})
         if ret:
-            await hub.request(cmd=ret)
+            await hub.request(pt=port, cmd=ret)
         return ret
 
     async def later_update(self, hub):
