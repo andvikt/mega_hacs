@@ -480,7 +480,12 @@ class MegaD:
             elif pty in ('3', '2', '4'):
                 try:
                     http_cmd = 'get'
-                    values = await self.get_port(port, force_http=True)
+                    if m == '5' and pty == '3':
+                        # 1-wire bus
+                        values = await self.get_port(port, force_http=True, http_cmd='list')
+                        http_cmd = 'list'
+                    else:
+                        values = await self.get_port(port, force_http=True)
                     if values is None or (isinstance(values, dict) and str(values.get('value')) in ('', 'None')):
                         values = await self.get_port(port, force_http=True, http_cmd='list')
                         http_cmd = 'list'
