@@ -260,7 +260,10 @@ class MegaD:
         if 'busy' in ret:
             return None
         if ':' in ret:
-            ret = ret.split(';')
+            if ';' in ret:
+                ret = ret.split(';')
+            elif '/' in ret:
+                ret = ret.split('/')
             ret = {'value': dict([
                 x.split(':') for x in ret if x.count(':') == 1
             ])}

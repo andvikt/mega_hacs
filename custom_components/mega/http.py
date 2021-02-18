@@ -84,7 +84,7 @@ class MegaView(HomeAssistantView):
         return ret
 
     async def later_update(self, hub):
-        _LOGGER.debug('force update')
         await asyncio.sleep(1)
+        _LOGGER.debug('force update')
         await hub.updater.async_refresh()
 
