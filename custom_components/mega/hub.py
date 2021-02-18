@@ -198,14 +198,13 @@ class MegaD:
         :return:
         """
         for x in self.ds2413_ports:
-            if x.http_cmd == 'ds2413':
-                self.lg.debug(f'poll ds2413 for %s', x)
-                await self.get_port(
-                    port=x,
-                    force_http=True,
-                    http_cmd='list',
-                    conv=False
-                )
+            self.lg.debug(f'poll ds2413 for %s', x)
+            await self.get_port(
+                port=x,
+                force_http=True,
+                http_cmd='list',
+                conv=False
+            )
 
     async def poll(self):
         """
