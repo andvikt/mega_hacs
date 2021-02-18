@@ -257,9 +257,9 @@ class MegaOutPort(MegaPushEntity):
                 if not isinstance(val, dict):
                     self.mega.lg.warning(f'{self.entity_id}: {val} is not a dict')
                     return
-                _val = val.get(self.addr)
+                _val = val.get(self.addr, val.get(self.addr.lower(), val.get(self.addr.upper())))
                 if not isinstance(val, str):
-                    self.mega.lg.warning(f'{self.entity_id}: can not get {self.addr} from {val}')
+                    self.mega.lg.warning(f'{self.entity_id}: can not get {self.addr} from {val}, recieved {_val}')
                     return
                 _val = _val.split('/')
                 if len(_val) >= 2:
