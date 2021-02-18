@@ -13,7 +13,7 @@ from homeassistant.const import (
     CONF_PORT,
     CONF_UNIQUE_ID,
     CONF_ID,
-    CONF_TYPE, CONF_UNIT_OF_MEASUREMENT,
+    CONF_TYPE, CONF_UNIT_OF_MEASUREMENT, CONF_VALUE_TEMPLATE,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.template import Template
@@ -163,7 +163,7 @@ class Mega1WSensor(MegaPushEntity):
             ret = str(ret)
         except:
             ret = None
-        tmpl: Template = self.customize.get(CONF_CONV_TEMPLATE)
+        tmpl: Template = self.customize.get(CONF_CONV_TEMPLATE, self.customize.get(CONF_VALUE_TEMPLATE))
         if tmpl is not None and self.hass is not None:
             tmpl.hass = self.hass
             ret = tmpl.async_render({'value': ret})

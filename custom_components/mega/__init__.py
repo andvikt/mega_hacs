@@ -7,11 +7,10 @@ import voluptuous as vol
 
 from homeassistant.const import (
     CONF_SCAN_INTERVAL, CONF_ID, CONF_NAME, CONF_DOMAIN,
-    CONF_UNIT_OF_MEASUREMENT, CONF_HOST
+    CONF_UNIT_OF_MEASUREMENT, CONF_HOST, CONF_VALUE_TEMPLATE
 )
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers.service import bind_hass
-from homeassistant.helpers.template import Template
 from homeassistant.helpers import config_validation as cv
 from homeassistant.components import mqtt
 from homeassistant.config_entries import ConfigEntry
@@ -41,7 +40,8 @@ CUSTOMIZE_PORT = {
                     'сообщение из меги '): cv.template,
     vol.Optional(CONF_ACTION): cv.script_action, # пока не реализовано
     vol.Optional(CONF_GET_VALUE, default=True): bool,
-    vol.Optional(CONF_CONV_TEMPLATE): cv.template
+    vol.Optional(CONF_CONV_TEMPLATE): cv.template,
+    vol.Optional(CONF_VALUE_TEMPLATE): cv.template,
 }
 CUSTOMIZE_DS2413 = {
     vol.Optional(str.lower, description='адрес и индекс устройства'): CUSTOMIZE_PORT
