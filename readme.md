@@ -62,7 +62,7 @@ script: "mega" # это api интеграции, к которому будет
 ## Зависимости
 Для максимальной скорости реакции на команды сервера, рекомендуется выключить `имитацию http-ответа` в 
 настройках интеграции и настроить proxy_pass к HA, самый простой способ сделать это - воспользоваться 
-[специальным аддоном](https://github.com/andvikt/mega_addon/tree/master/mega-updater)
+[специальным аддоном](https://github.com/andvikt/mega_addon/tree/master/mega-proxy)
 
 Обновить ваш контроллер до последней версии, обновление прошивки MegaD можно делать 
 из HA с помощью [аддона](https://github.com/andvikt/mega_addon.git)
