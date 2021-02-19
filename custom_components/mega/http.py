@@ -15,6 +15,7 @@ from .tools import make_ints
 from . import hub as h
 _LOGGER = logging.getLogger(__name__).getChild('http')
 
+we
 
 class MegaView(HomeAssistantView):
 
@@ -78,11 +79,13 @@ class MegaView(HomeAssistantView):
                 template.hass = hass
                 ret = template.async_render(data)
         _LOGGER.debug('response %s', ret)
-        Response(body='', content_type='text/plain', headers={'Server': 's', 'Date': 'n'})
-        if 'd' in ret:
-            await hub.request(pt=port, cmd=ret)
-        else:
-            await hub.request(cmd=ret)
+        Response(body='' if hub.fake_response else ret, content_type='text/plain')
+
+        if hub.fake_response:
+            if 'd' in ret:
+                await hub.request(pt=port, cmd=ret)
+            else:
+                await hub.request(cmd=ret)
         return ret
 
     async def later_update(self, hub):

@@ -75,6 +75,7 @@ class MegaD:
             inverted: typing.List[int] = None,
             update_all=True,
             poll_outs=False,
+            fake_response=True,
             **kwargs,
     ):
         """Initialize."""
@@ -87,6 +88,7 @@ class MegaD:
         self.poll_outs = poll_outs
         self.update_all = update_all if update_all is not None else True
         self.nports = nports
+        self.fake_response = fake_response
         self.mqtt_inputs = mqtt_inputs
         self.loop: asyncio.AbstractEventLoop = None
         self.hass = hass

@@ -23,6 +23,7 @@
                     "nports": "Number of ports",
                     "update_all": "Update all outs when input",
                     "mqtt_inputs": "Use MQTT",
+                    "fake_response": "Fake response",
                     "poll_outs": "Poll outs"
                 }
             }
@@ -37,6 +38,7 @@
                   "reload": "Reload objects",
                   "mqtt_inputs": "Use MQTT",
                   "update_all": "Update all outs when input",
+                  "fake_response": "Fake response",
                   "poll_outs": "Poll outs"
                 }
             }

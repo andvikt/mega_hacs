@@ -15,6 +15,7 @@
           "mqtt_inputs": "[%key:common::config_flow::data::mqtt_inputs%]",
           "nports": "[%key:common::config_flow::data::nports%]",
           "update_all": "[%key:common::config_flow::data::update_all%]",
+          "fake_response": "[%key:common::config_flow::data::fake_response%]",
           "poll_outs": "[%key:common::config_flow::data::poll_outs%]"
         }
       }
