@@ -15,7 +15,6 @@ from .tools import make_ints
 from . import hub as h
 _LOGGER = logging.getLogger(__name__).getChild('http')
 
-we
 
 class MegaView(HomeAssistantView):
 
