@@ -24,7 +24,7 @@ class MegaView(HomeAssistantView):
 
     def __init__(self, cfg: dict):
         self._try = 0
-        self.allowed_hosts = {'::1'}
+        self.allowed_hosts = {'::1', '127.0.0.1'}
         self.callbacks = defaultdict(lambda: defaultdict(list))
         self.templates: typing.Dict[str, typing.Dict[str, Template]] = {
             mid: {
