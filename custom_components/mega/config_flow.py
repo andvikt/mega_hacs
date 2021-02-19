@@ -141,7 +141,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Optional(CONF_RELOAD, default=False): bool,
                 vol.Optional(CONF_UPDATE_ALL, default=e.get(CONF_UPDATE_ALL, True)): bool,
                 vol.Optional(CONF_FAKE_RESPONSE, default=e.get(CONF_FAKE_RESPONSE, True)): bool,
-                vol.Optional(CONF_FORCE_D, default=e.get(CONF_FORCE_D, True)): bool,
+                vol.Optional(CONF_FORCE_D, default=e.get(CONF_FORCE_D, False)): bool,
                 # vol.Optional(CONF_INVERT, default=''): str,
             }),
         )
