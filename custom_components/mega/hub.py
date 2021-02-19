@@ -76,6 +76,7 @@ class MegaD:
             update_all=True,
             poll_outs=False,
             fake_response=True,
+            force_d=None,
             **kwargs,
     ):
         """Initialize."""
@@ -129,6 +130,9 @@ class MegaD:
             self.mqtt_id = f"megad/{_id}"
         else:
             self.mqtt_id = mqtt_id
+
+        if force_d is not None:
+            self.customize[CONF_FORCE_D] = force_d
 
     async def start(self):
         self.loop = asyncio.get_event_loop()

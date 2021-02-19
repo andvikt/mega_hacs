@@ -16,6 +16,7 @@
           "nports": "[%key:common::config_flow::data::nports%]",
           "update_all": "[%key:common::config_flow::data::update_all%]",
           "fake_response": "[%key:common::config_flow::data::fake_response%]",
+          "force_d": "[%key:common::config_flow::data::force_d%]",
           "poll_outs": "[%key:common::config_flow::data::poll_outs%]"
         }
       }

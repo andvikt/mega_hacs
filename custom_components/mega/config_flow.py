@@ -10,7 +10,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_ID, CONF_PASSWORD, CONF_SCAN_INTERVAL
 from homeassistant.core import callback, HomeAssistant
 from .const import DOMAIN, CONF_PORT_TO_SCAN, CONF_RELOAD, PLATFORMS, CONF_MQTT_INPUTS, \
-    CONF_NPORTS, CONF_UPDATE_ALL, CONF_POLL_OUTS, CONF_FAKE_RESPONSE  # pylint:disable=unused-import
+    CONF_NPORTS, CONF_UPDATE_ALL, CONF_POLL_OUTS, CONF_FAKE_RESPONSE, CONF_FORCE_D  # pylint:disable=unused-import
 from .hub import MegaD
 from . import exceptions
 
@@ -24,10 +24,11 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Optional(CONF_SCAN_INTERVAL, default=0): int,
         vol.Optional(CONF_POLL_OUTS, default=False): bool,
         vol.Optional(CONF_PORT_TO_SCAN, default=0): int,
-        vol.Optional(CONF_MQTT_INPUTS, default=True): bool,
+        vol.Optional(CONF_MQTT_INPUTS, default=False): bool,
         vol.Optional(CONF_NPORTS, default=37): int,
         vol.Optional(CONF_UPDATE_ALL, default=True): bool,
         vol.Optional(CONF_FAKE_RESPONSE, default=True): bool,
+        vol.Optional(CONF_FORCE_D, default=True): bool,
     },
 )
 
@@ -140,6 +141,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Optional(CONF_RELOAD, default=False): bool,
                 vol.Optional(CONF_UPDATE_ALL, default=e.get(CONF_UPDATE_ALL, True)): bool,
                 vol.Optional(CONF_FAKE_RESPONSE, default=e.get(CONF_FAKE_RESPONSE, True)): bool,
+                vol.Optional(CONF_FORCE_D, default=e.get(CONF_FORCE_D, True)): bool,
                 # vol.Optional(CONF_INVERT, default=''): str,
             }),
         )

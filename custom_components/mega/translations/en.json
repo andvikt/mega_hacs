@@ -24,6 +24,7 @@
                     "update_all": "Update all outs when input",
                     "mqtt_inputs": "Use MQTT",
                     "fake_response": "Fake response",
+                    "force_d": "Force 'd' response",
                     "poll_outs": "Poll outs"
                 }
             }
@@ -39,6 +40,7 @@
                   "mqtt_inputs": "Use MQTT",
                   "update_all": "Update all outs when input",
                   "fake_response": "Fake response",
+                  "force_d": "Force 'd' response",
                   "poll_outs": "Poll outs"
                 }
             }
