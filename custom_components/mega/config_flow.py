@@ -10,7 +10,8 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_ID, CONF_PASSWORD, CONF_SCAN_INTERVAL
 from homeassistant.core import callback, HomeAssistant
 from .const import DOMAIN, CONF_PORT_TO_SCAN, CONF_RELOAD, PLATFORMS, CONF_MQTT_INPUTS, \
-    CONF_NPORTS, CONF_UPDATE_ALL, CONF_POLL_OUTS, CONF_FAKE_RESPONSE, CONF_FORCE_D  # pylint:disable=unused-import
+    CONF_NPORTS, CONF_UPDATE_ALL, CONF_POLL_OUTS, CONF_FAKE_RESPONSE, CONF_FORCE_D, \
+    CONF_ALLOW_HOSTS, CONF_PROTECTED  # pylint:disable=unused-import
 from .hub import MegaD
 from . import exceptions
 
@@ -29,6 +30,8 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Optional(CONF_UPDATE_ALL, default=True): bool,
         vol.Optional(CONF_FAKE_RESPONSE, default=True): bool,
         vol.Optional(CONF_FORCE_D, default=True): bool,
+        vol.Optional(CONF_PROTECTED, default=True): bool,
+        vol.Optional(CONF_ALLOW_HOSTS, default='::1;127.0.0.1'): str,
     },
 )
 
@@ -109,7 +112,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_init(self, user_input=None):
         """Manage the options."""
-
+        hub = await get_hub(self.hass, self.config_entry.data)
         if user_input is not None:
             reload = user_input.pop(CONF_RELOAD)
             cfg = dict(self.config_entry.data)
@@ -142,6 +145,8 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Optional(CONF_UPDATE_ALL, default=e.get(CONF_UPDATE_ALL, True)): bool,
                 vol.Optional(CONF_FAKE_RESPONSE, default=e.get(CONF_FAKE_RESPONSE, True)): bool,
                 vol.Optional(CONF_FORCE_D, default=e.get(CONF_FORCE_D, False)): bool,
+                vol.Optional(CONF_PROTECTED, default=e.get(CONF_PROTECTED, True)): bool,
+                vol.Optional(CONF_ALLOW_HOSTS, default='::1;127.0.0.1'): str,
                 # vol.Optional(CONF_INVERT, default=''): str,
             }),
         )

@@ -25,6 +25,8 @@
                     "mqtt_inputs": "Use MQTT (Deprecated)",
                     "fake_response": "Fake response",
                     "force_d": "Force 'd' response",
+                    "protected": "Protected",
+                    "allow_hosts": "Allowed hosts",
                     "poll_outs": "Poll outs"
                 }
             }
@@ -41,6 +43,8 @@
                   "update_all": "Update all outs when input",
                   "fake_response": "Fake response",
                   "force_d": "Force 'd' response",
+                  "protected": "Protected",
+                  "allow_hosts": "Allowed hosts",
                   "poll_outs": "Poll outs"
                 }
             }

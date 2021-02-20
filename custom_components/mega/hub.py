@@ -72,11 +72,12 @@ class MegaD:
             scan_interval=60,
             port_to_scan=0,
             nports=38,
-            inverted: typing.List[int] = None,
-            update_all=True,
-            poll_outs=False,
-            fake_response=True,
-            force_d=None,
+            update_all: bool=True,
+            poll_outs: bool=False,
+            fake_response: bool=True,
+            force_d: bool=None,
+            allow_hosts: str=None,
+            protected=True,
             **kwargs,
     ):
         """Initialize."""
@@ -133,6 +134,14 @@ class MegaD:
 
         if force_d is not None:
             self.customize[CONF_FORCE_D] = force_d
+        try:
+            if allow_hosts is not None:
+                allow_hosts = set(allow_hosts.split(';'))
+                hass.data[DOMAIN][CONF_HTTP].allowed_hosts |= allow_hosts
+            hass.data[DOMAIN][CONF_HTTP].protected = protected
+
+        except Exception:
+            self.lg.exception('while setting allowed hosts')
 
     async def start(self):
         self.loop = asyncio.get_event_loop()

@@ -17,6 +17,8 @@
           "update_all": "[%key:common::config_flow::data::update_all%]",
           "fake_response": "[%key:common::config_flow::data::fake_response%]",
           "force_d": "[%key:common::config_flow::data::force_d%]",
+          "protected": "[%key:common::config_flow::data::protected%]",
+          "allow_hosts": "[%key:common::config_flow::data::allow_hosts%]",
           "poll_outs": "[%key:common::config_flow::data::poll_outs%]"
         }
       }

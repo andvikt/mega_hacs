@@ -24,7 +24,9 @@ class MegaView(HomeAssistantView):
 
     def __init__(self, cfg: dict):
         self._try = 0
+        self.protected = True
         self.allowed_hosts = {'::1', '127.0.0.1'}
+        self.notified_attempts = defaultdict(lambda : False)
         self.callbacks = defaultdict(lambda: defaultdict(list))
         self.templates: typing.Dict[str, typing.Dict[str, Template]] = {
             mid: {
@@ -37,16 +39,30 @@ class MegaView(HomeAssistantView):
 
     async def get(self, request: Request) -> Response:
 
-        auth = False
-        for x in self.allowed_hosts:
-            if request.remote.startswith(x):
-                auth = True
-                break
-        if not auth:
-            _LOGGER.warning(f'unauthorised attempt to connect from {request.remote}')
-            return Response(status=401)
-
         hass: HomeAssistant = request.app['hass']
+        if self.protected:
+            auth = False
+            for x in self.allowed_hosts:
+                if request.remote.startswith(x):
+                    auth = True
+                    break
+            if not auth:
+                msg = f"Non-authorised request from {request.remote} to `/mega`. "\
+                      f"If you want to accept requests from this host "\
+                      f"please add it to allowed hosts in `mega` UI-configuration"
+                if not self.notified_attempts[request.remote]:
+                    await hass.services.async_call(
+                        'persistent_notification',
+                        'create',
+                        {
+                            "notification_id": request.remote,
+                            "title": "Non-authorised request",
+                            "message": msg
+                        }
+                    )
+                _LOGGER.warning(msg)
+                return Response(status=401)
+
         hub: 'h.MegaD' = hass.data.get(DOMAIN).get(request.remote)  # TODO: проверить какой remote
         if hub is None and request.remote == '::1':
             hub = hass.data.get(DOMAIN).get('__def')
