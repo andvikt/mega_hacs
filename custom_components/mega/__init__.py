@@ -128,8 +128,7 @@ async def get_hub(hass, entry):
 async def _add_mega(hass: HomeAssistant, entry: ConfigEntry):
     id = entry.data.get('id', entry.entry_id)
     hub = await get_hub(hass, entry)
-    hass.data[DOMAIN][id] = hass.data[DOMAIN]['__def'] = hub
-    hass.data[DOMAIN][entry.data.get(CONF_HOST)] = hub
+    hass.data[DOMAIN][id] = hub
     hass.data[DOMAIN][CONF_ALL][id] = hub
     if not await hub.authenticate():
         raise Exception("not authentificated")

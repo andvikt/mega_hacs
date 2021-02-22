@@ -85,6 +85,11 @@ class MegaD:
             self.http = hass.data.get(DOMAIN, {}).get(CONF_HTTP)
             if not self.http is None:
                 self.http.allowed_hosts |= {host}
+                self.http.hubs[host] = self
+                if len(self.http.hubs) == 1:
+                    self.http.hubs['__def'] = self
+                if mqtt_id:
+                    self.http.hubs[mqtt_id] = self
         else:
             self.http = None
         self.poll_outs = poll_outs
@@ -475,6 +480,7 @@ class MegaD:
 
     async def get_config(self, nports=37):
         ret = defaultdict(lambda: defaultdict(list))
+        ret['mqtt_id'] = await self.get_mqtt_id()
         async for port, pty, m in self.scan_ports(nports):
             if pty == "0":
                 ret['binary_sensor'][port].append({})

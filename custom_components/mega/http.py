@@ -36,9 +36,10 @@ class MegaView(HomeAssistantView):
             } for mid in cfg if isinstance(cfg[mid], dict)
         }
         _LOGGER.debug('templates: %s', self.templates)
+        self.hubs = {}
 
     async def get(self, request: Request) -> Response:
-
+        _LOGGER.debug('request from %s %s', request.remote, request.headers)
         hass: HomeAssistant = request.app['hass']
         if self.protected:
             auth = False
@@ -63,10 +64,14 @@ class MegaView(HomeAssistantView):
                 _LOGGER.warning(msg)
                 return Response(status=401)
 
-        hub: 'h.MegaD' = hass.data.get(DOMAIN).get(request.remote)  # TODO: проверить какой remote
-        if hub is None and request.remote == '::1':
-            hub = hass.data.get(DOMAIN).get('__def')
-        if hub is None:
+        hub: 'h.MegaD' = self.hubs.get(request.remote)
+        if hub is None and 'mdid' in request.query:
+            hub = self.hubs.get(request.query['mdid'])
+            if hub is None:
+                _LOGGER.warning(f'can not find mdid={request.query["mdid"]} in {list(self.hubs)}')
+        if hub is None and request.remote in ['::1', '127.0.0.1']:
+            hub = self.hubs.get('__def')
+        elif hub is None:
             return Response(status=400)
         data = dict(request.query)
         hass.bus.async_fire(
