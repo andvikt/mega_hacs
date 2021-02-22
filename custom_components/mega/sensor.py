@@ -13,11 +13,12 @@ from homeassistant.const import (
     CONF_PORT,
     CONF_UNIQUE_ID,
     CONF_ID,
-    CONF_TYPE, CONF_UNIT_OF_MEASUREMENT,
+    CONF_TYPE, CONF_UNIT_OF_MEASUREMENT, CONF_VALUE_TEMPLATE,
 )
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.template import Template
 from .entities import MegaPushEntity
-from .const import CONF_KEY, TEMP, HUM, W1, W1BUS
+from .const import CONF_KEY, TEMP, HUM, W1, W1BUS, CONF_CONV_TEMPLATE
 from .hub import MegaD
 import re
 
@@ -101,7 +102,6 @@ class Mega1WSensor(MegaPushEntity):
             unit_of_measurement,
             device_class,
             key=None,
-            http_cmd='get',
             *args,
             **kwargs
     ):
@@ -117,7 +117,6 @@ class Mega1WSensor(MegaPushEntity):
         self._device_class = device_class
         self._unit_of_measurement = unit_of_measurement
         self.mega.sensors.append(self)
-        self.http_cmd = http_cmd
 
     @property
     def unit_of_measurement(self):
@@ -149,7 +148,9 @@ class Mega1WSensor(MegaPushEntity):
             try:
                 ret = self.mega.values.get(self.port, {})
                 if isinstance(ret, dict):
-                    ret = ret.get(self.key)
+                    ret = ret.get('value', {})
+                    if isinstance(ret, dict):
+                        ret = ret.get(self.key)
             except:
                 self.lg.error(self.mega.values.get(self.port, {}).get('value', {}))
                 return
@@ -162,6 +163,10 @@ class Mega1WSensor(MegaPushEntity):
             ret = str(ret)
         except:
             ret = None
+        tmpl: Template = self.customize.get(CONF_CONV_TEMPLATE, self.customize.get(CONF_VALUE_TEMPLATE))
+        if tmpl is not None and self.hass is not None:
+            tmpl.hass = self.hass
+            ret = tmpl.async_render({'value': ret})
         return ret
 
     @property

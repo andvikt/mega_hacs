@@ -16,7 +16,8 @@ from homeassistant.const import (
     CONF_ENTITY_ID,
 )
 from homeassistant.core import HomeAssistant
-from .const import EVENT_BINARY_SENSOR, DOMAIN, CONF_CUSTOM, CONF_SKIP
+from homeassistant.helpers.template import Template
+from .const import EVENT_BINARY_SENSOR, DOMAIN, CONF_CUSTOM, CONF_SKIP, CONF_INVERT, CONF_RESPONSE_TEMPLATE
 from .entities import  MegaPushEntity
 from .hub import MegaD
 
@@ -72,14 +73,37 @@ class MegaBinarySensor(BinarySensorEntity, MegaPushEntity):
         return self._attrs
 
     @property
+    def invert(self):
+        return self.customize.get(CONF_INVERT, False)
+
+    @property
     def is_on(self) -> bool:
         val = self.mega.values.get(self.port, {}).get("value") \
               or self.mega.values.get(self.port, {}).get('m')
         if val is None and self._state is not None:
             return self._state == 'ON'
         elif val is not None:
-            return val == 'ON' or val == 1
+            if val in ['ON', 'OFF']:
+                return val == 'ON' if not self.invert else val == 'OFF'
+            else:
+                return val != 1 if not self.invert else val == 1
 
     def _update(self, payload: dict):
         self.mega.values[self.port] = payload
+        if not self.mega.mqtt_inputs:
+            return
+
+        template: Template = self.customize.get(CONF_RESPONSE_TEMPLATE, None)
+        if template is not None:
+            template.hass = self.hass
+            ret = template.async_render(payload)
+            self.mega.lg.debug(f'response: %s', ret)
+            self.hass.async_create_task(
+                self.mega.request(pt=self.port, cmd=ret)
+            )
+        elif self.mega.force_d:
+            self.mega.lg.debug(f'response d')
+            self.hass.async_create_task(
+                self.mega.request(pt=self.port, cmd='d')
+            )
 

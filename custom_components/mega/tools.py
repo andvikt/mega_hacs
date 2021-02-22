@@ -1,7 +1,9 @@
+_params = ['m', 'click', 'cnt', 'pt']
+
 def make_ints(d: dict):
-    for x in d:
+    for x in _params:
         try:
-            d[x] = float(d[x])
+            d[x] = int(d.get(x, 0))
         except (ValueError, TypeError):
             pass
     if 'm' not in d:

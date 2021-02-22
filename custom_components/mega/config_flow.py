@@ -10,7 +10,8 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_ID, CONF_PASSWORD, CONF_SCAN_INTERVAL
 from homeassistant.core import callback, HomeAssistant
 from .const import DOMAIN, CONF_PORT_TO_SCAN, CONF_RELOAD, PLATFORMS, CONF_MQTT_INPUTS, \
-    CONF_NPORTS, CONF_UPDATE_ALL  # pylint:disable=unused-import
+    CONF_NPORTS, CONF_UPDATE_ALL, CONF_POLL_OUTS, CONF_FAKE_RESPONSE, CONF_FORCE_D, \
+    CONF_ALLOW_HOSTS, CONF_PROTECTED  # pylint:disable=unused-import
 from .hub import MegaD
 from . import exceptions
 
@@ -18,14 +19,19 @@ _LOGGER = logging.getLogger(__name__)
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_ID, default='def'): str,
+        vol.Required(CONF_ID, default='mega'): str,
         vol.Required(CONF_HOST, default="192.168.0.14"): str,
         vol.Required(CONF_PASSWORD, default="sec"): str,
         vol.Optional(CONF_SCAN_INTERVAL, default=0): int,
+        vol.Optional(CONF_POLL_OUTS, default=False): bool,
         vol.Optional(CONF_PORT_TO_SCAN, default=0): int,
-        vol.Optional(CONF_MQTT_INPUTS, default=True): bool,
+        vol.Optional(CONF_MQTT_INPUTS, default=False): bool,
         vol.Optional(CONF_NPORTS, default=37): int,
-        # vol.Optional(CONF_UPDATE_ALL, default=True): bool,
+        vol.Optional(CONF_UPDATE_ALL, default=True): bool,
+        vol.Optional(CONF_FAKE_RESPONSE, default=True): bool,
+        vol.Optional(CONF_FORCE_D, default=True): bool,
+        vol.Optional(CONF_PROTECTED, default=True): bool,
+        vol.Optional(CONF_ALLOW_HOSTS, default='::1;127.0.0.1'): str,
     },
 )
 
@@ -56,7 +62,7 @@ async def validate_input(hass: core.HomeAssistant, data):
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for mega."""
 
-    VERSION = 4
+    VERSION = 11
     CONNECTION_CLASS = config_entries.CONN_CLASS_ASSUMED
 
     async def async_step_user(self, user_input=None):
@@ -106,7 +112,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_init(self, user_input=None):
         """Manage the options."""
-
+        hub = await get_hub(self.hass, self.config_entry.data)
         if user_input is not None:
             reload = user_input.pop(CONF_RELOAD)
             cfg = dict(self.config_entry.data)
@@ -131,11 +137,16 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             step_id="init",
             data_schema=vol.Schema({
                 vol.Optional(CONF_SCAN_INTERVAL, default=e.get(CONF_SCAN_INTERVAL, 0)): int,
+                vol.Optional(CONF_POLL_OUTS, default=e.get(CONF_POLL_OUTS, False)): bool,
                 vol.Optional(CONF_PORT_TO_SCAN, default=e.get(CONF_PORT_TO_SCAN, 0)): int,
                 vol.Optional(CONF_MQTT_INPUTS, default=e.get(CONF_MQTT_INPUTS, True)): bool,
                 vol.Optional(CONF_NPORTS, default=e.get(CONF_NPORTS, 37)): int,
                 vol.Optional(CONF_RELOAD, default=False): bool,
-                # vol.Optional(CONF_UPDATE_ALL, default=e.get(CONF_UPDATE_ALL, True)): bool,
+                vol.Optional(CONF_UPDATE_ALL, default=e.get(CONF_UPDATE_ALL, True)): bool,
+                vol.Optional(CONF_FAKE_RESPONSE, default=e.get(CONF_FAKE_RESPONSE, True)): bool,
+                vol.Optional(CONF_FORCE_D, default=e.get(CONF_FORCE_D, False)): bool,
+                vol.Optional(CONF_PROTECTED, default=e.get(CONF_PROTECTED, True)): bool,
+                vol.Optional(CONF_ALLOW_HOSTS, default='::1;127.0.0.1'): str,
                 # vol.Optional(CONF_INVERT, default=''): str,
             }),
         )

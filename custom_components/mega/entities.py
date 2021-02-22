@@ -1,12 +1,32 @@
 import logging
 import asyncio
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
 from homeassistant.core import State
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers.restore_state import RestoreEntity
-from .hub import MegaD
-from .const import DOMAIN, CONF_CUSTOM, CONF_INVERT
+from . import hub as h
+from .const import DOMAIN, CONF_CUSTOM, CONF_INVERT, EVENT_BINARY_SENSOR, LONG, \
+    LONG_RELEASE, RELEASE, PRESS, SINGLE_CLICK, DOUBLE_CLICK, EVENT_BINARY
+
+_events_on = False
+_LOGGER = logging.getLogger(__name__)
+
+
+async def _set_events_on():
+    global _events_on, _task_set_ev_on
+    await asyncio.sleep(10)
+    _LOGGER.debug('events on')
+    _events_on = True
+
+
+def set_events_off():
+    global _events_on, _task_set_ev_on
+    _events_on = False
+    _task_set_ev_on = None
+
+_task_set_ev_on = None
 
 
 class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
@@ -17,14 +37,20 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
     """
     def __init__(
             self,
-            mega: MegaD,
+            mega: 'h.MegaD',
             port: int,
             config_entry: ConfigEntry = None,
             id_suffix=None,
             name=None,
             unique_id=None,
+            http_cmd='get',
+            addr: str=None,
+            index=None,
     ):
         super().__init__(mega.updater)
+
+        self.http_cmd = http_cmd
+
         self._state: State = None
         self.port = port
         self.config_entry = config_entry
@@ -37,6 +63,10 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
         self._name = name or f"{mega.id}_{port}" + \
                             (f"_{id_suffix}" if id_suffix else "")
         self._customize: dict = None
+        self.index = index
+        self.addr = addr
+        if self.http_cmd == 'ds2413':
+            self.mega.ds2413_ports |= {self.port}
 
     @property
     def customize(self):
@@ -46,7 +76,11 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
             c = self.hass.data.get(DOMAIN, {}).get(CONF_CUSTOM) or {}
             c = c.get(self._mega_id) or {}
             c = c.get(self.port) or {}
+            if self.addr is not None and self.index is not None and isinstance(c, dict):
+                idx = self.addr.lower() + f'_a' if self.index == 0 else '_b'
+                c = c.get(idx, {})
             self._customize = c
+
         return self._customize
 
     @property
@@ -88,11 +122,15 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
         return self._unique_id
 
     async def async_added_to_hass(self) -> None:
+        global _task_set_ev_on
         await super().async_added_to_hass()
         self._state = await self.async_get_last_state()
+        if self.mega.mqtt_inputs and _task_set_ev_on is None:
+            _task_set_ev_on = asyncio.create_task(_set_events_on())
 
     async def get_state(self):
-        if self.mega.mqtt is None:
+        self.lg.debug(f'state is %s', self.state)
+        if not self.mega.mqtt_inputs:
             self.async_write_ha_state()
 
 
@@ -111,7 +149,55 @@ class MegaPushEntity(BaseMegaEntity):
         self._update(value)
         self.async_write_ha_state()
         self.lg.debug(f'state after update %s', self.state)
-        self.is_first_update = False
+        if self.mega.mqtt_inputs and not _events_on:
+            _LOGGER.debug('skip event because events are off')
+            return
+        if not self.entity_id.startswith('binary_sensor'):
+            _LOGGER.debug('skip event because not a bnary sens')
+            return
+        ll: bool = self.mega.last_long.get(self.port, False)
+        if safe_int(value.get('click', 0)) == 1:
+            self.hass.bus.async_fire(
+                event_type=EVENT_BINARY,
+                event_data={
+                    'entity_id': self.entity_id,
+                    'type': SINGLE_CLICK
+                }
+            )
+        elif safe_int(value.get('click', 0)) == 2:
+            self.hass.bus.async_fire(
+                event_type=EVENT_BINARY,
+                event_data={
+                    'entity_id': self.entity_id,
+                    'type': DOUBLE_CLICK
+                }
+            )
+        elif safe_int(value.get('m', 0)) == 2:
+            self.mega.last_long[self.port] = True
+            self.hass.bus.async_fire(
+                event_type=EVENT_BINARY,
+                event_data={
+                    'entity_id': self.entity_id,
+                    'type': LONG
+                }
+            )
+        elif safe_int(value.get('m', 0)) == 1:
+            self.hass.bus.async_fire(
+                event_type=EVENT_BINARY,
+                event_data={
+                    'entity_id': self.entity_id,
+                    'type': LONG_RELEASE if ll else RELEASE,
+                }
+            )
+        elif safe_int(value.get('m', None)) == 0:
+            self.hass.bus.async_fire(
+                event_type=EVENT_BINARY,
+                event_data={
+                    'entity_id': self.entity_id,
+                    'type': PRESS,
+                }
+            )
+            self.mega.last_long[self.port] = False
         return
 
     def _update(self, payload: dict):
@@ -137,12 +223,18 @@ class MegaOutPort(MegaPushEntity):
         self._is_on = None
         self.dimmer = dimmer
 
+    # @property
+    # def assumed_state(self) -> bool:
+    #     return True if self.index is not None or self.mega.mqtt is None else False
+
     @property
     def invert(self):
         return self.customize.get(CONF_INVERT, False)
 
     @property
     def brightness(self):
+        if not self.dimmer:
+            return
         val = self.mega.values.get(self.port, {}).get("value")
         if val is None and self._state is not None:
             return self._state.attributes.get("brightness")
@@ -161,10 +253,36 @@ class MegaOutPort(MegaPushEntity):
             return self._state == 'ON'
         elif val is not None:
             val = val.get("value")
+            if not isinstance(val, str) and self.index is not None and self.addr is not None:
+                if not isinstance(val, dict):
+                    self.mega.lg.warning(f'{self.entity_id}: {val} is not a dict')
+                    return
+                _val = val.get(self.addr, val.get(self.addr.lower(), val.get(self.addr.upper())))
+                if not isinstance(_val, str):
+                    self.mega.lg.warning(f'{self.entity_id}: can not get {self.addr} from {val}, recieved {_val}')
+                    return
+                _val = _val.split('/')
+                if len(_val) >= 2:
+                    self.mega.lg.debug('%s parsed values: %s[%s]="%s"', self.entity_id, _val, self.index, _val)
+                    val = _val[self.index]
+                else:
+                    self.mega.lg.warning(f'{self.entity_id}: {_val} has wrong length')
+                    return
+            elif self.index is not None and self.addr is None:
+                self.mega.lg.warning(f'{self.entity_id} does not has addr')
+                return
+            self.mega.lg.debug('%s.state = %s', self.entity_id, val)
             if not self.invert:
                 return val == 'ON' or str(val) == '1' or (safe_int(val) is not None and safe_int(val) > 0)
             else:
                 return val == 'OFF' or str(val) == '0' or (safe_int(val) is not None and safe_int(val) == 0)
+
+    @property
+    def cmd_port(self):
+        if self.index is not None:
+            return f'{self.port}A' if self.index == 0 else f'{self.port}B'
+        else:
+            return self.port
 
     async def async_turn_on(self, brightness=None, **kwargs) -> None:
         brightness = brightness or self.brightness or 255
@@ -175,17 +293,39 @@ class MegaOutPort(MegaPushEntity):
             cmd = brightness
         else:
             cmd = 1 if not self.invert else 0
-        await self.mega.send_command(self.port, f"{self.port}:{cmd}")
-        self.mega.values[self.port] = {'value': cmd}
+        _cmd = {"cmd": f"{self.cmd_port}:{cmd}"}
+        if self.addr:
+            _cmd['addr'] = self.addr
+        await self.mega.request(**_cmd)
+        if self.index is not None:
+            # обновление текущего стейта для ds2413
+            await self.mega.get_port(
+                port=self.port,
+                force_http=True,
+                conv=False,
+                http_cmd='list',
+            )
+        else:
+            self.mega.values[self.port] = {'value': cmd}
         await self.get_state()
-
 
     async def async_turn_off(self, **kwargs) -> None:
 
         cmd = "0" if not self.invert else "1"
-
-        await self.mega.send_command(self.port, f"{self.port}:{cmd}")
-        self.mega.values[self.port] = {'value': cmd}
+        _cmd = {"cmd": f"{self.cmd_port}:{cmd}"}
+        if self.addr:
+            _cmd['addr'] = self.addr
+        await self.mega.request(**_cmd)
+        if self.index is not None:
+            # обновление текущего стейта для ds2413
+            await self.mega.get_port(
+                port=self.port,
+                force_http=True,
+                conv=False,
+                http_cmd='list',
+            )
+        else:
+            self.mega.values[self.port] = {'value': cmd}
         await self.get_state()
 
 

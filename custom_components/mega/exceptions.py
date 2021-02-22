@@ -15,3 +15,7 @@ class DuplicateId(exceptions.HomeAssistantError):
 
 class InvalidAuth(exceptions.HomeAssistantError):
     """Error to indicate there is invalid auth."""
+
+
+class NoPort(Exception):
+    pass

@@ -10,32 +10,49 @@ import json
 
 from bs4 import BeautifulSoup
 from homeassistant.components import mqtt
-from homeassistant.const import DEVICE_CLASS_TEMPERATURE, DEVICE_CLASS_HUMIDITY
+from homeassistant.const import (
+    DEVICE_CLASS_TEMPERATURE, DEVICE_CLASS_HUMIDITY, DEVICE_CLASS_PRESSURE,
+    DEVICE_CLASS_ILLUMINANCE, TEMP_CELSIUS, PERCENTAGE, LIGHT_LUX
+)
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from .const import TEMP, HUM, PATT_SPLIT, DOMAIN, CONF_HTTP, EVENT_BINARY_SENSOR
-from .exceptions import CannotConnect, MqttNotConfigured
-from .http import MegaView
+from .const import (
+    TEMP, HUM, PRESS,
+    LUX, PATT_SPLIT, DOMAIN,
+    CONF_HTTP, EVENT_BINARY_SENSOR, CONF_CUSTOM, CONF_FORCE_D, CONF_DEF_RESPONSE
+)
+from .entities import set_events_off, BaseMegaEntity
+from .exceptions import CannotConnect, NoPort
 from .tools import make_ints
 
 TEMP_PATT = re.compile(r'temp:([01234567890\.]+)')
 HUM_PATT = re.compile(r'hum:([01234567890\.]+)')
+PRESS_PATT = re.compile(r'press:([01234567890\.]+)')
+LUX_PATT = re.compile(r'lux:([01234567890\.]+)')
 PATTERNS = {
     TEMP: TEMP_PATT,
     HUM: HUM_PATT,
+    PRESS: PRESS_PATT,
+    LUX: LUX_PATT
 }
 UNITS = {
-    TEMP: '°C',
-    HUM: '%'
+    TEMP: TEMP_CELSIUS, 
+    HUM: PERCENTAGE,
+    PRESS: 'mmHg',
+    LUX: LIGHT_LUX
 }
 CLASSES = {
     TEMP: DEVICE_CLASS_TEMPERATURE,
-    HUM: DEVICE_CLASS_HUMIDITY
+    HUM: DEVICE_CLASS_HUMIDITY,
+    PRESS: DEVICE_CLASS_PRESSURE,
+    LUX: DEVICE_CLASS_ILLUMINANCE
 }
-
-class NoPort(Exception):
-    pass
+I2C_DEVICE_TYPES = {
+    "2":  LUX,  # BH1750
+    "3":  LUX,  # TSL2591
+    "7":  LUX,  # MAX44009
+    "70": LUX,  # OPT3001
+}
 
 
 class MegaD:
@@ -55,8 +72,12 @@ class MegaD:
             scan_interval=60,
             port_to_scan=0,
             nports=38,
-            inverted: typing.List[int] = None,
-            update_all=True,
+            update_all: bool=True,
+            poll_outs: bool=False,
+            fake_response: bool=True,
+            force_d: bool=None,
+            allow_hosts: str=None,
+            protected=True,
             **kwargs,
     ):
         """Initialize."""
@@ -64,10 +85,17 @@ class MegaD:
             self.http = hass.data.get(DOMAIN, {}).get(CONF_HTTP)
             if not self.http is None:
                 self.http.allowed_hosts |= {host}
+                self.http.hubs[host] = self
+                if len(self.http.hubs) == 1:
+                    self.http.hubs['__def'] = self
+                if mqtt_id:
+                    self.http.hubs[mqtt_id] = self
         else:
             self.http = None
+        self.poll_outs = poll_outs
         self.update_all = update_all if update_all is not None else True
         self.nports = nports
+        self.fake_response = fake_response
         self.mqtt_inputs = mqtt_inputs
         self.loop: asyncio.AbstractEventLoop = None
         self.hass = hass
@@ -76,11 +104,13 @@ class MegaD:
         self.mqtt = mqtt
         self.id = id
         self.lck = asyncio.Lock()
+        self.last_long = {}
         self._http_lck = asyncio.Lock()
         self._notif_lck = asyncio.Lock()
         self.cnd = asyncio.Condition()
         self.online = True
-        self.entities: typing.List[Entity] = []
+        self.entities: typing.List[BaseMegaEntity] = []
+        self.ds2413_ports = set()
         self.poll_interval = scan_interval
         self.subs = None
         self.lg: logging.Logger = lg.getChild(self.id)
@@ -90,6 +120,7 @@ class MegaD:
         self.last_update = datetime.now()
         self._callbacks: typing.DefaultDict[int, typing.List[typing.Callable[[dict], typing.Coroutine]]] = defaultdict(list)
         self._loop = loop
+        self._customize = None
         self.values = {}
         self.last_port = None
         self.updater = DataUpdateCoordinator(
@@ -106,9 +137,21 @@ class MegaD:
         else:
             self.mqtt_id = mqtt_id
 
+        if force_d is not None:
+            self.customize[CONF_FORCE_D] = force_d
+        try:
+            if allow_hosts is not None:
+                allow_hosts = set(allow_hosts.split(';'))
+                hass.data[DOMAIN][CONF_HTTP].allowed_hosts |= allow_hosts
+            hass.data[DOMAIN][CONF_HTTP].protected = protected
+
+        except Exception:
+            self.lg.exception('while setting allowed hosts')
+
     async def start(self):
         self.loop = asyncio.get_event_loop()
         if self.mqtt is not None:
+            set_events_off()
             self.subs = await self.mqtt.async_subscribe(
                 topic=f"{self.mqtt_id}/+",
                 msg_callback=self._process_msg,
@@ -137,6 +180,22 @@ class MegaD:
             ports.append(x.port)
 
     @property
+    def customize(self):
+        if self._customize is None:
+            c = self.hass.data.get(DOMAIN, {}).get(CONF_CUSTOM) or {}
+            c = c.get(self.id) or {}
+            self._customize = c
+        return self._customize
+
+    @property
+    def force_d(self):
+        return self.customize.get(CONF_FORCE_D, False)
+
+    @property
+    def def_response(self):
+        return self.customize.get(CONF_DEF_RESPONSE, None)
+
+    @property
     def is_online(self):
         return (datetime.now() - self.last_update).total_seconds() < (self.poll_interval + 10)
 
@@ -157,20 +216,35 @@ class MegaD:
             )
             self.online = True
 
+    async def _get_ds2413(self):
+        """
+        обновление ds2413 устройств
+        :return:
+        """
+        for x in self.ds2413_ports:
+            self.lg.debug(f'poll ds2413 for %s', x)
+            await self.get_port(
+                port=x,
+                force_http=True,
+                http_cmd='list',
+                conv=False
+            )
+
     async def poll(self):
         """
-        Send get port 0 every poll_interval. When answer is received, mega.<id> becomes online else mega.<id> becomes
-        offline
+        Polling ports
         """
         self.lg.debug('poll')
         if self.mqtt is None:
             await self.get_all_ports()
             await self.get_sensors(only_list=True)
-            return
-        if len(self.sensors) > 0:
+        elif self.poll_outs:
+            await self.get_all_ports(check_skip=True)
+        elif len(self.sensors) > 0:
             await self.get_sensors()
         else:
             await self.get_port(self.port_to_scan)
+        await self._get_ds2413()
         return self.values
 
     async def get_mqtt_id(self):
@@ -204,14 +278,21 @@ class MegaD:
     async def save(self):
         await self.send_command(cmd='s')
 
-    def parse_response(self, ret):
+    def parse_response(self, ret, cmd='get'):
         if ret is None:
             raise NoPort()
+        if 'busy' in ret:
+            return None
         if ':' in ret:
-            ret = PATT_SPLIT.split(ret)
-            ret = dict([
+            if ';' in ret:
+                ret = ret.split(';')
+            elif '/' in ret and not cmd == 'list':
+                ret = ret.split('/')
+            else:
+                ret = [ret]
+            ret = {'value': dict([
                 x.split(':') for x in ret if x.count(':') == 1
-            ])
+            ])}
         elif 'ON' in ret:
             ret = {'value': 'ON'}
         elif 'OFF' in ret:
@@ -220,20 +301,23 @@ class MegaD:
             ret = {'value': ret}
         return ret
 
-    async def get_port(self, port, force_http=False, http_cmd='get'):
+    async def get_port(self, port, force_http=False, http_cmd='get', conv=True):
         """
         Запрос состояния порта. Состояние всегда возвращается в виде объекта, всегда сохраняется в центральное
         хранилище values
         """
         self.lg.debug(f'get port %s', port)
         if self.mqtt is None or force_http:
-            ret = await self.request(pt=port, cmd=http_cmd)
-            ret = self.parse_response(ret)
-            self.lg.debug('parsed: %s', ret)
-            if http_cmd == 'list' and isinstance(ret, dict) and 'value' in ret:
+            if http_cmd == 'list' and conv:
+                await self.request(pt=port, cmd='conv')
                 await asyncio.sleep(1)
-                ret = await self.request(pt=port, http_cmd=http_cmd)
-                ret = self.parse_response(ret)
+            ret = self.parse_response(await self.request(pt=port, cmd=http_cmd), cmd=http_cmd)
+            ntry = 0
+            while http_cmd == 'list' and ret is None and ntry < 3:
+                await asyncio.sleep(1)
+                ret = self.parse_response(await self.request(pt=port, cmd=http_cmd))
+                ntry += 1
+            self.lg.debug('parsed: %s', ret)
             self.values[port] = ret
             return ret
 
@@ -252,14 +336,25 @@ class MegaD:
                 except asyncio.TimeoutError:
                     self.lg.error(f'timeout when getting port {port}')
 
-    async def get_all_ports(self):
+    @property
+    def ports(self):
+        return {e.port for e in self.entities}
+
+    async def get_all_ports(self, only_out=False, check_skip=False):
         if not self.mqtt_inputs:
             ret = await self.request(cmd='all')
             for port, x in enumerate(ret.split(';')):
+                if port in self.ds2413_ports:
+                    continue
+                if check_skip and not port in self.ports:
+                    continue
                 ret = self.parse_response(x)
                 self.values[port] = ret
-        else:
+        elif not check_skip:
             for x in range(self.nports + 1):
+                await self.get_port(x)
+        else:
+            for x in self.ports:
                 await self.get_port(x)
 
     async def reboot(self, save=True):
@@ -369,6 +464,12 @@ class MegaD:
                     m = m.find(selected=True)['value']
                 self._scanned[port] = (pty, m)
                 return pty, m
+            elif pty in ('2', '4'):  # эта часть не очень проработана, тут есть i2c который может работать неправильно
+                m = tree.find('select', attrs={'name': 'd'})
+                if m:
+                    m = m.find(selected=True)['value']
+                self._scanned[port] = (pty, m or '0')
+                return pty, m or '0'
 
     async def scan_ports(self, nports=37):
         for x in range(0, nports+1):
@@ -379,18 +480,36 @@ class MegaD:
 
     async def get_config(self, nports=37):
         ret = defaultdict(lambda: defaultdict(list))
+        ret['mqtt_id'] = await self.get_mqtt_id()
         async for port, pty, m in self.scan_ports(nports):
             if pty == "0":
                 ret['binary_sensor'][port].append({})
             elif pty == "1" and (m in ['0', '1', '3'] or m is None):
                 ret['light'][port].append({'dimmer': m == '1'})
-            elif pty == '3':
+            elif pty == "1" and m == "2":
+                # ds2413
+                _data = await self.get_port(port=port, force_http=True, http_cmd='list', conv=False)
+                data = _data.get('value', {})
+                if not isinstance(data, dict):
+                    self.lg.warning(f'can not add ds2413 on port {port}, it has wrong data: {_data}')
+                    continue
+                for addr, state in data.items():
+                    ret['light'][port].extend([
+                        {"index": 0, "addr": addr, "id_suffix": f'{addr}_a', "http_cmd": 'ds2413'},
+                        {"index": 1, "addr": addr, "id_suffix": f'{addr}_b', "http_cmd": 'ds2413'},
+                    ])
+            elif pty in ('3', '2', '4'):
                 try:
                     http_cmd = 'get'
-                    values = await self.get_port(port, force_http=True)
-                    if values is None or (isinstance(values, dict) and str(values.get('value')) in ('', 'None')):
+                    if m == '5' and pty == '3':
+                        # 1-wire bus
                         values = await self.get_port(port, force_http=True, http_cmd='list')
                         http_cmd = 'list'
+                    else:
+                        values = await self.get_port(port, force_http=True)
+                        if values is None or (isinstance(values, dict) and str(values.get('value')) in ('', 'None')):
+                            values = await self.get_port(port, force_http=True, http_cmd='list')
+                            http_cmd = 'list'
                 except asyncio.TimeoutError:
                     self.lg.warning(f'timout on port {port}')
                     continue
@@ -403,7 +522,10 @@ class MegaD:
                 if isinstance(values, str) and TEMP_PATT.search(values):
                     values = {TEMP: values}
                 elif not isinstance(values, dict):
-                    values = {None: values}
+                    if pty == '4' and m in I2C_DEVICE_TYPES:
+                        values = {I2C_DEVICE_TYPES[m]: values}
+                    else:
+                        values = {None: values}
                 for key in values:
                     self.lg.debug(f'add sensor {key}')
                     ret['sensor'][port].append(dict(

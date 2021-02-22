@@ -14,5 +14,6 @@
   "codeowners": [
     "@andvikt"
   ],
-  "issue_tracker": "https://github.com/andvikt/mega_hacs/issues"
+  "issue_tracker": "https://github.com/andvikt/mega_hacs/issues",
+  "version": "v0.4.2b1"
 }

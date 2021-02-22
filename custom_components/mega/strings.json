@@ -14,7 +14,12 @@
           "invert": "[%key:common::config_flow::data::invert%]",
           "mqtt_inputs": "[%key:common::config_flow::data::mqtt_inputs%]",
           "nports": "[%key:common::config_flow::data::nports%]",
-          "update_all": "[%key:common::config_flow::data::update_all%]"
+          "update_all": "[%key:common::config_flow::data::update_all%]",
+          "fake_response": "[%key:common::config_flow::data::fake_response%]",
+          "force_d": "[%key:common::config_flow::data::force_d%]",
+          "protected": "[%key:common::config_flow::data::protected%]",
+          "allow_hosts": "[%key:common::config_flow::data::allow_hosts%]",
+          "poll_outs": "[%key:common::config_flow::data::poll_outs%]"
         }
       }
     },
@@ -38,7 +43,8 @@
           "invert": "[%key:common::config_flow::data::invert%]",
           "mqtt_inputs": "[%key:common::config_flow::data::mqtt_inputs%]",
           "nports": "[%key:common::config_flow::data::nports%]",
-          "update_all": "[%key:common::config_flow::data::update_all%]"
+          "update_all": "[%key:common::config_flow::data::update_all%]",
+          "poll_outs": "[%key:common::config_flow::data::poll_outs%]"
         }
       }
     }

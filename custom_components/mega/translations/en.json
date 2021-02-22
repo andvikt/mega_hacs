@@ -22,7 +22,12 @@
                     "port_to_scan": "Port to poll aliveness (needed only if no sensors used)",
                     "nports": "Number of ports",
                     "update_all": "Update all outs when input",
-                    "mqtt_inputs": "Use MQTT"
+                    "mqtt_inputs": "Use MQTT (Deprecated)",
+                    "fake_response": "Fake response",
+                    "force_d": "Force 'd' response",
+                    "protected": "Protected",
+                    "allow_hosts": "Allowed hosts",
+                    "poll_outs": "Poll outs"
                 }
             }
         }
@@ -34,8 +39,13 @@
                   "scan_interval": "Scan interval (sec), 0 - don't update",
                   "port_to_scan": "Port to poll aliveness (needed only if no sensors used)",
                   "reload": "Reload objects",
-                  "mqtt_inputs": "Use MQTT",
-                  "update_all": "Update all outs when input"
+                  "mqtt_inputs": "Use MQTT (Deprecated)",
+                  "update_all": "Update all outs when input",
+                  "fake_response": "Fake response",
+                  "force_d": "Force 'd' response",
+                  "protected": "Protected",
+                  "allow_hosts": "Allowed hosts",
+                  "poll_outs": "Poll outs"
                 }
             }
         }
