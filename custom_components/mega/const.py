@@ -31,6 +31,7 @@ CONF_CONV_TEMPLATE = 'conv_template'
 CONF_POLL_OUTS = 'poll_outs'
 CONF_FORCE_D = 'force_d'
 CONF_DEF_RESPONSE = 'def_response'
+CONF_RESTORE_ON_RESTART = 'restore_on_restart'
 PLATFORMS = [
     "light",
     "switch",

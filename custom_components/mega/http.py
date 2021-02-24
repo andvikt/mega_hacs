@@ -64,7 +64,8 @@ class MegaView(HomeAssistantView):
                 _LOGGER.warning(msg)
                 return Response(status=401)
 
-        hub: 'h.MegaD' = self.hubs.get(request.remote)
+        remote = request.headers.get('X-Real-IP', request.remote)
+        hub: 'h.MegaD' = self.hubs.get(remote)
         if hub is None and 'mdid' in request.query:
             hub = self.hubs.get(request.query['mdid'])
             if hub is None:
@@ -80,6 +81,9 @@ class MegaView(HomeAssistantView):
         )
         _LOGGER.debug(f"Request: %s from '%s'", data, request.remote)
         make_ints(data)
+        if data.get('st') == '1' and hub.restore_on_restart:
+            asyncio.create_task(self.later_restore(hub))
+            return Response(status=200)
         port = data.get('pt')
         data = data.copy()
         update_all = True
@@ -101,12 +105,22 @@ class MegaView(HomeAssistantView):
         _LOGGER.debug('response %s', ret)
         Response(body='' if hub.fake_response else ret, content_type='text/plain')
 
-        if hub.fake_response:
+        if hub.fake_response and 'value' not in data and 'pt' in data:
             if 'd' in ret:
                 await hub.request(pt=port, cmd=ret)
             else:
                 await hub.request(cmd=ret)
         return ret
+
+    async def later_restore(self, hub):
+        """
+        Восстановление всех выходов с небольшой задержкой. Задержка нужна чтобы ответ прошел успешно
+
+        :param hub:
+        :return:
+        """
+        await asyncio.sleep(0.2)
+        await hub.restore_states()
 
     async def later_update(self, hub):
         await asyncio.sleep(1)

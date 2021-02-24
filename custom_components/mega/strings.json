@@ -19,6 +19,7 @@
           "force_d": "[%key:common::config_flow::data::force_d%]",
           "protected": "[%key:common::config_flow::data::protected%]",
           "allow_hosts": "[%key:common::config_flow::data::allow_hosts%]",
+          "restore_on_restart": "[%key:common::config_flow::data::restore_on_restart%]",
           "poll_outs": "[%key:common::config_flow::data::poll_outs%]"
         }
       }

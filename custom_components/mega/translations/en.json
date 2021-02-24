@@ -27,6 +27,7 @@
                     "force_d": "Force 'd' response",
                     "protected": "Protected",
                     "allow_hosts": "Allowed hosts",
+                    "restore_on_restart": "Restore outs on restart",
                     "poll_outs": "Poll outs"
                 }
             }
@@ -45,6 +46,7 @@
                   "force_d": "Force 'd' response",
                   "protected": "Protected",
                   "allow_hosts": "Allowed hosts",
+                  "restore_on_restart": "Restore outs on restart",
                   "poll_outs": "Poll outs"
                 }
             }

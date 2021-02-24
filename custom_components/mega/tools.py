@@ -1,5 +1,6 @@
 _params = ['m', 'click', 'cnt', 'pt']
 
+
 def make_ints(d: dict):
     for x in _params:
         try:

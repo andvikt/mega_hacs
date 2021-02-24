@@ -21,7 +21,7 @@ from .const import (
     LUX, PATT_SPLIT, DOMAIN,
     CONF_HTTP, EVENT_BINARY_SENSOR, CONF_CUSTOM, CONF_FORCE_D, CONF_DEF_RESPONSE
 )
-from .entities import set_events_off, BaseMegaEntity
+from .entities import set_events_off, BaseMegaEntity, MegaOutPort
 from .exceptions import CannotConnect, NoPort
 from .tools import make_ints
 
@@ -78,6 +78,7 @@ class MegaD:
             force_d: bool=None,
             allow_hosts: str=None,
             protected=True,
+            restore_on_restart=False,
             **kwargs,
     ):
         """Initialize."""
@@ -136,7 +137,7 @@ class MegaD:
             self.mqtt_id = f"megad/{_id}"
         else:
             self.mqtt_id = mqtt_id
-
+        self.restore_on_restart = restore_on_restart
         if force_d is not None:
             self.customize[CONF_FORCE_D] = force_d
         try:
@@ -536,5 +537,13 @@ class MegaD:
                         http_cmd=http_cmd,
                     ))
         return ret
+
+    async def restore_states(self):
+        for x in self.entities:
+            if isinstance(x, MegaOutPort):
+                if x.is_on:
+                    await x.async_turn_on(brightness=x.brightness)
+                else:
+                    await x.async_turn_off()
 
 
