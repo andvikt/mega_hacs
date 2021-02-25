@@ -47,6 +47,14 @@ CUSTOMIZE_DS2413 = {
     vol.Optional(str.lower, description='адрес и индекс устройства'): CUSTOMIZE_PORT
 }
 
+
+def extender(x):
+    if isinstance(x, str) and 'e' in x:
+        return x
+    else:
+        raise ValueError('must has "e" in port name')
+
+
 CONFIG_SCHEMA = vol.Schema(
     {
         DOMAIN: {
@@ -58,7 +66,7 @@ CONFIG_SCHEMA = vol.Schema(
                     description='Ответ по умолчанию',
                     default=None
                 ): vol.Any(cv.template, None),
-                vol.Optional(int, description='номер порта'): vol.Any(
+                vol.Optional(vol.Any(int, extender), description='номер порта'): vol.Any(
                     CUSTOMIZE_PORT,
                     CUSTOMIZE_DS2413,
                 )
@@ -128,6 +136,7 @@ async def get_hub(hass, entry):
 async def _add_mega(hass: HomeAssistant, entry: ConfigEntry):
     id = entry.data.get('id', entry.entry_id)
     hub = await get_hub(hass, entry)
+    hub.fw = await hub.get_fw()
     hass.data[DOMAIN][id] = hub
     hass.data[DOMAIN][CONF_ALL][id] = hub
     if not await hub.authenticate():
@@ -173,7 +182,7 @@ async def updater(hass: HomeAssistant, entry: ConfigEntry):
 async def async_remove_entry(hass, entry) -> None:
     """Handle removal of an entry."""
     id = entry.data.get('id', entry.entry_id)
-    hub: MegaD = hass.data[DOMAIN][id]
+    hub: MegaD = hass.data[DOMAIN].get(id)
     if hub is None:
         return
     _LOGGER.debug(f'remove {id}')

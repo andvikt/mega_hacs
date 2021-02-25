@@ -15,6 +15,8 @@ from .tools import make_ints
 from . import hub as h
 _LOGGER = logging.getLogger(__name__).getChild('http')
 
+ext = {f'ext{x}' for x in range(16)}
+
 
 class MegaView(HomeAssistantView):
 
@@ -93,15 +95,27 @@ class MegaView(HomeAssistantView):
         data['mega_id'] = hub.id
         ret = 'd' if hub.force_d else ''
         if port is not None:
-            hub.values[port] = data
-            for cb in self.callbacks[hub.id][port]:
-                cb(data)
-            template: Template = self.templates.get(hub.id, {}).get(port, hub.def_response)
+            if set(data).issubset(ext):
+                ret = ''  # пока ответ всегда пустой, неясно какая будет реакция на непустой ответ
+                for e in ext:
+                    if e in data:
+                        idx = e[-1]
+                        pt = f'{port}e{idx}'
+                        data['value'] = 'ON' if data[e] == '1' else 'OFF'
+                        data['m'] = 1 if data[e] == '0' else 0  # имитация поведения обычного входа, чтобы события обрабатывались аналогично
+                        hub.values[pt] = data
+                        for cb in self.callbacks[hub.id][pt]:
+                            cb(data)
+            else:
+                hub.values[port] = data
+                for cb in self.callbacks[hub.id][port]:
+                    cb(data)
+                template: Template = self.templates.get(hub.id, {}).get(port, hub.def_response)
+                if template is not None:
+                    template.hass = hass
+                    ret = template.async_render(data)
             if hub.update_all and update_all:
                 asyncio.create_task(self.later_update(hub))
-            if template is not None:
-                template.hass = hass
-                ret = template.async_render(data)
         _LOGGER.debug('response %s', ret)
         Response(body='' if hub.fake_response else ret, content_type='text/plain')
 

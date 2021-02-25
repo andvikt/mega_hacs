@@ -16,10 +16,11 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from .config_parser import parse_config, DS2413, MCP230, MCP230_OUT, MCP230_IN, PCA9685
 from .const import (
     TEMP, HUM, PRESS,
     LUX, PATT_SPLIT, DOMAIN,
-    CONF_HTTP, EVENT_BINARY_SENSOR, CONF_CUSTOM, CONF_FORCE_D, CONF_DEF_RESPONSE
+    CONF_HTTP, EVENT_BINARY_SENSOR, CONF_CUSTOM, CONF_FORCE_D, CONF_DEF_RESPONSE, PATT_FW
 )
 from .entities import set_events_off, BaseMegaEntity, MegaOutPort
 from .exceptions import CannotConnect, NoPort
@@ -79,6 +80,7 @@ class MegaD:
             allow_hosts: str=None,
             protected=True,
             restore_on_restart=False,
+            extenders=None,
             **kwargs,
     ):
         """Initialize."""
@@ -93,6 +95,7 @@ class MegaD:
                     self.http.hubs[mqtt_id] = self
         else:
             self.http = None
+        self.extenders = extenders or []
         self.poll_outs = poll_outs
         self.update_all = update_all if update_all is not None else True
         self.nports = nports
@@ -127,10 +130,12 @@ class MegaD:
         self.updater = DataUpdateCoordinator(
             hass,
             self.lg,
-            name="sensors",
+            name="megad",
             update_method=self.poll,
             update_interval=timedelta(seconds=self.poll_interval) if self.poll_interval else None,
         )
+        self.updaters = []
+        self.fw = ''
         self.notifiers = defaultdict(asyncio.Condition)
         if not mqtt_id:
             _id = host.split(".")[-1]
@@ -236,6 +241,12 @@ class MegaD:
         Polling ports
         """
         self.lg.debug('poll')
+        for x in self.extenders:
+            ret = await self._update_extender(x)
+            if not isinstance(ret, dict):
+                self.lg.warning(f'wrong updater result: {ret} from extender {x}')
+                continue
+            self.values.update(ret)
         if self.mqtt is None:
             await self.get_all_ports()
             await self.get_sensors(only_list=True)
@@ -259,12 +270,18 @@ class MegaD:
                 _id = _id['value']
             return _id or 'megad/' + self.host.split('.')[-1]
 
+    async def get_fw(self):
+        data = await self.request()
+        return PATT_FW.search(data).groups()[0]
+
     async def send_command(self, port=None, cmd=None):
         return await self.request(pt=port, cmd=cmd)
 
     async def request(self, **kwargs):
         cmd = '&'.join([f'{k}={v}' for k, v in kwargs.items() if v is not None])
-        url = f"http://{self.host}/{self.sec}/?{cmd}"
+        url = f"http://{self.host}/{self.sec}"
+        if cmd:
+            url = f"{url}/?{cmd}"
         self.lg.debug('request: %s', url)
         async with self._http_lck:
             async with aiohttp.request("get", url=url) as req:
@@ -432,62 +449,77 @@ class MegaD:
             return await req.text()
 
     async def scan_port(self, port):
-        async with self.lck:
-            if port in self._scanned:
-                return self._scanned[port]
-            url = f'http://{self.host}/{self.sec}/?pt={port}'
-            self.lg.debug(
-                f'scan port %s: %s', port, url
-            )
-            async with aiohttp.request('get', url) as req:
-                html = await req.text()
-                if req.status != 200:
-                    return
-            tree = BeautifulSoup(html, features="lxml")
-            pty = tree.find('select', attrs={'name': 'pty'})
-            if pty is None:
-                return
-            else:
-                pty = pty.find(selected=True)
-                if pty:
-                    pty = pty['value']
-                else:
-                    return
-            if pty in ['0', '1']:
-                m = tree.find('select', attrs={'name': 'm'})
-                if m:
-                    m = m.find(selected=True)['value']
-                self._scanned[port] = (pty, m)
-                return pty, m
-            elif pty == '3':
-                m = tree.find('select', attrs={'name': 'd'})
-                if m:
-                    m = m.find(selected=True)['value']
-                self._scanned[port] = (pty, m)
-                return pty, m
-            elif pty in ('2', '4'):  # эта часть не очень проработана, тут есть i2c который может работать неправильно
-                m = tree.find('select', attrs={'name': 'd'})
-                if m:
-                    m = m.find(selected=True)['value']
-                self._scanned[port] = (pty, m or '0')
-                return pty, m or '0'
+        data = await self.request(pt=port)
+        return parse_config(data)
+        # async with self.lck:
+        #     if port in self._scanned:
+        #         return self._scanned[port]
+        #     url = f'http://{self.host}/{self.sec}/?pt={port}'
+        #     self.lg.debug(
+        #         f'scan port %s: %s', port, url
+        #     )
+        #     async with aiohttp.request('get', url) as req:
+        #         html = await req.text()
+        #         if req.status != 200:
+        #             return
+        #     tree = BeautifulSoup(html, features="lxml")
+        #     pty = tree.find('select', attrs={'name': 'pty'})
+        #     if pty is None:
+        #         return
+        #     else:
+        #         pty = pty.find(selected=True)
+        #         if pty:
+        #             pty = pty['value']
+        #         else:
+        #             return
+        #     if pty in ['0', '1']:
+        #         m = tree.find('select', attrs={'name': 'm'})
+        #         if m:
+        #             m = m.find(selected=True)['value']
+        #         self._scanned[port] = (pty, m)
+        #         return pty, m
+        #     elif pty == '3':
+        #         m = tree.find('select', attrs={'name': 'd'})
+        #         if m:
+        #             m = m.find(selected=True)['value']
+        #         self._scanned[port] = (pty, m)
+        #         return pty, m
+        #     elif pty in ('2', '4'):  # эта часть не очень проработана, тут есть i2c который может работать неправильно
+        #         m = tree.find('select', attrs={'name': 'd'})
+        #         if m:
+        #             m = m.find(selected=True)['value']
+        #         self._scanned[port] = (pty, m or '0')
+        #         return pty, m or '0'
 
     async def scan_ports(self, nports=37):
         for x in range(0, nports+1):
             ret = await self.scan_port(x)
             if ret:
-                yield [x, *ret]
+                yield x, ret
         self.nports = nports+1
+
+    async def _update_extender(self, port):
+        """
+        Обновление mcp230, так же подходит для PCA9685
+        :param port:
+        :return:
+        """
+        values = await self.request(pt=port, cmd='get')
+        ret = {}
+        for i, x in enumerate(values.split(';')):
+            ret[f'{port}e{i}'] = x
+        return ret
 
     async def get_config(self, nports=37):
         ret = defaultdict(lambda: defaultdict(list))
         ret['mqtt_id'] = await self.get_mqtt_id()
-        async for port, pty, m in self.scan_ports(nports):
-            if pty == "0":
+        ret['extenders'] = extenders = []
+        async for port, cfg in self.scan_ports(nports):
+            if cfg.pty == "0":
                 ret['binary_sensor'][port].append({})
-            elif pty == "1" and (m in ['0', '1', '3'] or m is None):
-                ret['light'][port].append({'dimmer': m == '1'})
-            elif pty == "1" and m == "2":
+            elif cfg.pty == "1" and (cfg.m in ['0', '1', '3'] or cfg.m is None):
+                ret['light'][port].append({'dimmer': cfg.m == '1'})
+            elif cfg == DS2413:
                 # ds2413
                 _data = await self.get_port(port=port, force_http=True, http_cmd='list', conv=False)
                 data = _data.get('value', {})
@@ -499,21 +531,34 @@ class MegaD:
                         {"index": 0, "addr": addr, "id_suffix": f'{addr}_a', "http_cmd": 'ds2413'},
                         {"index": 1, "addr": addr, "id_suffix": f'{addr}_b', "http_cmd": 'ds2413'},
                     ])
-            elif pty in ('3', '2', '4'):
-                try:
-                    http_cmd = 'get'
-                    if m == '5' and pty == '3':
-                        # 1-wire bus
+            elif cfg == MCP230:
+                extenders.append(port)
+                values = await self.request(pt=port, cmd='get')
+                values = values.split(';')
+                for n in range(len(values)):
+                    ext_page = await self.request(pt=port, ext=n)
+                    ext_cfg = parse_config(ext_page)
+                    if ext_cfg.ety == '1':
+                        ret['light'][f'{port}e{n}'].append({})
+                    elif ext_cfg.ety == '0':
+                        ret['binary_sensor'][f'{port}e{n}'].append({})
+            elif cfg == PCA9685:
+                extenders.append(port)
+                values = await self.request(pt=port, cmd='get')
+                values = values.split(';')
+                for n in range(len(values)):
+                    ret['light'][f'{port}e{n}'].append({'dimmer': True, 'dimmer_scale': 16})
+            elif cfg.pty in ('3', '2', '4'):
+                http_cmd = 'get'
+                if cfg.d == '5' and cfg.pty == '3':
+                    # 1-wire bus
+                    values = await self.get_port(port, force_http=True, http_cmd='list')
+                    http_cmd = 'list'
+                else:
+                    values = await self.get_port(port, force_http=True)
+                    if values is None or (isinstance(values, dict) and str(values.get('value')) in ('', 'None')):
                         values = await self.get_port(port, force_http=True, http_cmd='list')
                         http_cmd = 'list'
-                    else:
-                        values = await self.get_port(port, force_http=True)
-                        if values is None or (isinstance(values, dict) and str(values.get('value')) in ('', 'None')):
-                            values = await self.get_port(port, force_http=True, http_cmd='list')
-                            http_cmd = 'list'
-                except asyncio.TimeoutError:
-                    self.lg.warning(f'timout on port {port}')
-                    continue
                 self.lg.debug(f'values: %s', values)
                 if values is None:
                     self.lg.warning(f'port {port} is of type sensor but response is None, skipping it')
@@ -523,8 +568,8 @@ class MegaD:
                 if isinstance(values, str) and TEMP_PATT.search(values):
                     values = {TEMP: values}
                 elif not isinstance(values, dict):
-                    if pty == '4' and m in I2C_DEVICE_TYPES:
-                        values = {I2C_DEVICE_TYPES[m]: values}
+                    if cfg.pty == '4' and cfg.d in I2C_DEVICE_TYPES:
+                        values = {I2C_DEVICE_TYPES.get(cfg.m): values}
                     else:
                         values = {None: values}
                 for key in values:

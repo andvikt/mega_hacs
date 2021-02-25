@@ -96,7 +96,7 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
             "name": f'{self._mega_id} port {self.port}',
             "manufacturer": 'ab-log.ru',
             # "model": self.light.productname,
-            # "sw_version": self.light.swversion,
+            "sw_version": self.mega.fw,
             "via_device": (DOMAIN, self._mega_id),
         }
 
@@ -214,6 +214,7 @@ class MegaOutPort(MegaPushEntity):
     def __init__(
             self,
             dimmer=False,
+            dimmer_scale=1,
             *args, **kwargs
     ):
         super().__init__(
@@ -222,6 +223,7 @@ class MegaOutPort(MegaPushEntity):
         self._brightness = None
         self._is_on = None
         self.dimmer = dimmer
+        self.dimmer_scale = dimmer_scale
 
     # @property
     # def assumed_state(self) -> bool:
@@ -235,10 +237,22 @@ class MegaOutPort(MegaPushEntity):
     def brightness(self):
         if not self.dimmer:
             return
-        val = self.mega.values.get(self.port, {}).get("value")
-        if val is None and self._state is not None:
+        val = self.mega.values.get(self.port, {})
+        if isinstance(val, dict) and len(val) == 0 and self._state is not None:
             return self._state.attributes.get("brightness")
+        elif isinstance(self.port, str) and 'e' in self.port:
+            if isinstance(val, str):
+                val = safe_int(val)
+            else:
+                val = 0
+            if val == 0:
+                return self._brightness
+            else:
+                return val
         elif val is not None:
+            val = val.get("value")
+            if val is None:
+                return
             try:
                 val = int(val)
                 return val
@@ -248,9 +262,16 @@ class MegaOutPort(MegaPushEntity):
     @property
     def is_on(self) -> bool:
         val = self.mega.values.get(self.port, {})
-
-        if val is None and self._state is not None:
+        if isinstance(val, dict) and len(val) == 0 and self._state is not None:
             return self._state == 'ON'
+        elif isinstance(self.port, str) and 'e' in self.port and val:
+            if val is None:
+                return
+            if self.dimmer:
+                val = safe_int(val)
+                return val > 0 if not self.invert else val == 0
+            else:
+                return val == 'ON' if not self.invert else val == 'OFF'
         elif val is not None:
             val = val.get("value")
             if not isinstance(val, str) and self.index is not None and self.addr is not None:
@@ -286,11 +307,11 @@ class MegaOutPort(MegaPushEntity):
 
     async def async_turn_on(self, brightness=None, **kwargs) -> None:
         brightness = brightness or self.brightness or 255
-
+        self._brightness = brightness
         if self.dimmer and brightness == 0:
-            cmd = 255
+            cmd = 255 * self.dimmer_scale
         elif self.dimmer:
-            cmd = brightness
+            cmd = brightness * self.dimmer_scale
         else:
             cmd = 1 if not self.invert else 0
         _cmd = {"cmd": f"{self.cmd_port}:{cmd}"}
@@ -305,6 +326,11 @@ class MegaOutPort(MegaPushEntity):
                 conv=False,
                 http_cmd='list',
             )
+        elif isinstance(self.port, str) and 'e' in self.port:
+            if not self.dimmer:
+                self.mega.values[self.port] = 'ON' if not self.invert else 'OFF'
+            else:
+                self.mega.values[self.port] = cmd
         else:
             self.mega.values[self.port] = {'value': cmd}
         await self.get_state()
@@ -324,6 +350,8 @@ class MegaOutPort(MegaPushEntity):
                 conv=False,
                 http_cmd='list',
             )
+        elif isinstance(self.port, str) and 'e' in self.port:
+            self.mega.values[self.port] = 'OFF' if not self.invert else 'ON'
         else:
             self.mega.values[self.port] = {'value': cmd}
         await self.get_state()
