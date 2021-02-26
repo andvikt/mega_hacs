@@ -11,3 +11,10 @@ def make_ints(d: dict):
         d['m'] = 0
     if 'click' not in d:
         d['click'] = 0
+
+
+def int_ignore(x):
+    try:
+        return int(x)
+    except (TypeError, ValueError):
+        return x

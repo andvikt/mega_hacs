@@ -20,7 +20,7 @@ from homeassistant.helpers.template import Template
 from .const import EVENT_BINARY_SENSOR, DOMAIN, CONF_CUSTOM, CONF_SKIP, CONF_INVERT, CONF_RESPONSE_TEMPLATE
 from .entities import  MegaPushEntity
 from .hub import MegaD
-
+from .tools import int_ignore
 
 lg = logging.getLogger(__name__)
 
@@ -51,7 +51,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     devices = []
     customize = hass.data.get(DOMAIN, {}).get(CONF_CUSTOM, {})
     for port, cfg in config_entry.data.get('binary_sensor', {}).items():
-        port = int(port)
+        port = int_ignore(port)
         c = customize.get(mid, {}).get(port, {})
         if c.get(CONF_SKIP, False):
             continue

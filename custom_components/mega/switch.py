@@ -18,6 +18,7 @@ from homeassistant.core import HomeAssistant
 from . import hub as h
 from .entities import MegaOutPort
 from .const import CONF_DIMMER, CONF_SWITCH, DOMAIN, CONF_CUSTOM, CONF_SKIP
+from .tools import int_ignore
 
 _LOGGER = lg = logging.getLogger(__name__)
 
@@ -50,7 +51,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 
     customize = hass.data.get(DOMAIN, {}).get(CONF_CUSTOM, {})
     for port, cfg in config_entry.data.get('light', {}).items():
-        port = int(port)
+        port = int_ignore(port)
         c = customize.get(mid, {}).get(port, {})
         if c.get(CONF_SKIP, False) or c.get(CONF_DOMAIN, 'light') != 'switch':
             continue

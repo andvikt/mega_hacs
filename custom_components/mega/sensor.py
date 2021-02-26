@@ -22,6 +22,8 @@ from .const import CONF_KEY, TEMP, HUM, W1, W1BUS, CONF_CONV_TEMPLATE
 from .hub import MegaD
 import re
 
+from .tools import int_ignore
+
 lg = logging.getLogger(__name__)
 TEMP_PATT = re.compile(r'temp:([01234567890\.]+)')
 HUM_PATT = re.compile(r'hum:([01234567890\.]+)')
@@ -81,7 +83,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     hub: MegaD = hass.data['mega'][mid]
     devices = []
     for port, cfg in config_entry.data.get('sensor', {}).items():
-        port = int(port)
+        port = int_ignore(port)
         for data in cfg:
             hub.lg.debug(f'add sensor on port %s with data %s', port, data)
             sensor = Mega1WSensor(

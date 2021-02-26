@@ -24,7 +24,7 @@ from .const import (
 )
 from .entities import set_events_off, BaseMegaEntity, MegaOutPort
 from .exceptions import CannotConnect, NoPort
-from .tools import make_ints
+from .tools import make_ints, int_ignore
 
 TEMP_PATT = re.compile(r'temp:([01234567890\.]+)')
 HUM_PATT = re.compile(r'hum:([01234567890\.]+)')
@@ -394,7 +394,7 @@ class MegaD:
         if port == 'cmd':
             return
         try:
-            port = int(port)
+            port = int_ignore(port)
         except:
             self.lg.warning('can not process %s', msg)
             return
@@ -423,7 +423,7 @@ class MegaD:
             asyncio.run_coroutine_threadsafe(self._notify(port, value), self.loop)
 
     def subscribe(self, port, callback):
-        port = int(port)
+        port = int_ignore(port)
         self.lg.debug(
             f'subscribe %s %s', port, callback
         )
