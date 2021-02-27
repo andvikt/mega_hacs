@@ -247,8 +247,8 @@ class MegaOutPort(MegaPushEntity):
                 val = 0
             if val == 0:
                 return self._brightness
-            else:
-                return val
+            elif isinstance(val, (int, float)):
+                return int(val / self.dimmer_scale)
         elif val is not None:
             val = val.get("value")
             if val is None:
@@ -269,7 +269,8 @@ class MegaOutPort(MegaPushEntity):
                 return
             if self.dimmer:
                 val = safe_int(val)
-                return val > 0 if not self.invert else val == 0
+                if val is not None:
+                    return val > 0 if not self.invert else val == 0
             else:
                 return val == 'ON' if not self.invert else val == 'OFF'
         elif val is not None:
@@ -358,8 +359,10 @@ class MegaOutPort(MegaPushEntity):
 
 
 def safe_int(v):
-    if v in ['ON', 'OFF']:
-        return None
+    if v == 'ON':
+        return 1
+    elif v == 'OFF':
+        return 0
     try:
         return int(v)
     except (ValueError, TypeError):

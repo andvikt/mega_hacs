@@ -78,14 +78,15 @@ class MegaBinarySensor(BinarySensorEntity, MegaPushEntity):
 
     @property
     def is_on(self) -> bool:
-        val = self.mega.values.get(self.port, {}).get("value") \
-              or self.mega.values.get(self.port, {}).get('m')
+        val = self.mega.values.get(self.port, {})
+        if isinstance(val, dict):
+            val = val.get("value", val.get('m'))
         if val is None and self._state is not None:
             return self._state == 'ON'
         elif val is not None:
-            if val in ['ON', 'OFF']:
-                return val == 'ON' if not self.invert else val == 'OFF'
-            else:
+            if val in ['ON', 'OFF', '1', '0']:
+                return val in ['ON', '1'] if not self.invert else val in ['OFF', '0']
+            elif isinstance(val, int):
                 return val != 1 if not self.invert else val == 1
 
     def _update(self, payload: dict):
