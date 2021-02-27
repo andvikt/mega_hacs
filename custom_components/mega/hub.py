@@ -81,6 +81,7 @@ class MegaD:
             protected=True,
             restore_on_restart=False,
             extenders=None,
+            ext_in=None,
             **kwargs,
     ):
         """Initialize."""
@@ -96,6 +97,7 @@ class MegaD:
         else:
             self.http = None
         self.extenders = extenders or []
+        self.ext_in = ext_in or {}
         self.poll_outs = poll_outs
         self.update_all = update_all if update_all is not None else True
         self.nports = nports
@@ -514,6 +516,7 @@ class MegaD:
         ret = defaultdict(lambda: defaultdict(list))
         ret['mqtt_id'] = await self.get_mqtt_id()
         ret['extenders'] = extenders = []
+        ret['ext_in'] = ext_int = {}
         async for port, cfg in self.scan_ports(nports):
             if cfg.pty == "0":
                 ret['binary_sensor'][port].append({})
@@ -533,6 +536,7 @@ class MegaD:
                     ])
             elif cfg == MCP230:
                 extenders.append(port)
+                ext_int[cfg.inta] = port
                 values = await self.request(pt=port, cmd='get')
                 values = values.split(';')
                 for n in range(len(values)):

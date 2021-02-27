@@ -97,10 +97,15 @@ class MegaView(HomeAssistantView):
         if port is not None:
             if set(data).issubset(ext):
                 ret = ''  # пока ответ всегда пустой, неясно какая будет реакция на непустой ответ
+                pt_orig = hub.ext_in.get(port)
+                if pt_orig is None:
+                    hub.lg.warning(f'can not find extender for int port {port}')
+                    return Response(status=200)
                 for e in ext:
                     if e in data:
                         idx = e[-1]
-                        pt = f'{port}e{idx}'
+                        pt = f'{pt_orig}e{idx}'
+                        data['pt'] = pt_orig
                         data['value'] = 'ON' if data[e] == '1' else 'OFF'
                         data['m'] = 1 if data[e] == '0' else 0  # имитация поведения обычного входа, чтобы события обрабатывались аналогично
                         hub.values[pt] = data
