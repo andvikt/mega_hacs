@@ -110,20 +110,21 @@ class MegaView(HomeAssistantView):
                                    f'have ext_int: {hub.ext_in}, ext: {hub.extenders}')
                     return Response(status=200)
                 for e, v in data.items():
+                    _data = data.copy()
                     if e.startswith('ext'):
                         idx = e[3:]
                         pt = f'{pt_orig}e{idx}'
-                        data['pt_orig'] = pt_orig
-                        data['value'] = 'ON' if v == '1' else 'OFF'
-                        data['m'] = 1 if data[e] == '0' else 0  # имитация поведения обычного входа, чтобы события обрабатывались аналогично
-                        hub.values[pt] = data
+                        _data['pt_orig'] = pt_orig
+                        _data['value'] = 'ON' if v == '1' else 'OFF'
+                        _data['m'] = 1 if _data[e] == '0' else 0  # имитация поведения обычного входа, чтобы события обрабатывались аналогично
+                        hub.values[pt] = _data
                         for cb in self.callbacks[hub.id][pt]:
-                            cb(data)
+                            cb(_data)
                         act = hub.ext_act.get(pt)
                         template: Template = self.templates.get(hub.id, {}).get(port, hub.def_response)
                         if template is not None:
                             template.hass = hass
-                            ret = template.async_render(data)
+                            ret = template.async_render(_data)
                         if ret == 'd' and act:
                             await hub.request(cmd=act)
                         ret = 'd' if hub.force_d else ''

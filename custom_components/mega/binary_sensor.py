@@ -67,6 +67,10 @@ class MegaBinarySensor(BinarySensorEntity, MegaPushEntity):
         super().__init__(*args, **kwargs)
         self._is_on = None
         self._attrs = None
+        self._click_task = None
+
+    async def _click(self):
+        await self.customize.get
 
     @property
     def state_attributes(self):

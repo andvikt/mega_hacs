@@ -118,7 +118,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             reload = user_input.pop(CONF_RELOAD)
             cfg = dict(self.config_entry.data)
             cfg.update(user_input)
-            hub = await get_hub(self.hass, self.config_entry.data)
+            hub = await get_hub(self.hass, cfg)
             if reload:
                 await hub.start()
                 new = await hub.get_config(nports=user_input.get(CONF_NPORTS, 37))

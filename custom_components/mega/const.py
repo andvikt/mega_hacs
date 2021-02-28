@@ -32,6 +32,8 @@ CONF_POLL_OUTS = 'poll_outs'
 CONF_FORCE_D = 'force_d'
 CONF_DEF_RESPONSE = 'def_response'
 CONF_RESTORE_ON_RESTART = 'restore_on_restart'
+CONF_CLICK_TIME = 'click_time'
+CONF_LONG_TIME = 'long_time'
 PLATFORMS = [
     "light",
     "switch",
