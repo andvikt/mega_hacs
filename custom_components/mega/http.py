@@ -100,7 +100,7 @@ class MegaView(HomeAssistantView):
         ret = 'd' if hub.force_d else ''
         if port is not None:
             if is_ext(data):
-                ret = ''  # пока ответ всегда пустой, неясно какая будет реакция на непустой ответ
+                # ret = ''  # пока ответ всегда пустой, неясно какая будет реакция на непустой ответ
                 if port in hub.extenders:
                     pt_orig = port
                 else:
