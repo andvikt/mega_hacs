@@ -126,6 +126,7 @@ class MegaView(HomeAssistantView):
                         if template is not None:
                             template.hass = hass
                             ret = template.async_render(_data)
+                        hub.lg.debug(f'response={ret}, template={template}')
                         if ret == 'd' and act:
                             await hub.request(cmd=act)
                         ret = 'd' if hub.force_d else ''
