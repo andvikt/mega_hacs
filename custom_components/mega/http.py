@@ -15,7 +15,11 @@ from .tools import make_ints
 from . import hub as h
 _LOGGER = logging.getLogger(__name__).getChild('http')
 
-ext = {f'ext{x}' for x in range(16)}
+
+def is_ext(data: typing.Dict[str, typing.Any]):
+    for x in data:
+        if x.startswith('ext'):
+            return True
 
 
 class MegaView(HomeAssistantView):
@@ -95,18 +99,21 @@ class MegaView(HomeAssistantView):
         data['mega_id'] = hub.id
         ret = 'd' if hub.force_d else ''
         if port is not None:
-            if set(data).issubset(ext):
+            if is_ext(data):
                 ret = ''  # пока ответ всегда пустой, неясно какая будет реакция на непустой ответ
-                pt_orig = hub.ext_in.get(port)
+                if port in hub.extenders:
+                    pt_orig = port
+                else:
+                    pt_orig = hub.ext_in.get(port)
                 if pt_orig is None:
                     hub.lg.warning(f'can not find extender for int port {port}')
                     return Response(status=200)
-                for e in ext:
-                    if e in data:
+                for e, v in data.items():
+                    if e.startswith('ext') in data:
                         idx = e[-1]
                         pt = f'{pt_orig}e{idx}'
-                        data['pt'] = pt_orig
-                        data['value'] = 'ON' if data[e] == '1' else 'OFF'
+                        data['pt_orig'] = pt_orig
+                        data['value'] = 'ON' if v == '1' else 'OFF'
                         data['m'] = 1 if data[e] == '0' else 0  # имитация поведения обычного входа, чтобы события обрабатывались аналогично
                         hub.values[pt] = data
                         for cb in self.callbacks[hub.id][pt]:

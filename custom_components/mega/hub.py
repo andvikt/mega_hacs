@@ -536,7 +536,7 @@ class MegaD:
                     ])
             elif cfg == MCP230:
                 extenders.append(port)
-                ext_int[cfg.inta] = port
+                ext_int[int(cfg.inta)] = port
                 values = await self.request(pt=port, cmd='get')
                 values = values.split(';')
                 for n in range(len(values)):
