@@ -121,6 +121,7 @@ class MegaView(HomeAssistantView):
                         for cb in self.callbacks[hub.id][pt]:
                             cb(_data)
                         act = hub.ext_act.get(pt)
+                        hub.lg.debug(f'act on port {pt}: {act}, all acts are: {hub.ext_act}')
                         template: Template = self.templates.get(hub.id, {}).get(port, hub.def_response)
                         if template is not None:
                             template.hass = hass
