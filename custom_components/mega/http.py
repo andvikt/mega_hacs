@@ -104,7 +104,7 @@ class MegaView(HomeAssistantView):
                 if port in hub.extenders:
                     pt_orig = port
                 else:
-                    pt_orig = hub.ext_in.get(port)
+                    pt_orig = hub.ext_in.get(port, hub.ext_in.get(str(port)))
                 if pt_orig is None:
                     hub.lg.warning(f'can not find extender for int port {port}, '
                                    f'have ext_int: {hub.ext_in}, ext: {hub.extenders}')
