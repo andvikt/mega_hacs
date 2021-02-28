@@ -109,7 +109,7 @@ class MegaView(HomeAssistantView):
                     hub.lg.warning(f'can not find extender for int port {port}')
                     return Response(status=200)
                 for e, v in data.items():
-                    if e.startswith('ext') in data:
+                    if e.startswith('ext'):
                         idx = e[3:]
                         pt = f'{pt_orig}e{idx}'
                         data['pt_orig'] = pt_orig
@@ -118,6 +118,8 @@ class MegaView(HomeAssistantView):
                         hub.values[pt] = data
                         for cb in self.callbacks[hub.id][pt]:
                             cb(data)
+                        if pt in hub.ext_act:
+                            await hub.request(cmd=hub.ext_act[pt])
             else:
                 hub.values[port] = data
                 for cb in self.callbacks[hub.id][port]:

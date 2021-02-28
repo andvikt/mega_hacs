@@ -82,6 +82,7 @@ class MegaD:
             restore_on_restart=False,
             extenders=None,
             ext_in=None,
+            ext_act=None,
             **kwargs,
     ):
         """Initialize."""
@@ -98,6 +99,7 @@ class MegaD:
             self.http = None
         self.extenders = extenders or []
         self.ext_in = ext_in or {}
+        self.ext_act = ext_act or {}
         self.poll_outs = poll_outs
         self.update_all = update_all if update_all is not None else True
         self.nports = nports
@@ -517,6 +519,7 @@ class MegaD:
         ret['mqtt_id'] = await self.get_mqtt_id()
         ret['extenders'] = extenders = []
         ret['ext_in'] = ext_int = {}
+        ret['ext_acts'] = ext_acts = {}
         async for port, cfg in self.scan_ports(nports):
             if cfg.pty == "0":
                 ret['binary_sensor'][port].append({})
@@ -542,10 +545,13 @@ class MegaD:
                 for n in range(len(values)):
                     ext_page = await self.request(pt=port, ext=n)
                     ext_cfg = parse_config(ext_page)
+                    pt = f'{port}e{n}'
                     if ext_cfg.ety == '1':
-                        ret['light'][f'{port}e{n}'].append({})
+                        ret['light'][pt].append({})
                     elif ext_cfg.ety == '0':
-                        ret['binary_sensor'][f'{port}e{n}'].append({})
+                        if ext_cfg.eact:
+                            ext_acts[pt] = ext_cfg.eact
+                        ret['binary_sensor'][pt].append({})
             elif cfg == PCA9685:
                 extenders.append(port)
                 values = await self.request(pt=port, cmd='get')

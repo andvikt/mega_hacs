@@ -1,6 +1,19 @@
 from dataclasses import dataclass, field
 from bs4 import BeautifulSoup
 
+inputs = [
+    'eact',
+    'inta',
+    'misc',
+]
+selectors = [
+    'pty',
+    'm',
+    'gr',
+    'd',
+    'ety',
+]
+
 
 @dataclass(frozen=True, eq=True)
 class Config:
@@ -8,21 +21,16 @@ class Config:
     m: str = None
     gr: str = None
     d: str = None
-    inta: str = field(compare=False, hash=False, default=None)
     ety: str = None
+    inta: str = field(compare=False, hash=False, default=None)
     misc: str = field(compare=False, hash=False, default=None)
+    eact: str = field(compare=False, hash=False, default=None)
 
 
 def parse_config(page: str):
     page = BeautifulSoup(page, features="lxml")
     ret = {}
-    for x in [
-        'pty',
-        'm',
-        'gr',
-        'd',
-        'ety',
-    ]:
+    for x in selectors:
         v = page.find('select', attrs={'name': x})
         if v is None:
             continue
@@ -31,12 +39,10 @@ def parse_config(page: str):
             if v:
                 v = v['value']
                 ret[x] = v
-    v = page.find('input', attrs={'name': 'inta'})
-    if v:
-        ret['inta'] = v['value']
-    v = page.find('input', attrs={'name': 'misc'})
-    if v:
-        ret['misc'] = v.get('checked', False)
+    for x in inputs:
+        v = page.find('input', attrs={'name': x})
+        if v:
+            ret[x] = v['value']
     return Config(**ret)
 
 
