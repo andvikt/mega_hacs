@@ -118,8 +118,14 @@ class MegaView(HomeAssistantView):
                         hub.values[pt] = data
                         for cb in self.callbacks[hub.id][pt]:
                             cb(data)
-                        if pt in hub.ext_act:
-                            await hub.request(cmd=hub.ext_act[pt])
+                        act = hub.ext_act.get(pt)
+                        template: Template = self.templates.get(hub.id, {}).get(port, hub.def_response)
+                        if template is not None:
+                            template.hass = hass
+                            ret = template.async_render(data)
+                        if ret == 'd' and act:
+                            await hub.request(cmd=act)
+                        ret = 'd' if hub.force_d else ''
             else:
                 hub.values[port] = data
                 for cb in self.callbacks[hub.id][port]:
