@@ -127,6 +127,7 @@ class MegaView(HomeAssistantView):
                             template.hass = hass
                             ret = template.async_render(_data)
                         hub.lg.debug(f'response={ret}, template={template}')
+                        ret = ret.replace(':3', f':{v}')
                         if ret == 'd' and act:
                             await hub.request(cmd=act)
                         ret = 'd' if hub.force_d else ''
