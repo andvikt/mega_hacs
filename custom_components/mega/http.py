@@ -110,7 +110,7 @@ class MegaView(HomeAssistantView):
                     return Response(status=200)
                 for e, v in data.items():
                     if e.startswith('ext') in data:
-                        idx = e[-1]
+                        idx = e[3:]
                         pt = f'{pt_orig}e{idx}'
                         data['pt_orig'] = pt_orig
                         data['value'] = 'ON' if v == '1' else 'OFF'
