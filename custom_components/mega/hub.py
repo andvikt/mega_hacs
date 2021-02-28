@@ -82,7 +82,7 @@ class MegaD:
             restore_on_restart=False,
             extenders=None,
             ext_in=None,
-            ext_act=None,
+            ext_acts=None,
             **kwargs,
     ):
         """Initialize."""
@@ -99,7 +99,7 @@ class MegaD:
             self.http = None
         self.extenders = extenders or []
         self.ext_in = ext_in or {}
-        self.ext_act = ext_act or {}
+        self.ext_act = ext_acts or {}
         self.poll_outs = poll_outs
         self.update_all = update_all if update_all is not None else True
         self.nports = nports
@@ -539,7 +539,8 @@ class MegaD:
                     ])
             elif cfg == MCP230:
                 extenders.append(port)
-                ext_int[int(cfg.inta)] = port
+                if cfg.inta:
+                    ext_int[int_ignore(cfg.inta)] = port
                 values = await self.request(pt=port, cmd='get')
                 values = values.split(';')
                 for n in range(len(values)):
