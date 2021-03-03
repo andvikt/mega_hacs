@@ -530,9 +530,11 @@ class MegaD:
         :return:
         """
         _params = tuple(params.items())
-        return {
+        ret = {
             _params: await self.request(**params)
         }
+        self.lg.debug('i2c response: %s', ret)
+        return ret
 
     async def get_config(self, nports=37):
         ret = defaultdict(lambda: defaultdict(list))

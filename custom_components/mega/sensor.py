@@ -110,7 +110,8 @@ class MegaI2C(MegaPushEntity):
         return self._device_class
 
     def state(self):
-        return self.mega.values[self._params]
+        self.lg.debug(f'get % all states: %', self._params, self.mega.values)
+        return self.mega.values.get(self._params)
 
     @property
     def device_class(self):
