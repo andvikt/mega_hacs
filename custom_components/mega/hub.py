@@ -588,7 +588,7 @@ class MegaD:
                     page = await self.request(pt=port, cmd='scan')
                     req, parsed = parse_scan_page(page)
                     self.lg.debug(f'scan results: %s', (req, parsed))
-                    ret['i2c'][port].append(parsed)
+                    ret['i2c'][port].extend(parsed)
                     i2c_sensors.extend(req)
             elif cfg.pty in ('3', '2', '4'):
                 http_cmd = 'get'
