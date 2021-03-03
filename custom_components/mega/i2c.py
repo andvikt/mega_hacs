@@ -17,36 +17,37 @@ def parse_scan_page(page: str):
         if params is None:
             continue
         params = dict(parse_qsl(urlparse(params).query))
-        if 'i2c_dev' in params:
-            dev = params['i2c_dev']
-            classes = i2c_classes.get(dev, [])
-            for i, c in enumerate(classes):
-                if c is Skip:
-                    continue
-                elif c is Request:
-                    req.append(params)
-                    continue
-                elif isinstance(c, tuple):
-                    suffix, c = c
-                elif isinstance(c, str):
-                    suffix = c
-                else:
-                    suffix = ''
-                if 'addr' in params:
-                    suffix += f"_{params['addr']}" if suffix else str(params['addr'])
-                if suffix:
-                    _dev = f'{dev}_{suffix}'
-                else:
-                    _dev = dev
-                params = params.copy()
-                if i > 0:
-                    params['i2c_par'] = i
-                ret.append({
-                    'id_suffix': _dev,
-                    'device_class': c,
-                    'params': params,
-                })
+        dev = params.get('i2c_dev')
+        if dev is None:
+            continue
+        classes = i2c_classes.get(dev, [])
+        for i, c in enumerate(classes):
+            if c is Skip:
+                continue
+            elif c is Request:
                 req.append(params)
+                continue
+            elif isinstance(c, tuple):
+                suffix, c = c
+            elif isinstance(c, str):
+                suffix = c
+            else:
+                suffix = ''
+            if 'addr' in params:
+                suffix += f"_{params['addr']}" if suffix else str(params['addr'])
+            if suffix:
+                _dev = f'{dev}_{suffix}'
+            else:
+                _dev = dev
+            params = params.copy()
+            if i > 0:
+                params['i2c_par'] = i
+            ret.append({
+                'id_suffix': _dev,
+                'device_class': c,
+                'params': params,
+            })
+            req.append(params)
     return req, ret
 
 
