@@ -14,6 +14,7 @@ from homeassistant.const import (
     CONF_UNIQUE_ID,
     CONF_ID,
     CONF_TYPE, CONF_UNIT_OF_MEASUREMENT, CONF_VALUE_TEMPLATE,
+    CONF_DEVICE_CLASS,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.template import Template
@@ -82,19 +83,38 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     mid = config_entry.data[CONF_ID]
     hub: MegaD = hass.data['mega'][mid]
     devices = []
-    for port, cfg in config_entry.data.get('sensor', {}).items():
-        port = int_ignore(port)
-        for data in cfg:
-            hub.lg.debug(f'add sensor on port %s with data %s', port, data)
-            sensor = Mega1WSensor(
-                mega=hub,
-                port=port,
-                config_entry=config_entry,
-                **data,
-            )
-            devices.append(sensor)
+    for tp in ['sensor', 'i2c']:
+        for port, cfg in config_entry.data.get(tp, {}).items():
+            port = int_ignore(port)
+            for data in cfg:
+                hub.lg.debug(f'add sensor on port %s with data %s', port, data)
+                sensor = _constructors[tp](
+                    mega=hub,
+                    port=port,
+                    config_entry=config_entry,
+                    **data,
+                )
+                devices.append(sensor)
 
     async_add_devices(devices)
+
+
+class MegaI2C(MegaPushEntity):
+
+    def __init__(self, *args, device_class: str, params: dict, **kwargs):
+        self._device_class = device_class
+        self._params = tuple(params.items())
+        super().__init__(*args, **kwargs)
+
+    def device_class(self):
+        return self._device_class
+
+    def state(self):
+        return self.mega.values[self._params]
+
+    @property
+    def device_class(self):
+        return self._device_class
 
 
 class Mega1WSensor(MegaPushEntity):
@@ -141,7 +161,15 @@ class Mega1WSensor(MegaPushEntity):
 
     @property
     def device_class(self):
-        return self._device_class
+        _u = self.customize.get(CONF_DEVICE_CLASS, None)
+        if _u is None:
+            return self._device_class
+        elif isinstance(_u, str):
+            return _u
+        elif isinstance(_u, dict) and self.key in _u:
+            return _u[self.key]
+        else:
+            return self._device_class
 
     @property
     def state(self):
@@ -178,3 +206,9 @@ class Mega1WSensor(MegaPushEntity):
         if isinstance(c, dict):
             c = c.get(self.key)
         return c or n
+
+
+_constructors = {
+    'sensor': Mega1WSensor,
+    'i2c': MegaI2C,
+}

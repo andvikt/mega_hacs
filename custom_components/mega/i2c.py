@@ -1,16 +1,5 @@
-from urllib.parse import urlparse, parse_qsl
-
-from bs4 import BeautifulSoup
-
-page = '''
-<html><head></head><body><a href="/sec/?pt=33">Back</a><br>0x15 - <a href="/sec/?pt=33&amp;scl=32&amp;i2c_dev=t67xx">T67XX</a><br>0x40 - <a href="/sec/?pt=33&amp;scl=32&amp;i2c_dev=htu21d">HTU21D</a>/PCA9685/HM3301<br>0x4a - <a href="/sec/?pt=33&amp;scl=32&amp;i2c_dev=max44009">MAX44009</a><br>
-</body></html>
-'''
-
 from urllib.parse import parse_qsl, urlparse
-
 from bs4 import BeautifulSoup
-
 from homeassistant.const import (
     DEVICE_CLASS_HUMIDITY,
     DEVICE_CLASS_TEMPERATURE,
@@ -117,5 +106,3 @@ i2c_classes = {
         DEVICE_CLASS_TEMPERATURE,
     ]
 }
-
-print(parse_scan_page(page))

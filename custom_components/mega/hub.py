@@ -24,7 +24,8 @@ from .const import (
 )
 from .entities import set_events_off, BaseMegaEntity, MegaOutPort
 from .exceptions import CannotConnect, NoPort
-from .tools import make_ints, int_ignore
+from .i2c import parse_scan_page
+from .tools import make_ints, int_ignore, PriorityLock
 
 TEMP_PATT = re.compile(r'temp:([01234567890\.]+)')
 HUM_PATT = re.compile(r'hum:([01234567890\.]+)')
@@ -83,6 +84,7 @@ class MegaD:
             extenders=None,
             ext_in=None,
             ext_acts=None,
+            i2c_sensors=None,
             **kwargs,
     ):
         """Initialize."""
@@ -100,6 +102,7 @@ class MegaD:
         self.extenders = extenders or []
         self.ext_in = ext_in or {}
         self.ext_act = ext_acts or {}
+        self.i2c_sensors = i2c_sensors or []
         self.poll_outs = poll_outs
         self.update_all = update_all if update_all is not None else True
         self.nports = nports
@@ -113,7 +116,7 @@ class MegaD:
         self.id = id
         self.lck = asyncio.Lock()
         self.last_long = {}
-        self._http_lck = asyncio.Lock()
+        self._http_lck = PriorityLock()
         self._notif_lck = asyncio.Lock()
         self.cnd = asyncio.Condition()
         self.online = True
@@ -245,6 +248,12 @@ class MegaD:
         Polling ports
         """
         self.lg.debug('poll')
+        for x in self.i2c_sensors:
+            if not isinstance(x, dict):
+                continue
+            ret = await self._update_i2c(x)
+            if isinstance(ret, dict):
+                self.values.update(ret)
         for x in self.extenders:
             ret = await self._update_extender(x)
             if not isinstance(ret, dict):
@@ -281,13 +290,13 @@ class MegaD:
     async def send_command(self, port=None, cmd=None):
         return await self.request(pt=port, cmd=cmd)
 
-    async def request(self, **kwargs):
+    async def request(self, priority=0, **kwargs):
         cmd = '&'.join([f'{k}={v}' for k, v in kwargs.items() if v is not None])
         url = f"http://{self.host}/{self.sec}"
         if cmd:
             url = f"{url}/?{cmd}"
         self.lg.debug('request: %s', url)
-        async with self._http_lck:
+        async with self._http_lck(priority):
             async with aiohttp.request("get", url=url) as req:
                 if req.status != 200:
                     self.lg.warning('%s returned %s (%s)', url, req.status, await req.text())
@@ -514,12 +523,24 @@ class MegaD:
             ret[f'{port}e{i}'] = x
         return ret
 
+    async def _update_i2c(self, params):
+        """
+        Обновление портов i2c
+        :param params: параметры url
+        :return:
+        """
+        _params = tuple(params.items())
+        return {
+            _params: await self.request(**params)
+        }
+
     async def get_config(self, nports=37):
         ret = defaultdict(lambda: defaultdict(list))
         ret['mqtt_id'] = await self.get_mqtt_id()
         ret['extenders'] = extenders = []
         ret['ext_in'] = ext_int = {}
         ret['ext_acts'] = ext_acts = {}
+        ret['i2c_sensors'] = i2c_sensors = []
         async for port, cfg in self.scan_ports(nports):
             if cfg.pty == "0":
                 ret['binary_sensor'][port].append({})
@@ -559,6 +580,16 @@ class MegaD:
                 values = values.split(';')
                 for n in range(len(values)):
                     ret['light'][f'{port}e{n}'].append({'dimmer': True, 'dimmer_scale': 16})
+            elif cfg.pty == '4' and cfg.gr == '0':
+                # i2c в режиме ANY
+                scan = cfg.src.find('a', text='I2C Scan')
+                self.lg.debug(f'find scan link: %s', scan)
+                if scan is not None:
+                    page = await self.request(pt=port, cmd='scan')
+                    req, parsed = parse_scan_page(page)
+                    self.lg.debug(f'scan results: %s', (req, parsed))
+                    ret['i2c'][port].append(parsed)
+                    i2c_sensors.extend(req)
             elif cfg.pty in ('3', '2', '4'):
                 http_cmd = 'get'
                 if cfg.d == '5' and cfg.pty == '3':

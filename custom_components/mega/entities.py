@@ -318,7 +318,7 @@ class MegaOutPort(MegaPushEntity):
         _cmd = {"cmd": f"{self.cmd_port}:{cmd}"}
         if self.addr:
             _cmd['addr'] = self.addr
-        await self.mega.request(**_cmd)
+        await self.mega.request(**_cmd, priority=-1)
         if self.index is not None:
             # обновление текущего стейта для ds2413
             await self.mega.get_port(
@@ -342,7 +342,7 @@ class MegaOutPort(MegaPushEntity):
         _cmd = {"cmd": f"{self.cmd_port}:{cmd}"}
         if self.addr:
             _cmd['addr'] = self.addr
-        await self.mega.request(**_cmd)
+        await self.mega.request(**_cmd, priority=-1)
         if self.index is not None:
             # обновление текущего стейта для ds2413
             await self.mega.get_port(

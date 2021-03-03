@@ -7,7 +7,7 @@ import voluptuous as vol
 
 from homeassistant.const import (
     CONF_SCAN_INTERVAL, CONF_ID, CONF_NAME, CONF_DOMAIN,
-    CONF_UNIT_OF_MEASUREMENT, CONF_HOST, CONF_VALUE_TEMPLATE
+    CONF_UNIT_OF_MEASUREMENT, CONF_HOST, CONF_VALUE_TEMPLATE, CONF_DEVICE_CLASS
 )
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers.service import bind_hass
@@ -31,6 +31,10 @@ CUSTOMIZE_PORT = {
     }),
     vol.Optional(CONF_DOMAIN): vol.Any('light', 'switch'),
     vol.Optional(CONF_UNIT_OF_MEASUREMENT, description='единицы измерений, либо строка либо мепинг'):
+        vol.Any(str, {
+            vol.Required(str): str
+        }),
+    vol.Optional(CONF_DEVICE_CLASS):
         vol.Any(str, {
             vol.Required(str): str
         }),

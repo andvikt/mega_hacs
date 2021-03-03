@@ -25,6 +25,7 @@ class Config:
     inta: str = field(compare=False, hash=False, default=None)
     misc: str = field(compare=False, hash=False, default=None)
     eact: str = field(compare=False, hash=False, default=None)
+    src: BeautifulSoup = field(compare=False, hash=False, default=None)
 
 
 def parse_config(page: str):
@@ -43,7 +44,7 @@ def parse_config(page: str):
         v = page.find('input', attrs={'name': x})
         if v:
             ret[x] = v['value']
-    return Config(**ret)
+    return Config(**ret, src=page)
 
 
 DIGITAL_IN = Config(pty="0")
