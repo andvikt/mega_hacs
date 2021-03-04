@@ -545,7 +545,7 @@ class MegaD:
                 for n in range(len(values)):
                     ext_page = await self.request(pt=port, ext=n)
                     ext_cfg = parse_config(ext_page)
-                    pt = f'{port}e{n}' if not self.new_naming else f'{port:02}e{n}'
+                    pt = f'{port}e{n}' if not self.new_naming else f'{port:02}e{n:02}'
                     if ext_cfg.ety == '1':
                         ret['light'][pt].append({})
                     elif ext_cfg.ety == '0':
@@ -557,7 +557,7 @@ class MegaD:
                 values = await self.request(pt=port, cmd='get')
                 values = values.split(';')
                 for n in range(len(values)):
-                    pt = f'{port}e{n}' if not self.new_naming else f'{port:02}e{n}'
+                    pt = f'{port}e{n}' if not self.new_naming else f'{port:02}e{n:02}'
                     ret['light'][pt].append({'dimmer': True, 'dimmer_scale': 16})
             elif cfg.pty == '4' and (cfg.gr == '0' or _cust.get(CONF_FORCE_I2C_SCAN)):
                 # i2c в режиме ANY
