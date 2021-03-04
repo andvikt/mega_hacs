@@ -11,7 +11,7 @@ from homeassistant.const import CONF_HOST, CONF_ID, CONF_PASSWORD, CONF_SCAN_INT
 from homeassistant.core import callback, HomeAssistant
 from .const import DOMAIN, CONF_PORT_TO_SCAN, CONF_RELOAD, PLATFORMS, CONF_MQTT_INPUTS, \
     CONF_NPORTS, CONF_UPDATE_ALL, CONF_POLL_OUTS, CONF_FAKE_RESPONSE, CONF_FORCE_D, \
-    CONF_ALLOW_HOSTS, CONF_PROTECTED, CONF_RESTORE_ON_RESTART  # pylint:disable=unused-import
+    CONF_ALLOW_HOSTS, CONF_PROTECTED, CONF_RESTORE_ON_RESTART, CONF_UPDATE_TIME  # pylint:disable=unused-import
 from .hub import MegaD
 from . import exceptions
 
@@ -33,6 +33,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Optional(CONF_RESTORE_ON_RESTART, default=True): bool,
         vol.Optional(CONF_PROTECTED, default=True): bool,
         vol.Optional(CONF_ALLOW_HOSTS, default='::1;127.0.0.1'): str,
+        vol.Optional(CONF_UPDATE_TIME, default=True): bool,
     },
 )
 
@@ -152,6 +153,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Optional(CONF_RESTORE_ON_RESTART, default=e.get(CONF_RESTORE_ON_RESTART, False)): bool,
                 vol.Optional(CONF_PROTECTED, default=e.get(CONF_PROTECTED, True)): bool,
                 vol.Optional(CONF_ALLOW_HOSTS, default='::1;127.0.0.1'): str,
+                vol.Optional(CONF_UPDATE_TIME, default=e.get(CONF_UPDATE_TIME, False)): bool,
                 # vol.Optional(CONF_INVERT, default=''): str,
             }),
         )

@@ -28,7 +28,8 @@
                     "protected": "Protected",
                     "allow_hosts": "Allowed hosts",
                     "restore_on_restart": "Restore outs on restart",
-                    "poll_outs": "Poll outs"
+                    "poll_outs": "Poll outs",
+                    "update_time": "Sync time"
                 }
             }
         }
@@ -47,7 +48,8 @@
                   "protected": "Protected",
                   "allow_hosts": "Allowed hosts",
                   "restore_on_restart": "Restore outs on restart",
-                  "poll_outs": "Poll outs"
+                  "poll_outs": "Poll outs",
+                  "update_time": "Sync time"
                 }
             }
         }

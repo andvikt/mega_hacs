@@ -86,6 +86,7 @@ class MegaD:
             ext_acts=None,
             i2c_sensors=None,
             new_naming=False,
+            update_time=False,
             **kwargs,
     ):
         """Initialize."""
@@ -105,6 +106,7 @@ class MegaD:
         self.ext_in = ext_in or {}
         self.ext_act = ext_acts or {}
         self.i2c_sensors = i2c_sensors or []
+        self._update_time = update_time
         self.poll_outs = poll_outs
         self.update_all = update_all if update_all is not None else True
         self.nports = nports
@@ -250,6 +252,8 @@ class MegaD:
         Polling ports
         """
         self.lg.debug('poll')
+        if self._update_time:
+            await self.update_time()
         for x in self.i2c_sensors:
             if not isinstance(x, dict):
                 continue
@@ -649,4 +653,8 @@ class MegaD:
                 else:
                     await x.async_turn_off()
 
-
+    async def update_time(self):
+        await self.request(
+            cf=7,
+            stime=datetime.now().strftime('%H:%M:%S')
+        )
