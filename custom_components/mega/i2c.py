@@ -100,6 +100,7 @@ i2c_classes = {
         ('object', DEVICE_CLASS_TEMPERATURE),
     ],
     'ptsensor': [
+        Skip,
         Request(delay=1),  # запрос на измерение
         DEVICE_CLASS_PRESSURE,
         DEVICE_CLASS_TEMPERATURE,
