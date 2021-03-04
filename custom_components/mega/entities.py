@@ -157,6 +157,8 @@ class MegaPushEntity(BaseMegaEntity):
 
     def __update(self, value: dict):
         self._update(value)
+        if self.hass is None:
+            return
         self.async_write_ha_state()
         self.lg.debug(f'state after update %s', self.state)
         if self.mega.mqtt_inputs and not _events_on:
