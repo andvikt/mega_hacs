@@ -593,6 +593,7 @@ class MegaD:
                     ret['i2c'][port].extend(parsed)
                     i2c_sensors.extend(req)
             elif cfg.pty == '4' and cfg.m == '2':
+                # scl исключаем из сканирования
                 continue
             elif cfg.pty in ('3', '2', '4'):
                 http_cmd = 'get'
