@@ -592,6 +592,8 @@ class MegaD:
                     self.lg.debug(f'scan results: %s', (req, parsed))
                     ret['i2c'][port].extend(parsed)
                     i2c_sensors.extend(req)
+            elif cfg.pty == '4' and cfg.m == '2':
+                continue
             elif cfg.pty in ('3', '2', '4'):
                 http_cmd = 'get'
                 if cfg.d == '5' and cfg.pty == '3':
