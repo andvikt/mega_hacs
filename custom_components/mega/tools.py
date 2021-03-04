@@ -57,7 +57,7 @@ class PriorityLock(asyncio.Lock):
                 locked and returns True.
                 """
         if (not self._locked and (self._waiters is None or
-                                  all(w.cancelled() for _, w in self._waiters))):
+                                  all(w.cancelled() for _, _, w in self._waiters))):
             self._locked = True
             return True
 
