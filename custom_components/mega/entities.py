@@ -93,7 +93,7 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
 
     @property
     def device_info(self):
-        _pt = self.port if not self.mega.new_naming else f'{self.port:02}'
+        _pt = self.port if not self.mega.new_naming else f'{self.port:02}' if isinstance(self.port, int) else self.port
         return {
             "identifiers": {
                 # Serial numbers are unique identifiers within a specific domain
