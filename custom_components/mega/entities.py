@@ -60,7 +60,7 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
         self._lg = None
         self._unique_id = unique_id or f"mega_{mega.id}_{port}" + \
                                        (f"_{id_suffix}" if id_suffix else "")
-        _pt = port if not mega.new_naming else f'{port:02}'
+        _pt = port if not mega.new_naming else f'{port:02}' if isinstance(port, int) else port
         self._name = name or f"{mega.id}_{_pt}" + \
                             (f"_{id_suffix}" if id_suffix else "")
         self._customize: dict = None
@@ -123,7 +123,7 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
     def name(self):
         c = self.customize.get(CONF_NAME)
         if not isinstance(c, str):
-            _pt = self.port if not self.mega.new_naming else f'{self.port:02}'
+            _pt = self.port if not self.mega.new_naming else f'{self.port:02}' if isinstance(self.port, int) else self.port
             c = self._name or f"{self.mega.id}_p{_pt}"
         return c
 
