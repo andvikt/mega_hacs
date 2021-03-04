@@ -70,6 +70,13 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
             self.mega.ds2413_ports |= {self.port}
 
     @property
+    def enabled(self):
+        if '<' in self.name:
+            return False
+        else:
+            return super().enabled
+
+    @property
     def customize(self):
         if self.hass is None:
             return {}

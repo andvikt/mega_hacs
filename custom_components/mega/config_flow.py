@@ -11,7 +11,8 @@ from homeassistant.const import CONF_HOST, CONF_ID, CONF_PASSWORD, CONF_SCAN_INT
 from homeassistant.core import callback, HomeAssistant
 from .const import DOMAIN, CONF_PORT_TO_SCAN, CONF_RELOAD, PLATFORMS, CONF_MQTT_INPUTS, \
     CONF_NPORTS, CONF_UPDATE_ALL, CONF_POLL_OUTS, CONF_FAKE_RESPONSE, CONF_FORCE_D, \
-    CONF_ALLOW_HOSTS, CONF_PROTECTED, CONF_RESTORE_ON_RESTART, CONF_UPDATE_TIME  # pylint:disable=unused-import
+    CONF_ALLOW_HOSTS, CONF_PROTECTED, CONF_RESTORE_ON_RESTART, CONF_UPDATE_TIME, \
+    REMOVE_CONFIG  # pylint:disable=unused-import
 from .hub import MegaD
 from . import exceptions
 
@@ -131,7 +132,10 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 cfg = dict(self.config_entry.data)
                 for x in PLATFORMS:
                     cfg.pop(x, None)
+                for x in REMOVE_CONFIG:
+                    cfg.pop(x, default=None)
                 cfg.update(new)
+
             cfg['new_naming'] = new_naming
             return self.async_create_entry(
                 title='',

@@ -557,7 +557,7 @@ class MegaD:
         ret['i2c_sensors'] = i2c_sensors = []
         async for port, cfg in self.scan_ports(nports):
             _cust = self.customize.get(port)
-            if not isinstance(_customise, dict):
+            if not isinstance(_cust, dict):
                 _cust = {}
             if cfg.pty == "0":
                 ret['binary_sensor'][port].append({})

@@ -56,3 +56,14 @@ SINGLE_CLICK = 'single'
 DOUBLE_CLICK = 'double'
 
 PATT_FW = re.compile(r'fw:\s(.+)\)')
+
+REMOVE_CONFIG = [
+    'extenders',
+    'ext_in',
+    'ext_acts',
+    'i2c_sensors',
+    'binary_sensor',
+    'light',
+    'i2c',
+    'sensor',
+]

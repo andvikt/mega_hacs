@@ -94,6 +94,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
                     config_entry=config_entry,
                     **data,
                 )
+                if '<' in sensor.name:
+                    continue
                 devices.append(sensor)
 
     async_add_devices(devices)

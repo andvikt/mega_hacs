@@ -69,6 +69,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         for data in cfg:
             hub.lg.debug(f'add light on port %s with data %s', port, data)
             light = MegaLight(mega=hub, port=port, config_entry=config_entry, **data)
+            if '<' in light.name:
+                continue
             devices.append(light)
     async_add_devices(devices)
 
