@@ -24,7 +24,7 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Required(CONF_PASSWORD, default="sec"): str,
         vol.Optional(CONF_SCAN_INTERVAL, default=0): int,
         vol.Optional(CONF_POLL_OUTS, default=False): bool,
-        vol.Optional(CONF_PORT_TO_SCAN, default=0): int,
+        # vol.Optional(CONF_PORT_TO_SCAN, default=0): int,
         vol.Optional(CONF_MQTT_INPUTS, default=False): bool,
         vol.Optional(CONF_NPORTS, default=37): int,
         vol.Optional(CONF_UPDATE_ALL, default=True): bool,
@@ -82,6 +82,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             await hub.stop()
             hub.lg.debug(f'config loaded: %s', config)
             config.update(user_input)
+            config['new_naming'] = True
             return self.async_create_entry(
                 title=user_input.get(CONF_ID, user_input[CONF_HOST]),
                 data=config,
@@ -113,6 +114,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_init(self, user_input=None):
         """Manage the options."""
+        new_naming = self.config_entry.data.get('new_naming', False)
         hub = await get_hub(self.hass, self.config_entry.data)
         if user_input is not None:
             reload = user_input.pop(CONF_RELOAD)
@@ -129,6 +131,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 for x in PLATFORMS:
                     cfg.pop(x, None)
                 cfg.update(new)
+            cfg['new_naming'] = new_naming
             return self.async_create_entry(
                 title='',
                 data=cfg,
@@ -139,7 +142,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             data_schema=vol.Schema({
                 vol.Optional(CONF_SCAN_INTERVAL, default=e.get(CONF_SCAN_INTERVAL, 0)): int,
                 vol.Optional(CONF_POLL_OUTS, default=e.get(CONF_POLL_OUTS, False)): bool,
-                vol.Optional(CONF_PORT_TO_SCAN, default=e.get(CONF_PORT_TO_SCAN, 0)): int,
+                # vol.Optional(CONF_PORT_TO_SCAN, default=e.get(CONF_PORT_TO_SCAN, 0)): int,
                 vol.Optional(CONF_MQTT_INPUTS, default=e.get(CONF_MQTT_INPUTS, True)): bool,
                 vol.Optional(CONF_NPORTS, default=e.get(CONF_NPORTS, 37)): int,
                 vol.Optional(CONF_RELOAD, default=False): bool,

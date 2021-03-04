@@ -16,7 +16,7 @@ from homeassistant.components import mqtt
 from homeassistant.config_entries import ConfigEntry
 from .const import DOMAIN, CONF_INVERT, CONF_RELOAD, PLATFORMS, CONF_PORTS, CONF_CUSTOM, CONF_SKIP, CONF_PORT_TO_SCAN, \
     CONF_MQTT_INPUTS, CONF_HTTP, CONF_RESPONSE_TEMPLATE, CONF_ACTION, CONF_GET_VALUE, CONF_ALLOW_HOSTS, \
-    CONF_CONV_TEMPLATE, CONF_ALL, CONF_FORCE_D, CONF_DEF_RESPONSE
+    CONF_CONV_TEMPLATE, CONF_ALL, CONF_FORCE_D, CONF_DEF_RESPONSE, CONF_FORCE_I2C_SCAN
 from .hub import MegaD
 from .config_flow import ConfigFlow
 from .http import MegaView
@@ -46,6 +46,7 @@ CUSTOMIZE_PORT = {
     vol.Optional(CONF_GET_VALUE, default=True): bool,
     vol.Optional(CONF_CONV_TEMPLATE): cv.template,
     vol.Optional(CONF_VALUE_TEMPLATE): cv.template,
+    vol.Optional(CONF_FORCE_I2C_SCAN): bool,
 }
 CUSTOMIZE_DS2413 = {
     vol.Optional(str.lower, description='адрес и индекс устройства'): CUSTOMIZE_PORT

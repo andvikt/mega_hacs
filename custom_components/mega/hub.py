@@ -20,7 +20,7 @@ from .config_parser import parse_config, DS2413, MCP230, MCP230_OUT, MCP230_IN, 
 from .const import (
     TEMP, HUM, PRESS,
     LUX, PATT_SPLIT, DOMAIN,
-    CONF_HTTP, EVENT_BINARY_SENSOR, CONF_CUSTOM, CONF_FORCE_D, CONF_DEF_RESPONSE, PATT_FW
+    CONF_HTTP, EVENT_BINARY_SENSOR, CONF_CUSTOM, CONF_FORCE_D, CONF_DEF_RESPONSE, PATT_FW, CONF_FORCE_I2C_SCAN
 )
 from .entities import set_events_off, BaseMegaEntity, MegaOutPort
 from .exceptions import CannotConnect, NoPort
@@ -85,6 +85,7 @@ class MegaD:
             ext_in=None,
             ext_acts=None,
             i2c_sensors=None,
+            new_naming=False,
             **kwargs,
     ):
         """Initialize."""
@@ -99,6 +100,7 @@ class MegaD:
                     self.http.hubs[mqtt_id] = self
         else:
             self.http = None
+        self.new_naming = new_naming
         self.extenders = extenders or []
         self.ext_in = ext_in or {}
         self.ext_act = ext_acts or {}
@@ -267,8 +269,8 @@ class MegaD:
             await self.get_all_ports(check_skip=True)
         elif len(self.sensors) > 0:
             await self.get_sensors()
-        else:
-            await self.get_port(self.port_to_scan)
+        # else:
+        #     await self.get_port(self.port_to_scan)
         await self._get_ds2413()
         return self.values
 
@@ -550,6 +552,9 @@ class MegaD:
         ret['ext_acts'] = ext_acts = {}
         ret['i2c_sensors'] = i2c_sensors = []
         async for port, cfg in self.scan_ports(nports):
+            _cust = self.customize.get(port)
+            if not isinstance(_customise, dict):
+                _cust = {}
             if cfg.pty == "0":
                 ret['binary_sensor'][port].append({})
             elif cfg.pty == "1" and (cfg.m in ['0', '1', '3'] or cfg.m is None):
@@ -588,7 +593,7 @@ class MegaD:
                 values = values.split(';')
                 for n in range(len(values)):
                     ret['light'][f'{port}e{n}'].append({'dimmer': True, 'dimmer_scale': 16})
-            elif cfg.pty == '4' and cfg.gr == '0':
+            elif cfg.pty == '4' and (cfg.gr == '0' or _cust.get(CONF_FORCE_I2C_SCAN)):
                 # i2c в режиме ANY
                 scan = cfg.src.find('a', text='I2C Scan')
                 self.lg.debug(f'find scan link: %s', scan)

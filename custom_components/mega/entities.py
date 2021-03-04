@@ -60,7 +60,8 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
         self._lg = None
         self._unique_id = unique_id or f"mega_{mega.id}_{port}" + \
                                        (f"_{id_suffix}" if id_suffix else "")
-        self._name = name or f"{mega.id}_{port}" + \
+        _pt = port if not mega.new_naming else f'{port:02}'
+        self._name = name or f"{mega.id}_{_pt}" + \
                             (f"_{id_suffix}" if id_suffix else "")
         self._customize: dict = None
         self.index = index
@@ -85,6 +86,7 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
 
     @property
     def device_info(self):
+        _pt = self.port if not self.mega.new_naming else f'{self.port:02}'
         return {
             "identifiers": {
                 # Serial numbers are unique identifiers within a specific domain
@@ -93,7 +95,7 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
             "config_entries": [
                 self.config_entry,
             ],
-            "name": f'{self._mega_id} port {self.port}',
+            "name": f'{self._mega_id} port {_pt}',
             "manufacturer": 'ab-log.ru',
             # "model": self.light.productname,
             "sw_version": self.mega.fw,
@@ -114,7 +116,8 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
     def name(self):
         c = self.customize.get(CONF_NAME)
         if not isinstance(c, str):
-            c = self._name or f"{self.mega.id}_p{self.port}"
+            _pt = self.port if not self.mega.new_naming else f'{self.port:02}'
+            c = self._name or f"{self.mega.id}_p{_pt}"
         return c
 
     @property

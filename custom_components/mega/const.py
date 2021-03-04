@@ -34,6 +34,7 @@ CONF_DEF_RESPONSE = 'def_response'
 CONF_RESTORE_ON_RESTART = 'restore_on_restart'
 CONF_CLICK_TIME = 'click_time'
 CONF_LONG_TIME = 'long_time'
+CONF_FORCE_I2C_SCAN = 'force_i2c_scan'
 PLATFORMS = [
     "light",
     "switch",
