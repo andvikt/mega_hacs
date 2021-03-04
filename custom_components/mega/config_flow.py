@@ -133,7 +133,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 for x in PLATFORMS:
                     cfg.pop(x, None)
                 for x in REMOVE_CONFIG:
-                    cfg.pop(x, default=None)
+                    cfg.pop(x, None)
                 cfg.update(new)
 
             cfg['new_naming'] = new_naming
