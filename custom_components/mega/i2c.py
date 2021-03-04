@@ -1,3 +1,4 @@
+from dataclasses import dataclass, field
 from urllib.parse import parse_qsl, urlparse
 from bs4 import BeautifulSoup
 from homeassistant.const import (
@@ -25,6 +26,12 @@ def parse_scan_page(page: str):
             if c is Skip:
                 continue
             elif c is Request:
+                req.append(params)
+                continue
+            elif isinstance(c, Request):
+                if c.delay:
+                    params = params.copy()
+                    params['delay'] = c.delay
                 req.append(params)
                 continue
             elif isinstance(c, tuple):
@@ -55,8 +62,9 @@ class Skip:
     pass
 
 
+@dataclass
 class Request:
-    pass
+    delay: float = None
 
 
 i2c_classes = {
@@ -92,7 +100,7 @@ i2c_classes = {
         ('object', DEVICE_CLASS_TEMPERATURE),
     ],
     'ptsensor': [
-        Request,  # запрос на измерение
+        Request(delay=1),  # запрос на измерение
         DEVICE_CLASS_PRESSURE,
         DEVICE_CLASS_TEMPERATURE,
     ],

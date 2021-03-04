@@ -530,10 +530,16 @@ class MegaD:
         :return:
         """
         _params = tuple(params.items())
+        delay = None
+        if 'delay' in params:
+            delay = params.pop('delay')
         ret = {
             _params: await self.request(**params)
         }
         self.lg.debug('i2c response: %s', ret)
+        if delay:
+            self.lg.debug('delay %s', delay)
+            await asyncio.sleep(delay)
         return ret
 
     async def get_config(self, nports=37):
