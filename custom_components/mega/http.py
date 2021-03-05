@@ -77,7 +77,11 @@ class MegaView(HomeAssistantView):
             if hub is None:
                 _LOGGER.warning(f'can not find mdid={request.query["mdid"]} in {list(self.hubs)}')
         if hub is None and request.remote in ['::1', '127.0.0.1']:
-            hub = self.hubs.get('__def')
+            try:
+                hub = list(self.hubs.values())[0]
+            except IndexError:
+                _LOGGER.warning(f'can not find mdid={request.query["mdid"]} in {list(self.hubs)}')
+                return Response(status=400)
         elif hub is None:
             return Response(status=400)
         data = dict(request.query)
@@ -87,8 +91,10 @@ class MegaView(HomeAssistantView):
         )
         _LOGGER.debug(f"Request: %s from '%s'", data, request.remote)
         make_ints(data)
-        if data.get('st') == '1' and hub.restore_on_restart:
-            asyncio.create_task(self.later_restore(hub))
+        if data.get('st') == '1':
+            hass.async_create_task(hub.reload())
+            if hub.restore_on_restart:
+                hass.async_create_task(self.later_restore(hub))
             return Response(status=200)
         port = data.get('pt')
         data = data.copy()
@@ -164,4 +170,3 @@ class MegaView(HomeAssistantView):
         await asyncio.sleep(1)
         _LOGGER.debug('force update')
         await hub.updater.async_refresh()
-

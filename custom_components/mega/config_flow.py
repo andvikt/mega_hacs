@@ -65,7 +65,7 @@ async def validate_input(hass: core.HomeAssistant, data):
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for mega."""
 
-    VERSION = 22
+    VERSION = 23
     CONNECTION_CLASS = config_entries.CONN_CLASS_ASSUMED
 
     async def async_step_user(self, user_input=None):
@@ -130,8 +130,6 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
 
                 _LOGGER.debug(f'new config: %s', new)
                 cfg = dict(self.config_entry.data)
-                for x in PLATFORMS:
-                    cfg.pop(x, None)
                 for x in REMOVE_CONFIG:
                     cfg.pop(x, None)
                 cfg.update(new)

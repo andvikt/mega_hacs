@@ -1,6 +1,7 @@
 """Platform for light integration."""
 import logging
 import voluptuous as vol
+import struct
 
 from homeassistant.components.sensor import (
     PLATFORM_SCHEMA as SENSOR_SCHEMA,
@@ -19,7 +20,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.template import Template
 from .entities import MegaPushEntity
-from .const import CONF_KEY, TEMP, HUM, W1, W1BUS, CONF_CONV_TEMPLATE
+from .const import CONF_KEY, TEMP, HUM, W1, W1BUS, CONF_CONV_TEMPLATE, CONF_HEX_TO_FLOAT
 from .hub import MegaD
 import re
 
@@ -114,7 +115,17 @@ class MegaI2C(MegaPushEntity):
     @property
     def state(self):
         # self.lg.debug(f'get % all states: %', self._params, self.mega.values)
-        return self.mega.values.get(self._params)
+        ret = self.mega.values.get(self._params)
+        if self.customize.get(CONF_HEX_TO_FLOAT):
+            try:
+                ret = struct.unpack('!f', bytes.fromhex('41973333'))[0]
+            except:
+                self.lg.warning(f'could not convert {ret} form hex to float')
+        tmpl: Template = self.customize.get(CONF_CONV_TEMPLATE, self.customize.get(CONF_VALUE_TEMPLATE))
+        if tmpl is not None and self.hass is not None:
+            tmpl.hass = self.hass
+            ret = tmpl.async_render({'value': ret})
+        return ret
 
     @property
     def device_class(self):
@@ -197,6 +208,11 @@ class Mega1WSensor(MegaPushEntity):
             ret = str(ret)
         except:
             ret = None
+        if self.customize.get(CONF_HEX_TO_FLOAT):
+            try:
+                ret = struct.unpack('!f', bytes.fromhex(ret))[0]
+            except:
+                self.lg.warning(f'could not convert {ret} form hex to float')
         tmpl: Template = self.customize.get(CONF_CONV_TEMPLATE, self.customize.get(CONF_VALUE_TEMPLATE))
         if tmpl is not None and self.hass is not None:
             tmpl.hass = self.hass

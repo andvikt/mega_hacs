@@ -36,6 +36,7 @@ CONF_CLICK_TIME = 'click_time'
 CONF_LONG_TIME = 'long_time'
 CONF_FORCE_I2C_SCAN = 'force_i2c_scan'
 CONF_UPDATE_TIME = 'update_time'
+CONF_HEX_TO_FLOAT = 'hex_to_float'
 PLATFORMS = [
     "light",
     "switch",

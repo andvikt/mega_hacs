@@ -10,6 +10,7 @@ import json
 
 from bs4 import BeautifulSoup
 from homeassistant.components import mqtt
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     DEVICE_CLASS_TEMPERATURE, DEVICE_CLASS_HUMIDITY, DEVICE_CLASS_PRESSURE,
     DEVICE_CLASS_ILLUMINANCE, TEMP_CELSIUS, PERCENTAGE, LIGHT_LUX
@@ -20,7 +21,8 @@ from .config_parser import parse_config, DS2413, MCP230, MCP230_OUT, MCP230_IN, 
 from .const import (
     TEMP, HUM, PRESS,
     LUX, PATT_SPLIT, DOMAIN,
-    CONF_HTTP, EVENT_BINARY_SENSOR, CONF_CUSTOM, CONF_FORCE_D, CONF_DEF_RESPONSE, PATT_FW, CONF_FORCE_I2C_SCAN
+    CONF_HTTP, EVENT_BINARY_SENSOR, CONF_CUSTOM, CONF_FORCE_D, CONF_DEF_RESPONSE, PATT_FW, CONF_FORCE_I2C_SCAN,
+    REMOVE_CONFIG
 )
 from .entities import set_events_off, BaseMegaEntity, MegaOutPort
 from .exceptions import CannotConnect, NoPort
@@ -63,6 +65,7 @@ class MegaD:
     def __init__(
             self,
             hass: HomeAssistant,
+            config: ConfigEntry,
             loop: asyncio.AbstractEventLoop,
             host: str,
             password: str,
@@ -90,6 +93,7 @@ class MegaD:
             **kwargs,
     ):
         """Initialize."""
+        self.config = config
         if mqtt_inputs is None or mqtt_inputs == 'None' or mqtt_inputs is False:
             self.http = hass.data.get(DOMAIN, {}).get(CONF_HTTP)
             if not self.http is None:
@@ -620,3 +624,13 @@ class MegaD:
             cf=7,
             stime=datetime.now().strftime('%H:%M:%S')
         )
+
+    async def reload(self):
+        new = await self.get_config(nports=self.nports)
+        self.lg.debug(f'new config: %s', new)
+        cfg = dict(self.config.data)
+        for x in REMOVE_CONFIG:
+            cfg.pop(x, None)
+        cfg.update(new)
+        self.config.data = cfg
+        await self.hass.config_entries.async_reload(self.config.entry_id)
