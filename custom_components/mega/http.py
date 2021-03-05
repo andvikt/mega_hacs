@@ -92,9 +92,7 @@ class MegaView(HomeAssistantView):
         _LOGGER.debug(f"Request: %s from '%s'", data, request.remote)
         make_ints(data)
         if data.get('st') == '1':
-            hass.async_create_task(hub.reload())
-            if hub.restore_on_restart:
-                hass.async_create_task(self.later_restore(hub))
+            hass.async_create_task(self.later_restore(hub))
             return Response(status=200)
         port = data.get('pt')
         data = data.copy()
@@ -164,7 +162,9 @@ class MegaView(HomeAssistantView):
         :return:
         """
         await asyncio.sleep(0.2)
-        await hub.restore_states()
+        if hub.restore_on_restart:
+            await hub.restore_states()
+        await hub.reload()
 
     async def later_update(self, hub):
         await asyncio.sleep(1)
