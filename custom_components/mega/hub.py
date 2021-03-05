@@ -65,13 +65,13 @@ class MegaD:
     def __init__(
             self,
             hass: HomeAssistant,
-            config: ConfigEntry,
             loop: asyncio.AbstractEventLoop,
             host: str,
             password: str,
             mqtt: mqtt.MQTT,
             lg: logging.Logger,
             id: str,
+            config: ConfigEntry = None,
             mqtt_inputs: bool = True,
             mqtt_id: str = None,
             scan_interval=60,
@@ -625,7 +625,7 @@ class MegaD:
             stime=datetime.now().strftime('%H:%M:%S')
         )
 
-    async def reload(self):
+    async def reload(self, reload_entry=True):
         new = await self.get_config(nports=self.nports)
         self.lg.debug(f'new config: %s', new)
         cfg = dict(self.config.data)
@@ -633,4 +633,5 @@ class MegaD:
             cfg.pop(x, None)
         cfg.update(new)
         self.config.data = cfg
-        await self.hass.config_entries.async_reload(self.config.entry_id)
+        if reload_entry:
+            await self.hass.config_entries.async_reload(self.config.entry_id)

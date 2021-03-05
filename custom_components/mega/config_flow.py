@@ -117,24 +117,19 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_init(self, user_input=None):
         """Manage the options."""
         new_naming = self.config_entry.data.get('new_naming', False)
-        hub = await get_hub(self.hass, self.config_entry.data)
         if user_input is not None:
             reload = user_input.pop(CONF_RELOAD)
             cfg = dict(self.config_entry.data)
             cfg.update(user_input)
-            hub = await get_hub(self.hass, cfg)
-            if reload:
-                await hub.start()
-                new = await hub.get_config(nports=user_input.get(CONF_NPORTS, 37))
-                await hub.stop()
-
-                _LOGGER.debug(f'new config: %s', new)
-                cfg = dict(self.config_entry.data)
-                for x in REMOVE_CONFIG:
-                    cfg.pop(x, None)
-                cfg.update(new)
-
             cfg['new_naming'] = new_naming
+            self.config_entry.data = cfg
+            await get_hub(self.hass, cfg)
+
+            if reload:
+                id = self.config_entry.data.get('id', self.config_entry.entry_id)
+                hub: MegaD = self.hass.data[DOMAIN].get(id)
+                await hub.reload(reload_entry=False)
+
             return self.async_create_entry(
                 title='',
                 data=cfg,

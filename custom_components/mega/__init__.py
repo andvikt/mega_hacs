@@ -174,10 +174,9 @@ async def updater(hass: HomeAssistant, entry: ConfigEntry):
     :param entry:
     :return:
     """
-    hub: MegaD = hass.data[DOMAIN][entry.data[CONF_ID]]
-    hub.poll_interval = entry.options[CONF_SCAN_INTERVAL]
-    hub.port_to_scan = entry.options.get(CONF_PORT_TO_SCAN, 0)
-    entry.data = entry.options
+    # hub: MegaD = hass.data[DOMAIN][entry.data[CONF_ID]]
+    # hub.poll_interval = entry.options[CONF_SCAN_INTERVAL]
+    # hub.port_to_scan = entry.options.get(CONF_PORT_TO_SCAN, 0)
     await hass.config_entries.async_reload(entry.entry_id)
     return True
 
