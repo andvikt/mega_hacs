@@ -525,7 +525,7 @@ class MegaD:
                     pt = f'{port}e{n}'
                     name = pt if not self.new_naming else f'{port:02}e{n:02}'
                     ret['light'][pt].append({'dimmer': True, 'dimmer_scale': 16, 'name': f'{self.id}_{name}'})
-            if cfg.pty == '4': #and (cfg.gr == '0' or _cust.get(CONF_FORCE_I2C_SCAN))
+            if cfg.pty == '4':  # and (cfg.gr == '0' or _cust.get(CONF_FORCE_I2C_SCAN))
                 # i2c в режиме ANY
                 scan = cfg.src.find('a', text='I2C Scan')
                 self.lg.debug(f'find scan link: %s', scan)

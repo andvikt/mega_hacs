@@ -22,8 +22,8 @@
   `sensor`)
 - Поддержка rgb+w лент как с использованием диммеров, так и адресных лент на чипах ws28xx и подобных, 
   [подробнее про rgbw](https://github.com/andvikt/mega_hacs/wiki/rgbw)
-- Плавное диммирование с поддержкой [transition](https://www.home-assistant.io/integrations/scene#using-scene-transitions) 
-  для любых диммируемых объектов (в том числе с аппаратной поддержкой и без)
+- Плавное диммирование для любых диммируемых объектов (в том числе с аппаратной поддержкой и без),
+  [подробнее про smooth](https://github.com/andvikt/mega_hacs/wiki/smooth)
 - Возможность работы с несколькими megad
 - Обратная связь по [http](https://github.com/andvikt/mega_hacs/wiki/http) 
   будет выключена в версиях >= 1.0.0, тк в нем нет необходимости)
