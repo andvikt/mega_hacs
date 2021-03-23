@@ -97,20 +97,4 @@ class MegaBinarySensor(BinarySensorEntity, MegaPushEntity):
 
     def _update(self, payload: dict):
         self.mega.values[self.port] = payload
-        if not self.mega.mqtt_inputs:
-            return
-
-        template: Template = self.customize.get(CONF_RESPONSE_TEMPLATE, None)
-        if template is not None:
-            template.hass = self.hass
-            ret = template.async_render(payload)
-            self.mega.lg.debug(f'response: %s', ret)
-            self.hass.async_create_task(
-                self.mega.request(pt=self.port, cmd=ret)
-            )
-        elif self.mega.force_d:
-            self.mega.lg.debug(f'response d')
-            self.hass.async_create_task(
-                self.mega.request(pt=self.port, cmd='d')
-            )
 

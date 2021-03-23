@@ -115,3 +115,5 @@ class PriorityLock(asyncio.Lock):
         # taken already, will hit this again and wake up a new waiter.
         if not fut.done():
             fut.set_result(True)
+
+

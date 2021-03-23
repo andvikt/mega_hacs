@@ -6,7 +6,15 @@ from homeassistant.const import (
     DEVICE_CLASS_TEMPERATURE,
     DEVICE_CLASS_ILLUMINANCE,
     DEVICE_CLASS_PRESSURE,
+    PERCENTAGE,
+    LIGHT_LUX,
+    TEMP_CELSIUS,
+    CONCENTRATION_PARTS_PER_MILLION,
+    PRESSURE_BAR,
 )
+from collections import namedtuple
+
+DeviceType = namedtuple('DeviceType', 'device_class,unit_of_measurement,suffix')
 
 
 def parse_scan_page(page: str):
@@ -34,12 +42,11 @@ def parse_scan_page(page: str):
                     params['delay'] = c.delay
                 req.append(params)
                 continue
-            elif isinstance(c, tuple):
-                suffix, c = c
-            elif isinstance(c, str):
-                suffix = c
+            elif isinstance(c, DeviceType):
+                c, m, suffix = c
             else:
-                suffix = ''
+                continue
+            suffix = suffix or c
             if 'addr' in params:
                 suffix += f"_{params['addr']}" if suffix else str(params['addr'])
             if suffix:
@@ -49,10 +56,12 @@ def parse_scan_page(page: str):
             params = params.copy()
             if i > 0:
                 params['i2c_par'] = i
+
             ret.append({
                 'id_suffix': _dev,
                 'device_class': c,
                 'params': params,
+                'unit_of_measurement': m,
             })
             req.append(params)
     return req, ret
@@ -69,50 +78,50 @@ class Request:
 
 i2c_classes = {
     'htu21d': [
-        DEVICE_CLASS_HUMIDITY,
-        DEVICE_CLASS_TEMPERATURE,
+        DeviceType(DEVICE_CLASS_HUMIDITY, PERCENTAGE, None),
+        DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, None),
     ],
     'sht31': [
-        DEVICE_CLASS_HUMIDITY,
-        DEVICE_CLASS_TEMPERATURE,
+        DeviceType(DEVICE_CLASS_HUMIDITY, PERCENTAGE, None),
+        DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, None),
     ],
     'max44009': [
-        DEVICE_CLASS_ILLUMINANCE
+        DeviceType(DEVICE_CLASS_ILLUMINANCE, LIGHT_LUX, None)
     ],
     'bh1750': [
-        DEVICE_CLASS_ILLUMINANCE
+        DeviceType(DEVICE_CLASS_ILLUMINANCE, LIGHT_LUX, None)
     ],
     'tsl2591': [
-        DEVICE_CLASS_ILLUMINANCE
+        DeviceType(DEVICE_CLASS_ILLUMINANCE, LIGHT_LUX, None)
     ],
     'bmp180': [
-        DEVICE_CLASS_PRESSURE,
-        DEVICE_CLASS_TEMPERATURE,
+        DeviceType(DEVICE_CLASS_PRESSURE, PRESSURE_BAR, None),
+        DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, None),
     ],
     'bmx280': [
-        DEVICE_CLASS_PRESSURE,
-        DEVICE_CLASS_TEMPERATURE,
-        DEVICE_CLASS_HUMIDITY
+        DeviceType(DEVICE_CLASS_PRESSURE, PRESSURE_BAR, None),
+        DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, None),
+        DeviceType(DEVICE_CLASS_HUMIDITY, PERCENTAGE, None)
     ],
     'mlx90614': [
         Skip,
-        ('temp', DEVICE_CLASS_TEMPERATURE),
-        ('object', DEVICE_CLASS_TEMPERATURE),
+        DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, 'temp'),
+        DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, 'object'),
     ],
     'ptsensor': [
         Skip,
         Request(delay=1),  # запрос на измерение
-        DEVICE_CLASS_PRESSURE,
-        DEVICE_CLASS_TEMPERATURE,
+        DeviceType(DEVICE_CLASS_PRESSURE, PRESSURE_BAR, None),
+        DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, None),
     ],
     'mcp9600': [
-        DEVICE_CLASS_TEMPERATURE,  # термопара
-        DEVICE_CLASS_TEMPERATURE,  # сенсор встроенный в микросхему
+        DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, None),  # термопара
+        DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, None),  # сенсор встроенный в микросхему
     ],
     't67xx': [
-        None  # для co2 нет класса в HA
+        DeviceType(None, CONCENTRATION_PARTS_PER_MILLION, None)  # для co2 нет класса в HA
     ],
     'tmp117': [
-        DEVICE_CLASS_TEMPERATURE,
+        DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, None),
     ]
 }

@@ -5,10 +5,6 @@ class CannotConnect(exceptions.HomeAssistantError):
     """Error to indicate we cannot connect."""
 
 
-class MqttNotConfigured(exceptions.HomeAssistantError):
-    """Error to indicate mqtt is not configured"""
-
-
 class DuplicateId(exceptions.HomeAssistantError):
     """Error to indicate duplicate id"""
 

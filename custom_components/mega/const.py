@@ -1,5 +1,6 @@
 """Constants for the mega integration."""
 import re
+from itertools import permutations
 
 DOMAIN = "mega"
 CONF_MEGA_ID = "mega_id"
@@ -37,6 +38,13 @@ CONF_LONG_TIME = 'long_time'
 CONF_FORCE_I2C_SCAN = 'force_i2c_scan'
 CONF_UPDATE_TIME = 'update_time'
 CONF_HEX_TO_FLOAT = 'hex_to_float'
+CONF_LED = 'led'
+CONF_WS28XX = 'ws28xx'
+CONF_ORDER = 'order'
+CONF_SMOOTH = 'smooth'
+CONF_WHITE_SEP = 'white_sep'
+CONF_CHIP = 'chip'
+CONF_RANGE = 'range'
 PLATFORMS = [
     "light",
     "switch",
@@ -67,4 +75,6 @@ REMOVE_CONFIG = [
     'light',
     'i2c',
     'sensor',
+    'smooth',
 ]
+RGB_COMBINATIONS = [''.join(x) for x in permutations('rgb')]

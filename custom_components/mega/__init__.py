@@ -6,22 +6,48 @@ from functools import partial
 import voluptuous as vol
 
 from homeassistant.const import (
-    CONF_SCAN_INTERVAL, CONF_ID, CONF_NAME, CONF_DOMAIN,
-    CONF_UNIT_OF_MEASUREMENT, CONF_HOST, CONF_VALUE_TEMPLATE, CONF_DEVICE_CLASS
+    CONF_NAME, CONF_DOMAIN,
+    CONF_UNIT_OF_MEASUREMENT, CONF_VALUE_TEMPLATE, CONF_DEVICE_CLASS, CONF_PORT
 )
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers.service import bind_hass
 from homeassistant.helpers import config_validation as cv
-from homeassistant.components import mqtt
 from homeassistant.config_entries import ConfigEntry
 from .const import DOMAIN, CONF_INVERT, CONF_RELOAD, PLATFORMS, CONF_PORTS, CONF_CUSTOM, CONF_SKIP, CONF_PORT_TO_SCAN, \
     CONF_MQTT_INPUTS, CONF_HTTP, CONF_RESPONSE_TEMPLATE, CONF_ACTION, CONF_GET_VALUE, CONF_ALLOW_HOSTS, \
-    CONF_CONV_TEMPLATE, CONF_ALL, CONF_FORCE_D, CONF_DEF_RESPONSE, CONF_FORCE_I2C_SCAN, CONF_HEX_TO_FLOAT
+    CONF_CONV_TEMPLATE, CONF_ALL, CONF_FORCE_D, CONF_DEF_RESPONSE, CONF_FORCE_I2C_SCAN, CONF_HEX_TO_FLOAT, \
+    RGB_COMBINATIONS, CONF_WS28XX, CONF_ORDER, CONF_SMOOTH, CONF_LED, CONF_WHITE_SEP, CONF_CHIP, CONF_RANGE
 from .hub import MegaD
 from .config_flow import ConfigFlow
 from .http import MegaView
 
 _LOGGER = logging.getLogger(__name__)
+
+_port_n = vol.Any(int, str)
+
+LED_LIGHT = \
+    {
+        str: vol.Any(
+            {
+                vol.Required(CONF_PORTS): vol.Any(
+                    vol.ExactSequence([_port_n, _port_n, _port_n]),
+                    vol.ExactSequence([_port_n, _port_n, _port_n, _port_n]),
+                    msg='ports must be [R, G, B] or [R, G, B, W] of integers 0..255'
+                ),
+                vol.Optional(CONF_NAME): str,
+                vol.Optional(CONF_WHITE_SEP, default=True): bool,
+                vol.Optional(CONF_SMOOTH, default=1): cv.time_period_seconds,
+            },
+            {
+                vol.Required(CONF_PORT): int,
+                vol.Required(CONF_WS28XX): True,
+                vol.Optional(CONF_CHIP, default=100): int,
+                vol.Optional(CONF_ORDER, default='rgb'): vol.Any(*RGB_COMBINATIONS, msg=f'order must be one of {RGB_COMBINATIONS}'),
+                vol.Optional(CONF_SMOOTH, default=1): cv.time_period_seconds,
+                vol.Optional(CONF_NAME): str,
+            },
+        )
+    }
 
 CUSTOMIZE_PORT = {
     vol.Optional(CONF_SKIP, description='исключить порт из сканирования', default=False): bool,
@@ -48,6 +74,14 @@ CUSTOMIZE_PORT = {
     vol.Optional(CONF_VALUE_TEMPLATE): cv.template,
     vol.Optional(CONF_FORCE_I2C_SCAN): bool,
     vol.Optional(CONF_HEX_TO_FLOAT): bool,
+    vol.Optional(CONF_SMOOTH): cv.time_period_seconds,
+    # vol.Optional(CONF_RANGE): vol.ExactSequence([int, int]), TODO: сделать отбрасывание "плохих" значений
+    vol.Optional(str): {
+        vol.Optional(CONF_NAME): str,
+        vol.Optional(CONF_DEVICE_CLASS): str,
+        vol.Optional(CONF_UNIT_OF_MEASUREMENT): str,
+        vol.Optional(CONF_VALUE_TEMPLATE): cv.template,
+    }
 }
 CUSTOMIZE_DS2413 = {
     vol.Optional(str.lower, description='адрес и индекс устройства'): CUSTOMIZE_PORT
@@ -72,10 +106,11 @@ CONFIG_SCHEMA = vol.Schema(
                     description='Ответ по умолчанию',
                     default=None
                 ): vol.Any(cv.template, None),
+                vol.Optional(CONF_LED): LED_LIGHT,
                 vol.Optional(vol.Any(int, extender), description='номер порта'): vol.Any(
                     CUSTOMIZE_PORT,
                     CUSTOMIZE_DS2413,
-                )
+                ),
             }
         }
     },
@@ -123,18 +158,7 @@ async def get_hub(hass, entry):
     data = dict(entry.data)
     data.update(entry.options or {})
     data.update(id=id)
-    use_mqtt = data.get(CONF_MQTT_INPUTS, True)
-
-    _mqtt = hass.data.get(mqtt.DOMAIN) if use_mqtt else None
-    if _mqtt is None and use_mqtt:
-        for x in range(5):
-            await asyncio.sleep(5)
-            _mqtt = hass.data.get(mqtt.DOMAIN)
-            if _mqtt is not None:
-                break
-        if _mqtt is None:
-            raise Exception('mqtt not configured, please configure mqtt first')
-    hub = MegaD(hass, config=entry, **data, mqtt=_mqtt, lg=_LOGGER, loop=asyncio.get_event_loop())
+    hub = MegaD(hass, config=entry, **data, lg=_LOGGER, loop=asyncio.get_event_loop())
     hub.mqtt_id = await hub.get_mqtt_id()
     return hub
 

@@ -104,13 +104,30 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 
 class MegaI2C(MegaPushEntity):
 
-    def __init__(self, *args, device_class: str, params: dict, **kwargs):
+    def __init__(
+            self,
+            *args,
+            device_class: str,
+            params: dict,
+            unit_of_measurement: str = None,
+            **kwargs
+    ):
         self._device_class = device_class
         self._params = tuple(params.items())
+        self._unit_of_measurement = unit_of_measurement
         super().__init__(*args, **kwargs)
 
+    @property
+    def customize(self):
+        return super().customize.get(self.id_suffix, {}) or {}
+
+    @property
     def device_class(self):
         return self._device_class
+
+    @property
+    def unit_of_measurement(self):
+        return self._unit_of_measurement
 
     @property
     def state(self):
@@ -122,9 +139,13 @@ class MegaI2C(MegaPushEntity):
             except:
                 self.lg.warning(f'could not convert {ret} form hex to float')
         tmpl: Template = self.customize.get(CONF_CONV_TEMPLATE, self.customize.get(CONF_VALUE_TEMPLATE))
-        if tmpl is not None and self.hass is not None:
-            tmpl.hass = self.hass
-            ret = tmpl.async_render({'value': ret})
+        try:
+            ret = float(ret)
+            if tmpl is not None and self.hass is not None:
+                tmpl.hass = self.hass
+                ret = tmpl.async_render({'value': ret})
+        except:
+            ret = ret
         return ret
 
     @property
@@ -214,10 +235,13 @@ class Mega1WSensor(MegaPushEntity):
             except:
                 self.lg.warning(f'could not convert {ret} form hex to float')
         tmpl: Template = self.customize.get(CONF_CONV_TEMPLATE, self.customize.get(CONF_VALUE_TEMPLATE))
-        if tmpl is not None and self.hass is not None:
-            tmpl.hass = self.hass
-            ret = tmpl.async_render({'value': ret})
-        return ret
+        try:
+            ret = float(ret)
+            if tmpl is not None and self.hass is not None:
+                tmpl.hass = self.hass
+                ret = tmpl.async_render({'value': ret})
+        except:
+            return ret
 
     @property
     def name(self):

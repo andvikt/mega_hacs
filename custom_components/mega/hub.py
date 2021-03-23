@@ -9,7 +9,6 @@ import re
 import json
 
 from bs4 import BeautifulSoup
-from homeassistant.components import mqtt
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     DEVICE_CLASS_TEMPERATURE, DEVICE_CLASS_HUMIDITY, DEVICE_CLASS_PRESSURE,
@@ -24,7 +23,7 @@ from .const import (
     CONF_HTTP, EVENT_BINARY_SENSOR, CONF_CUSTOM, CONF_FORCE_D, CONF_DEF_RESPONSE, PATT_FW, CONF_FORCE_I2C_SCAN,
     REMOVE_CONFIG
 )
-from .entities import set_events_off, BaseMegaEntity, MegaOutPort
+from .entities import set_events_off, BaseMegaEntity, MegaOutPort, safe_int
 from .exceptions import CannotConnect, NoPort
 from .i2c import parse_scan_page
 from .tools import make_ints, int_ignore, PriorityLock
@@ -68,11 +67,9 @@ class MegaD:
             loop: asyncio.AbstractEventLoop,
             host: str,
             password: str,
-            mqtt: mqtt.MQTT,
             lg: logging.Logger,
             id: str,
             config: ConfigEntry = None,
-            mqtt_inputs: bool = True,
             mqtt_id: str = None,
             scan_interval=60,
             port_to_scan=0,
@@ -90,21 +87,22 @@ class MegaD:
             i2c_sensors=None,
             new_naming=False,
             update_time=False,
+            smooth: list=None,
             **kwargs,
     ):
         """Initialize."""
+        if config is not None:
+            lg.debug(f'load config: %s', config.data)
         self.config = config
-        if mqtt_inputs is None or mqtt_inputs == 'None' or mqtt_inputs is False:
-            self.http = hass.data.get(DOMAIN, {}).get(CONF_HTTP)
-            if not self.http is None:
-                self.http.allowed_hosts |= {host}
-                self.http.hubs[host] = self
-                if len(self.http.hubs) == 1:
-                    self.http.hubs['__def'] = self
-                if mqtt_id:
-                    self.http.hubs[mqtt_id] = self
-        else:
-            self.http = None
+        self.http = hass.data.get(DOMAIN, {}).get(CONF_HTTP)
+        if not self.http is None:
+            self.http.allowed_hosts |= {host}
+            self.http.hubs[host] = self
+            if len(self.http.hubs) == 1:
+                self.http.hubs['__def'] = self
+            if mqtt_id:
+                self.http.hubs[mqtt_id] = self
+        self.smooth = smooth or []
         self.new_naming = new_naming
         self.extenders = extenders or []
         self.ext_in = ext_in or {}
@@ -115,12 +113,10 @@ class MegaD:
         self.update_all = update_all if update_all is not None else True
         self.nports = nports
         self.fake_response = fake_response
-        self.mqtt_inputs = mqtt_inputs
         self.loop: asyncio.AbstractEventLoop = None
         self.hass = hass
         self.host = host
         self.sec = password
-        self.mqtt = mqtt
         self.id = id
         self.lck = asyncio.Lock()
         self.last_long = {}
@@ -170,14 +166,7 @@ class MegaD:
             self.lg.exception('while setting allowed hosts')
 
     async def start(self):
-        self.loop = asyncio.get_event_loop()
-        if self.mqtt is not None:
-            set_events_off()
-            self.subs = await self.mqtt.async_subscribe(
-                topic=f"{self.mqtt_id}/+",
-                msg_callback=self._process_msg,
-                qos=0,
-            )
+        pass
 
     async def stop(self):
         if self.subs is not None:
@@ -270,15 +259,9 @@ class MegaD:
                 self.lg.warning(f'wrong updater result: {ret} from extender {x}')
                 continue
             self.values.update(ret)
-        if self.mqtt is None:
-            await self.get_all_ports()
-            await self.get_sensors(only_list=True)
-        elif self.poll_outs:
-            await self.get_all_ports(check_skip=True)
-        elif len(self.sensors) > 0:
-            await self.get_sensors()
-        # else:
-        #     await self.get_port(self.port_to_scan)
+
+        await self.get_all_ports()
+        await self.get_sensors(only_list=True)
         await self._get_ds2413()
         return self.values
 
@@ -348,55 +331,33 @@ class MegaD:
         хранилище values
         """
         self.lg.debug(f'get port %s', port)
-        if self.mqtt is None or force_http:
-            if http_cmd == 'list' and conv:
-                await self.request(pt=port, cmd='conv')
-                await asyncio.sleep(1)
-            ret = self.parse_response(await self.request(pt=port, cmd=http_cmd), cmd=http_cmd)
-            ntry = 0
-            while http_cmd == 'list' and ret is None and ntry < 3:
-                await asyncio.sleep(1)
-                ret = self.parse_response(await self.request(pt=port, cmd=http_cmd))
-                ntry += 1
-            self.lg.debug('parsed: %s', ret)
-            self.values[port] = ret
-            return ret
+        if http_cmd == 'list' and conv:
+            await self.request(pt=port, cmd='conv')
+            await asyncio.sleep(1)
+        ret = self.parse_response(await self.request(pt=port, cmd=http_cmd), cmd=http_cmd)
+        ntry = 0
+        while http_cmd == 'list' and ret is None and ntry < 3:
+            await asyncio.sleep(1)
+            ret = self.parse_response(await self.request(pt=port, cmd=http_cmd))
+            ntry += 1
+        self.lg.debug('parsed: %s', ret)
+        self.values[port] = ret
+        return ret
 
-        async with self._notif_lck:
-            async with self.notifiers[port]:
-                cnd = self.notifiers[port]
-                await self.mqtt.async_publish(
-                    topic=f'{self.mqtt_id}/cmd',
-                    payload=f'get:{port}',
-                    qos=2,
-                    retain=False,
-                )
-                try:
-                    await asyncio.wait_for(cnd.wait(), timeout=10)
-                    return self.values.get(port)
-                except asyncio.TimeoutError:
-                    self.lg.error(f'timeout when getting port {port}')
 
     @property
     def ports(self):
         return {e.port for e in self.entities}
 
     async def get_all_ports(self, only_out=False, check_skip=False):
-        if not self.mqtt_inputs:
-            ret = await self.request(cmd='all')
-            for port, x in enumerate(ret.split(';')):
-                if port in self.ds2413_ports:
-                    continue
-                if check_skip and not port in self.ports:
-                    continue
-                ret = self.parse_response(x)
-                self.values[port] = ret
-        elif not check_skip:
-            for x in range(self.nports + 1):
-                await self.get_port(x)
-        else:
-            for x in self.ports:
-                await self.get_port(x)
+        ret = await self.request(cmd='all')
+        for port, x in enumerate(ret.split(';')):
+            if port in self.ds2413_ports:
+                continue
+            if check_skip and not port in self.ports:
+                continue
+            ret = self.parse_response(x)
+            self.values[port] = ret
 
     async def reboot(self, save=True):
         await self.save()
@@ -450,10 +411,7 @@ class MegaD:
         self.lg.debug(
             f'subscribe %s %s', port, callback
         )
-        if self.mqtt_inputs:
-            self._callbacks[port].append(callback)
-        else:
-            self.http.callbacks[self.id][port].append(callback)
+        self.http.callbacks[self.id][port].append(callback)
 
     async def authenticate(self) -> bool:
         """Test if we can authenticate with the host."""
@@ -520,6 +478,7 @@ class MegaD:
         ret['ext_in'] = ext_int = {}
         ret['ext_acts'] = ext_acts = {}
         ret['i2c_sensors'] = i2c_sensors = []
+        ret['smooth'] = smooth = []
         async for port, cfg in self.scan_ports(nports):
             _cust = self.customize.get(port)
             if not isinstance(_cust, dict):
@@ -527,7 +486,9 @@ class MegaD:
             if cfg.pty == "0":
                 ret['binary_sensor'][port].append({})
             elif cfg.pty == "1" and (cfg.m in ['0', '1', '3'] or cfg.m is None):
-                ret['light'][port].append({'dimmer': cfg.m == '1'})
+                if cfg.misc is not None:
+                    smooth.append(port)
+                ret['light'][port].append({'dimmer': cfg.m == '1', 'smooth': safe_int(cfg.misc)})
             elif cfg == DS2413:
                 # ds2413
                 _data = await self.get_port(port=port, force_http=True, http_cmd='list', conv=False)
@@ -561,9 +522,10 @@ class MegaD:
                 values = await self.request(pt=port, cmd='get')
                 values = values.split(';')
                 for n in range(len(values)):
-                    pt = f'{port}e{n}' if not self.new_naming else f'{port:02}e{n:02}'
-                    ret['light'][pt].append({'dimmer': True, 'dimmer_scale': 16})
-            elif cfg.pty == '4' and (cfg.gr == '0' or _cust.get(CONF_FORCE_I2C_SCAN)):
+                    pt = f'{port}e{n}'
+                    name = pt if not self.new_naming else f'{port:02}e{n:02}'
+                    ret['light'][pt].append({'dimmer': True, 'dimmer_scale': 16, 'name': f'{self.id}_{name}'})
+            if cfg.pty == '4': #and (cfg.gr == '0' or _cust.get(CONF_FORCE_I2C_SCAN))
                 # i2c в режиме ANY
                 scan = cfg.src.find('a', text='I2C Scan')
                 self.lg.debug(f'find scan link: %s', scan)
@@ -627,11 +589,94 @@ class MegaD:
 
     async def reload(self, reload_entry=True):
         new = await self.get_config(nports=self.nports)
-        self.lg.debug(f'new config: %s', new)
         cfg = dict(self.config.data)
         for x in REMOVE_CONFIG:
             cfg.pop(x, None)
         cfg.update(new)
+        self.lg.debug(f'new config: %s', cfg)
         self.config.data = cfg
         if reload_entry:
             await self.hass.config_entries.async_reload(self.config.entry_id)
+        return cfg
+
+    def _wrap_port_smooth(self, from_, to_, time):
+        self.lg.debug('dim from %s to %s for %s seconds', from_, to_, time)
+        if time <= 0:
+            return
+        beg = datetime.now()
+        diff = to_ - from_
+        while True:
+            _pct = (datetime.now() - beg).total_seconds() / time
+            if _pct > 1:
+                return
+            val = from_ + round(diff * _pct)
+            yield val
+
+    async def smooth_dim(
+            self,
+            *config: typing.Tuple[typing.Any, int, int],
+            time: float,
+            jitter: int = 50,
+            ws=False,
+            updater=None,
+            can_smooth_hardware=False,
+            max_values=None,
+            chip=None,
+    ):
+        """
+        Плавное диммирование силами сервера, сразу нескольких портов (одной командой)
+
+        :param config: [(port, from, to), (port, from, to)]
+        :param time: время на диммирование
+        :param jitter: дополнительное замедление между командами в милисекундах
+        :param ws: если True, используется режим ws21xx
+        :param updater: функция, в которую передается текущее состояние
+        :param can_smooth_hardware: если True, используется аппаратная реализация smooth
+        :param max_values: максимальные значения (необходимы для расчета тайминга аппаратного smooth)
+        :param chip: кол-во чипов для ws-лент
+        :return:
+        """
+        if can_smooth_hardware:
+            for i, (pt, from_, to_) in enumerate(config):
+                pct = abs(from_ - to_) / max_values[i]
+                tm = max([round(time / pct), 1])
+                await self.request(pt=pt, pwm=to_, cnt=tm)
+
+        last_step = tuple([to_ for (_, _, to_) in config])
+        gen = [self._wrap_port_smooth(f, t, time) for (_, f, t) in config]
+        c = None
+        stop = False
+        while True:
+            if stop:
+                return
+            await asyncio.sleep(jitter / 1000)
+            try:
+                _next_val = tuple([next(x) for x in gen])
+            except StopIteration:
+                _next_val = last_step
+                stop = True
+            if _next_val == c:
+                continue
+            if updater is not None:
+                updater(_next_val)
+            if can_smooth_hardware:
+                if _next_val == last_step:
+                    return
+                continue
+            if not ws:
+                cmd = dict(
+                    cmd=';'.join([f'{pt}:{_next_val[i]}' for i, (pt, _, _) in enumerate(config)])
+                )
+                await self.request(**cmd)
+            else:
+                # для адресных лент
+                cmd = dict(
+                    pt=config[0][0],
+                    chip=chip,
+                    ws=''.join([hex(x).split('x')[1].ljust(2, '0').upper() for x in _next_val])
+                )
+                await self.request(**cmd)
+
+            if _next_val == last_step:
+                return
+            c = _next_val

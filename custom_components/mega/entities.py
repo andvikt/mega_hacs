@@ -1,5 +1,9 @@
 import logging
 import asyncio
+import time
+import typing
+from datetime import timedelta
+from functools import partial
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
@@ -8,7 +12,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers.restore_state import RestoreEntity
 from . import hub as h
 from .const import DOMAIN, CONF_CUSTOM, CONF_INVERT, EVENT_BINARY_SENSOR, LONG, \
-    LONG_RELEASE, RELEASE, PRESS, SINGLE_CLICK, DOUBLE_CLICK, EVENT_BINARY
+    LONG_RELEASE, RELEASE, PRESS, SINGLE_CLICK, DOUBLE_CLICK, EVENT_BINARY, CONF_SMOOTH
 
 _events_on = False
 _LOGGER = logging.getLogger(__name__)
@@ -38,7 +42,7 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
     def __init__(
             self,
             mega: 'h.MegaD',
-            port: int,
+            port: typing.Union[int, str, typing.List[int]],
             config_entry: ConfigEntry = None,
             id_suffix=None,
             name=None,
@@ -46,11 +50,13 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
             http_cmd='get',
             addr: str=None,
             index=None,
+            customize=None,
+            smooth=None,
+            **kwargs,
     ):
         super().__init__(mega.updater)
-
+        self._smooth = smooth
         self.http_cmd = http_cmd
-
         self._state: State = None
         self.port = port
         self.config_entry = config_entry
@@ -58,16 +64,56 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
         mega.entities.append(self)
         self._mega_id = mega.id
         self._lg = None
-        self._unique_id = unique_id or f"mega_{mega.id}_{port}" + \
-                                       (f"_{id_suffix}" if id_suffix else "")
-        _pt = port if not mega.new_naming else f'{port:02}' if isinstance(port, int) else port
-        self._name = name or f"{mega.id}_{_pt}" + \
-                            (f"_{id_suffix}" if id_suffix else "")
-        self._customize: dict = None
+        if not isinstance(port, list):
+            self._unique_id = unique_id or f"mega_{mega.id}_{port}" + \
+                                           (f"_{id_suffix}" if id_suffix else "")
+            _pt = port if not mega.new_naming else f'{port:02}' if isinstance(port, int) else port
+            self._name = name or f"{mega.id}_{_pt}" + \
+                         (f"_{id_suffix}" if id_suffix else "")
+            self._customize: dict = None
+        else:
+            assert id_suffix is not None
+            assert name is not None
+            assert isinstance(customize, dict)
+            self._unique_id = unique_id or f"mega_{mega.id}_{id_suffix}"
+            self._name = name
+            self._customize = customize
+
         self.index = index
         self.addr = addr
+        self.id_suffix = id_suffix
+        self._can_smooth_hard = None
         if self.http_cmd == 'ds2413':
             self.mega.ds2413_ports |= {self.port}
+
+    @property
+    def is_ws(self):
+        return False
+
+    def get_attribute(self, name, default=None):
+        attr = getattr(self, f'_{name}', None)
+        if attr is None and self._state is not None:
+            if name == 'is_on':
+                attr = self._state.state
+            else:
+                attr = self._state.attributes.get(f'{name}', default)
+        return attr if attr is not None else default
+
+    @property
+    def can_smooth_hardware(self):
+        if self._can_smooth_hard is None:
+            if self.is_ws:
+                self._can_smooth_hard = False
+            if not isinstance(self.port, list):
+                self._can_smooth_hard = self.port in self.mega.smooth
+            else:
+                for x in self.port:
+                    if isinstance(x, str):
+                        self._can_smooth_hard = False
+                        break
+                    else:
+                        self._can_smooth_hard = self.port in self.mega.smooth
+        return self._can_smooth_hard
 
     @property
     def enabled(self):
@@ -78,6 +124,8 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
 
     @property
     def customize(self):
+        if self._customize is not None:
+            return self._customize
         if self.hass is None:
             return {}
         if self._customize is None:
@@ -93,16 +141,23 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
 
     @property
     def device_info(self):
-        _pt = self.port if not self.mega.new_naming else f'{self.port:02}' if isinstance(self.port, int) else self.port
+        if isinstance(self.port, list):
+            pt_idx = self.id_suffix
+        else:
+            _pt = self.port if not self.mega.new_naming else f'{self.port:02}' if isinstance(self.port, int) else self.port
+            if isinstance(_pt, str) and 'e' in _pt:
+                pt_idx, _ = _pt.split('e')
+            else:
+                pt_idx = _pt
         return {
             "identifiers": {
                 # Serial numbers are unique identifiers within a specific domain
-                (DOMAIN, f'{self._mega_id}', self.port),
+                (DOMAIN, f'{self._mega_id}', pt_idx),
             },
             "config_entries": [
                 self.config_entry,
             ],
-            "name": f'{self._mega_id} port {_pt}',
+            "name": f'{self._mega_id} port {pt_idx}' if not isinstance(self.port, list) else f'{self._mega_id} {pt_idx}',
             "manufacturer": 'ab-log.ru',
             # "model": self.light.productname,
             "sw_version": self.mega.fw,
@@ -123,8 +178,11 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
     def name(self):
         c = self.customize.get(CONF_NAME)
         if not isinstance(c, str):
-            _pt = self.port if not self.mega.new_naming else f'{self.port:02}' if isinstance(self.port, int) else self.port
-            c = self._name or f"{self.mega.id}_p{_pt}"
+            if not isinstance(self.port, list):
+                _pt = self.port if not self.mega.new_naming else f'{self.port:02}' if isinstance(self.port, int) else self.port
+                c = self._name or f"{self.mega.id}_p{_pt}"
+            else:
+                c = self.id_suffix
         return c
 
     @property
@@ -135,13 +193,10 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
         global _task_set_ev_on
         await super().async_added_to_hass()
         self._state = await self.async_get_last_state()
-        if self.mega.mqtt_inputs and _task_set_ev_on is None:
-            _task_set_ev_on = asyncio.create_task(_set_events_on())
 
     async def get_state(self):
         self.lg.debug(f'state is %s', self.state)
-        if not self.mega.mqtt_inputs:
-            self.async_write_ha_state()
+        self.async_write_ha_state()
 
 
 class MegaPushEntity(BaseMegaEntity):
@@ -161,9 +216,6 @@ class MegaPushEntity(BaseMegaEntity):
             return
         self.async_write_ha_state()
         self.lg.debug(f'state after update %s', self.state)
-        if self.mega.mqtt_inputs and not _events_on:
-            _LOGGER.debug('skip event because events are off')
-            return
         if not self.entity_id.startswith('binary_sensor'):
             _LOGGER.debug('skip event because not a bnary sens')
             return
@@ -215,11 +267,6 @@ class MegaPushEntity(BaseMegaEntity):
     def _update(self, payload: dict):
         pass
 
-    async def async_added_to_hass(self) -> None:
-        await super().async_added_to_hass()
-        if self.mega.mqtt is not None:
-            asyncio.create_task(self.mega.get_port(self.port))
-
 
 class MegaOutPort(MegaPushEntity):
 
@@ -236,10 +283,23 @@ class MegaOutPort(MegaPushEntity):
         self._is_on = None
         self.dimmer = dimmer
         self.dimmer_scale = dimmer_scale
+        self.is_extender = isinstance(self.port, str) and 'e' in self.port
+        self.task: asyncio.Task = None
+        self._restore_brightness = None
+        self._last_called: float = 0
 
     # @property
     # def assumed_state(self) -> bool:
     #     return True if self.index is not None or self.mega.mqtt is None else False
+
+    @property
+    def max_dim(self):
+        if self.dimmer_scale == 1:
+            return 255
+        elif self.dimmer == 16:
+            return 4095
+        else:
+            return 255
 
     @property
     def invert(self):
@@ -318,19 +378,74 @@ class MegaOutPort(MegaPushEntity):
         else:
             return self.port
 
-    async def async_turn_on(self, brightness=None, **kwargs) -> None:
+    @property
+    def smooth(self) -> timedelta:
+        ret = self.customize.get(CONF_SMOOTH)
+        if ret is None and self._smooth:
+            ret = timedelta(seconds=self._smooth)
+        return ret
+
+    @property
+    def smooth_dim(self):
+        if not self.dimmer:
+            return False
+        return self.smooth or self.can_smooth_hardware
+
+    def update_from_smooth(self, value, update_state=False):
+        if isinstance(self.port, str):
+            self.mega.values[self.port] = value[0]
+        else:
+            self.mega.values[self.port] = {
+                'value': value[0]
+            }
+        if update_state:
+            self.async_write_ha_state()
+
+    def _set_dim_brightness(self, from_, to_, transition):
+        pct = abs(to_ - from_) / (255 if self.dimmer_scale == 1 else 4095)
+        update_state = transition is not None and transition > 3
+        tm = (self.smooth.total_seconds() * pct) if transition is None else transition
+        if self.task is not None:
+            self.task.cancel()
+        self.task = asyncio.create_task(self.mega.smooth_dim(
+            (self.cmd_port, from_, to_),
+            time=tm,
+            can_smooth_hardware=self.can_smooth_hardware,
+            max_values=[255 if self.dimmer_scale == 1 else 4095],
+            updater=partial(self.update_from_smooth, update_state=update_state),
+        ))
+
+    async def async_turn_on(self, brightness=None, transition=None, **kwargs):
+        if (time.time() - self._last_called) < 0.1:
+            return
+        self._last_called = time.time()
+        if not self.dimmer:
+            transition = None
+        if not self.is_on:
+            brightness = self._restore_brightness
         brightness = brightness or self.brightness or 255
+        _prev = safe_int(self.brightness) or 0
         self._brightness = brightness
         if self.dimmer and brightness == 0:
-            cmd = 255 * self.dimmer_scale
+            cmd = self.max_dim
         elif self.dimmer:
-            cmd = brightness * self.dimmer_scale
+            cmd = min((brightness * self.dimmer_scale, self.max_dim))
+            if self.smooth_dim or transition:
+                self._set_dim_brightness(from_=_prev, to_=cmd, transition=transition)
         else:
             cmd = 1 if not self.invert else 0
-        _cmd = {"cmd": f"{self.cmd_port}:{cmd}"}
+        if transition is None:
+            _cmd = {"cmd": f"{self.cmd_port}:{cmd}"}
+        else:
+            _cmd = {
+                "pt": f"{self.cmd_port}",
+                "pwm": cmd,
+                "cnt": round(transition / (abs(_prev - brightness) / 255)),
+            }
         if self.addr:
             _cmd['addr'] = self.addr
-        await self.mega.request(**_cmd, priority=-1)
+        if not (self.smooth_dim or transition):
+            await self.mega.request(**_cmd, priority=-1)
         if self.index is not None:
             # обновление текущего стейта для ds2413
             await self.mega.get_port(
@@ -348,13 +463,26 @@ class MegaOutPort(MegaPushEntity):
             self.mega.values[self.port] = {'value': cmd}
         await self.get_state()
 
-    async def async_turn_off(self, **kwargs) -> None:
-
+    async def async_turn_off(self, transition=None, **kwargs) -> None:
+        if (time.time() - self._last_called) < 0.1:
+            return
+        self._last_called = time.time()
+        self._restore_brightness = safe_int(self._brightness)
+        if not self.dimmer:
+            transition = None
         cmd = "0" if not self.invert else "1"
         _cmd = {"cmd": f"{self.cmd_port}:{cmd}"}
+        _prev = safe_int(self.brightness) or 0
         if self.addr:
             _cmd['addr'] = self.addr
-        await self.mega.request(**_cmd, priority=-1)
+        if not (self.smooth_dim or transition):
+            await self.mega.request(**_cmd, priority=-1)
+        else:
+            self._set_dim_brightness(
+                from_=_prev,
+                to_=0,
+                transition=transition,
+            )
         if self.index is not None:
             # обновление текущего стейта для ds2413
             await self.mega.get_port(
@@ -368,6 +496,11 @@ class MegaOutPort(MegaPushEntity):
         else:
             self.mega.values[self.port] = {'value': cmd}
         await self.get_state()
+
+    async def async_will_remove_from_hass(self) -> None:
+        if self.task is not None:
+            self.task.cancel()
+
 
 
 def safe_int(v):

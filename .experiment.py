@@ -1,3 +1,5 @@
-import struct
+from itertools import permutations
 
-print(struct.unpack('!f', bytes.fromhex('435c028f'))[0])
+RGB_COMBINATIONS = [''.join(x) for x in permutations('rgb')]
+
+print(RGB_COMBINATIONS)

@@ -44,6 +44,9 @@ def parse_config(page: str):
         v = page.find('input', attrs={'name': x})
         if v:
             ret[x] = v['value']
+    smooth = page.find('input', attrs={'name': 'misc'})
+    if smooth is None or smooth.get('checked') is None:
+        ret['misc'] = None
     return Config(**ret, src=page)
 
 

@@ -5,14 +5,12 @@ import logging
 import voluptuous as vol
 
 from homeassistant import config_entries, core
-from homeassistant.components import mqtt
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_ID, CONF_PASSWORD, CONF_SCAN_INTERVAL
 from homeassistant.core import callback, HomeAssistant
-from .const import DOMAIN, CONF_PORT_TO_SCAN, CONF_RELOAD, PLATFORMS, CONF_MQTT_INPUTS, \
+from .const import DOMAIN, CONF_RELOAD, \
     CONF_NPORTS, CONF_UPDATE_ALL, CONF_POLL_OUTS, CONF_FAKE_RESPONSE, CONF_FORCE_D, \
-    CONF_ALLOW_HOSTS, CONF_PROTECTED, CONF_RESTORE_ON_RESTART, CONF_UPDATE_TIME, \
-    REMOVE_CONFIG  # pylint:disable=unused-import
+    CONF_ALLOW_HOSTS, CONF_PROTECTED, CONF_RESTORE_ON_RESTART, CONF_UPDATE_TIME
 from .hub import MegaD
 from . import exceptions
 
@@ -23,10 +21,10 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
         vol.Required(CONF_ID, default='mega'): str,
         vol.Required(CONF_HOST, default="192.168.0.14"): str,
         vol.Required(CONF_PASSWORD, default="sec"): str,
-        vol.Optional(CONF_SCAN_INTERVAL, default=0): int,
+        vol.Optional(CONF_SCAN_INTERVAL, default=30): int,
         vol.Optional(CONF_POLL_OUTS, default=False): bool,
         # vol.Optional(CONF_PORT_TO_SCAN, default=0): int,
-        vol.Optional(CONF_MQTT_INPUTS, default=False): bool,
+        # vol.Optional(CONF_MQTT_INPUTS, default=False): bool,
         vol.Optional(CONF_NPORTS, default=37): int,
         vol.Optional(CONF_UPDATE_ALL, default=True): bool,
         vol.Optional(CONF_FAKE_RESPONSE, default=True): bool,
@@ -40,10 +38,10 @@ STEP_USER_DATA_SCHEMA = vol.Schema(
 
 
 async def get_hub(hass: HomeAssistant, data):
-    _mqtt = hass.data.get(mqtt.DOMAIN)
+    # _mqtt = hass.data.get(mqtt.DOMAIN)
     # if not isinstance(_mqtt, mqtt.MQTT):
     #     raise exceptions.MqttNotConfigured("mqtt must be configured first")
-    hub = MegaD(hass, **data, lg=_LOGGER, mqtt=_mqtt, loop=asyncio.get_event_loop())
+    hub = MegaD(hass, **data, lg=_LOGGER, loop=asyncio.get_event_loop()) #mqtt=_mqtt,
     hub.mqtt_id = await hub.get_mqtt_id()
     if not await hub.authenticate():
         raise exceptions.InvalidAuth
@@ -65,7 +63,7 @@ async def validate_input(hass: core.HomeAssistant, data):
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for mega."""
 
-    VERSION = 23
+    VERSION = 24
     CONNECTION_CLASS = config_entries.CONN_CLASS_ASSUMED
 
     async def async_step_user(self, user_input=None):
@@ -80,6 +78,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         try:
             hub = await validate_input(self.hass, user_input)
             await hub.start()
+            hub.new_naming=True
             config = await hub.get_config(nports=user_input.get(CONF_NPORTS, 37))
             await hub.stop()
             hub.lg.debug(f'config loaded: %s', config)
@@ -128,7 +127,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             if reload:
                 id = self.config_entry.data.get('id', self.config_entry.entry_id)
                 hub: MegaD = self.hass.data[DOMAIN].get(id)
-                await hub.reload(reload_entry=False)
+                cfg = await hub.reload(reload_entry=False)
 
             return self.async_create_entry(
                 title='',
@@ -141,7 +140,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 vol.Optional(CONF_SCAN_INTERVAL, default=e.get(CONF_SCAN_INTERVAL, 0)): int,
                 vol.Optional(CONF_POLL_OUTS, default=e.get(CONF_POLL_OUTS, False)): bool,
                 # vol.Optional(CONF_PORT_TO_SCAN, default=e.get(CONF_PORT_TO_SCAN, 0)): int,
-                vol.Optional(CONF_MQTT_INPUTS, default=e.get(CONF_MQTT_INPUTS, True)): bool,
+                # vol.Optional(CONF_MQTT_INPUTS, default=e.get(CONF_MQTT_INPUTS, True)): bool,
                 vol.Optional(CONF_NPORTS, default=e.get(CONF_NPORTS, 37)): int,
                 vol.Optional(CONF_RELOAD, default=False): bool,
                 vol.Optional(CONF_UPDATE_ALL, default=e.get(CONF_UPDATE_ALL, True)): bool,
