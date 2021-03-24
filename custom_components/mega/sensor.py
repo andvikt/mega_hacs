@@ -241,7 +241,8 @@ class Mega1WSensor(MegaPushEntity):
                 tmpl.hass = self.hass
                 ret = tmpl.async_render({'value': ret})
         except:
-            return ret
+            pass
+        return ret
 
     @property
     def name(self):
