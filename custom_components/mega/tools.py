@@ -117,3 +117,8 @@ class PriorityLock(asyncio.Lock):
             fut.set_result(True)
 
 
+def map_reorder_rgb(rgb: list, from_: str, to_: str):
+    if from_ == to_:
+        return rgb
+    mapping = [from_.index(x) for x in to_]
+    return [rgb[x] for x in mapping]

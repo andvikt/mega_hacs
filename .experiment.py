@@ -1,5 +1,15 @@
-from itertools import permutations
+order ='brg'
+rgb = 'rgb'
 
-RGB_COMBINATIONS = [''.join(x) for x in permutations('rgb')]
+map_to_order = [rgb.index(x) for x in order]
+map_from_order = [order.index(x) for x in rgb]
 
-print(RGB_COMBINATIONS)
+
+_rgb = [
+        rgb[x] for x in map_to_order
+    ]
+_order = [
+        _rgb[x] for x in map_from_order
+    ]
+
+print(_rgb, _order)

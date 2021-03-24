@@ -78,3 +78,4 @@ REMOVE_CONFIG = [
     'smooth',
 ]
 RGB_COMBINATIONS = [''.join(x) for x in permutations('rgb')]
+RGB = 'rgb'

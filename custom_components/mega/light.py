@@ -33,9 +33,9 @@ from .const import (
     CONF_SWITCH,
     DOMAIN,
     CONF_CUSTOM,
-    CONF_SKIP, CONF_LED, CONF_WS28XX, CONF_PORTS, CONF_WHITE_SEP, CONF_SMOOTH, CONF_ORDER, CONF_CHIP,
+    CONF_SKIP, CONF_LED, CONF_WS28XX, CONF_PORTS, CONF_WHITE_SEP, CONF_SMOOTH, CONF_ORDER, CONF_CHIP, RGB,
 )
-from .tools import int_ignore
+from .tools import int_ignore, map_reorder_rgb
 
 lg = logging.getLogger(__name__)
 SCAN_INTERVAL = timedelta(seconds=5)
@@ -119,14 +119,8 @@ class MegaRGBW(LightEntity, BaseMegaEntity):
         self._task: asyncio.Task = None
         self._restore = None
         self.smooth: timedelta = self.customize[CONF_SMOOTH]
-        self._color_map = self.customize.get(CONF_ORDER, 'rgb')
+        self._color_order = self.customize.get(CONF_ORDER, 'rgb')
         self._last_called: float = 0
-        if self._color_map == 'rgb':
-            self._color_map = None
-        else:
-            self._color_map = {
-                x: i for i, x in enumerate(self._color_map)
-            }
         self._max_values = None
 
     @property
@@ -189,11 +183,9 @@ class MegaRGBW(LightEntity, BaseMegaEntity):
         rgb = [
             round(x * self.max_values[i]) for i, x in enumerate(rgb)
         ]
-        if self.is_ws and self._color_map is not None:
+        if self.is_ws:
             # восстанавливаем мэпинг
-            rgb = [
-                rgb[self._color_map[x]] for x in 'rgb'
-            ]
+            rgb = map_reorder_rgb(rgb, RGB, self._color_order)
         return rgb
 
     async def async_turn_on(self, **kwargs):
@@ -267,7 +259,10 @@ class MegaRGBW(LightEntity, BaseMegaEntity):
         else:
             w = None
             rgb = rgbw
-
+        if self.is_ws:
+            rgb = map_reorder_rgb(
+                rgb, self._color_order, RGB
+            )
         h, s, v = colorsys.rgb_to_hsv(*[x/self.max_values[i] for i, x in enumerate(rgb)])
         h *= 360
         s *= 100
