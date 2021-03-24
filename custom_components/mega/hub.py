@@ -673,7 +673,7 @@ class MegaD:
                 cmd = dict(
                     pt=config[0][0],
                     chip=chip,
-                    ws=''.join([hex(x).split('x')[1].ljust(2, '0').upper() for x in _next_val])
+                    ws=''.join([hex(x).split('x')[1].rjust(2, '0').upper() for x in _next_val])
                 )
                 await self.request(**cmd)
 
