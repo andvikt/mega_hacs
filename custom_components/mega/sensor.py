@@ -146,7 +146,7 @@ class MegaI2C(MegaPushEntity):
                 ret = tmpl.async_render({'value': ret})
         except:
             ret = ret
-        return ret
+        return str(ret)
 
     @property
     def device_class(self):
@@ -242,7 +242,7 @@ class Mega1WSensor(MegaPushEntity):
                 ret = tmpl.async_render({'value': ret})
         except:
             pass
-        return ret
+        return str(ret)
 
     @property
     def name(self):
