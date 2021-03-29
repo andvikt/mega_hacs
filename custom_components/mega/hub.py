@@ -91,6 +91,8 @@ class MegaD:
             **kwargs,
     ):
         """Initialize."""
+        if DOMAIN not in hass.data:
+            hass.data[DOMAIN] = {}
         if config is not None:
             lg.debug(f'load config: %s', config.data)
         self.config = config
