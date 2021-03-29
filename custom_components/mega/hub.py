@@ -91,8 +91,6 @@ class MegaD:
             **kwargs,
     ):
         """Initialize."""
-        if DOMAIN not in hass.data:
-            hass.data[DOMAIN] = {}
         if config is not None:
             lg.debug(f'load config: %s', config.data)
         self.config = config
@@ -159,11 +157,10 @@ class MegaD:
         if force_d is not None:
             self.customize[CONF_FORCE_D] = force_d
         try:
-            if allow_hosts is not None:
+            if allow_hosts is not None and DOMAIN in hass.data:
                 allow_hosts = set(allow_hosts.split(';'))
                 hass.data[DOMAIN][CONF_HTTP].allowed_hosts |= allow_hosts
             hass.data[DOMAIN][CONF_HTTP].protected = protected
-
         except Exception:
             self.lg.exception('while setting allowed hosts')
 
@@ -292,14 +289,20 @@ class MegaD:
             url = f"{url}/?{cmd}"
         self.lg.debug('request: %s', url)
         async with self._http_lck(priority):
-            async with aiohttp.request("get", url=url) as req:
-                if req.status != 200:
-                    self.lg.warning('%s returned %s (%s)', url, req.status, await req.text())
-                    return None
-                else:
-                    ret = await req.text()
-                    self.lg.debug('response %s', ret)
-                    return ret
+            for _ntry in range(3):
+                try:
+                    async with aiohttp.request("get", url=url) as req:
+                        if req.status != 200:
+                            self.lg.warning('%s returned %s (%s)', url, req.status, await req.text())
+                            return None
+                        else:
+                            ret = await req.text()
+                            self.lg.debug('response %s', ret)
+                            return ret
+                except asyncio.TimeoutError:
+                    self.lg.warning(f'timeout while requesting {url}')
+                    await asyncio.sleep(1)
+            raise asyncio.TimeoutError('after 3 tries')
 
     async def save(self):
         await self.send_command(cmd='s')
