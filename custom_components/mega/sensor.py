@@ -20,7 +20,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.template import Template
 from .entities import MegaPushEntity
-from .const import CONF_KEY, TEMP, HUM, W1, W1BUS, CONF_CONV_TEMPLATE, CONF_HEX_TO_FLOAT
+from .const import CONF_KEY, TEMP, HUM, W1, W1BUS, CONF_CONV_TEMPLATE, CONF_HEX_TO_FLOAT, DOMAIN, CONF_CUSTOM, CONF_SKIP
 from .hub import MegaD
 import re
 
@@ -84,9 +84,14 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     mid = config_entry.data[CONF_ID]
     hub: MegaD = hass.data['mega'][mid]
     devices = []
+    customize = hass.data.get(DOMAIN, {}).get(CONF_CUSTOM, {}).get(mid, {})
     for tp in ['sensor', 'i2c']:
         for port, cfg in config_entry.data.get(tp, {}).items():
             port = int_ignore(port)
+            c = customize.get(port, {})
+            if c.get(CONF_SKIP):
+                hub.skip_ports |= {port}
+                continue
             for data in cfg:
                 hub.lg.debug(f'add sensor on port %s with data %s', port, data)
                 sensor = _constructors[tp](

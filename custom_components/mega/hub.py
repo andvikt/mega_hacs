@@ -91,6 +91,7 @@ class MegaD:
             **kwargs,
     ):
         """Initialize."""
+        self.skip_ports = set()
         if config is not None:
             lg.debug(f'load config: %s', config.data)
         self.config = config
@@ -477,6 +478,11 @@ class MegaD:
         :param params: параметры url
         :return:
         """
+        pt = params.get('pt')
+        if pt in self.skip_ports:
+            return
+        if pt is not None:
+            pass
         _params = tuple(params.items())
         delay = None
         if 'delay' in params:
