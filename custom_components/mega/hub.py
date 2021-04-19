@@ -185,7 +185,10 @@ class MegaD:
                 continue
             if x.port in ports:
                 continue
-            await self.get_port(x.port, force_http=True, http_cmd=x.http_cmd)
+            try:
+                await self.get_port(x.port, force_http=True, http_cmd=x.http_cmd)
+            except asyncio.TimeoutError:
+                continue
             ports.append(x.port)
 
     @property
@@ -232,12 +235,15 @@ class MegaD:
         """
         for x in self.ds2413_ports:
             self.lg.debug(f'poll ds2413 for %s', x)
-            await self.get_port(
-                port=x,
-                force_http=True,
-                http_cmd='list',
-                conv=False
-            )
+            try:
+                await self.get_port(
+                    port=x,
+                    force_http=True,
+                    http_cmd='list',
+                    conv=False
+                )
+            except asyncio.TimeoutError:
+                continue
 
     async def poll(self):
         """
@@ -252,6 +258,7 @@ class MegaD:
             ret = await self._update_i2c(x)
             if isinstance(ret, dict):
                 self.values.update(ret)
+
         for x in self.extenders:
             ret = await self._update_extender(x)
             if not isinstance(ret, dict):
@@ -291,7 +298,7 @@ class MegaD:
         async with self._http_lck(priority):
             for _ntry in range(3):
                 try:
-                    async with aiohttp.request("get", url=url) as req:
+                    async with aiohttp.request("get", url=url, timeout=aiohttp.ClientTimeout(total=5)) as req:
                         if req.status != 200:
                             self.lg.warning('%s returned %s (%s)', url, req.status, await req.text())
                             return None
@@ -301,7 +308,8 @@ class MegaD:
                             return ret
                 except asyncio.TimeoutError:
                     self.lg.warning(f'timeout while requesting {url}')
-                    await asyncio.sleep(1)
+                    raise
+                    # await asyncio.sleep(1)
             raise asyncio.TimeoutError('after 3 tries')
 
     async def save(self):
@@ -355,7 +363,10 @@ class MegaD:
         return {e.port for e in self.entities}
 
     async def get_all_ports(self, only_out=False, check_skip=False):
-        ret = await self.request(cmd='all')
+        try:
+            ret = await self.request(cmd='all')
+        except asyncio.TimeoutError:
+            return
         for port, x in enumerate(ret.split(';')):
             if port in self.ds2413_ports:
                 continue
@@ -451,7 +462,10 @@ class MegaD:
         :param port:
         :return:
         """
-        values = await self.request(pt=port, cmd='get')
+        try:
+            values = await self.request(pt=port, cmd='get')
+        except asyncio.TimeoutError:
+            return
         ret = {}
         for i, x in enumerate(values.split(';')):
             ret[f'{port}e{i}'] = x
@@ -467,9 +481,12 @@ class MegaD:
         delay = None
         if 'delay' in params:
             delay = params.pop('delay')
-        ret = {
-            _params: await self.request(**params)
-        }
+        try:
+            ret = {
+                _params: await self.request(**params)
+            }
+        except asyncio.TimeoutError:
+            return
         self.lg.debug('i2c response: %s', ret)
         if delay:
             self.lg.debug('delay %s', delay)
