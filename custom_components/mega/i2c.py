@@ -103,6 +103,10 @@ i2c_classes = {
         DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, None),
         DeviceType(DEVICE_CLASS_HUMIDITY, PERCENTAGE, None)
     ],
+    'dps368': [
+        DeviceType(DEVICE_CLASS_PRESSURE, PRESSURE_BAR, None),
+        DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, None),
+    ],
     'mlx90614': [
         Skip,
         DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, 'temp'),

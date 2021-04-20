@@ -2,7 +2,7 @@
   "domain": "mega",
   "name": "mega",
   "config_flow": true,
-  "documentation": "https://www.home-assistant.io/integrations/mega_hacs",
+  "documentation": "https://github.com/andvikt/mega_hacs",
   "requirements": [
     "beautifulsoup4",
     "lxml"
@@ -15,5 +15,5 @@
     "@andvikt"
   ],
   "issue_tracker": "https://github.com/andvikt/mega_hacs/issues",
-  "version": "v1.0.1"
+  "version": "v1.0.6b4"
 }
