@@ -99,7 +99,7 @@ CONFIG_SCHEMA = vol.Schema(
     {
         DOMAIN: {
             vol.Optional(CONF_ALLOW_HOSTS): [str],
-            vol.Required(str, description='id меги из веб-интерфейса'): {
+            vol.Optional(str, description='id меги из веб-интерфейса'): {
                 vol.Optional(CONF_FORCE_D, description='Принудительно слать d после срабатывания входа', default=False): bool,
                 vol.Optional(
                     CONF_DEF_RESPONSE,
@@ -114,7 +114,7 @@ CONFIG_SCHEMA = vol.Schema(
             }
         }
     },
-    extra=vol.ALLOW_EXTRA,
+    extra=vol.PREVENT_EXTRA,
 )
 
 ALIVE_STATE = 'alive'
