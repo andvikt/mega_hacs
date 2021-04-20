@@ -114,7 +114,7 @@ CONFIG_SCHEMA = vol.Schema(
             }
         }
     },
-    extra=vol.PREVENT_EXTRA,
+    extra=vol.ALLOW_EXTRA,
 )
 
 ALIVE_STATE = 'alive'
