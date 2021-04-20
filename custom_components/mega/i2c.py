@@ -6,6 +6,7 @@ from homeassistant.const import (
     DEVICE_CLASS_TEMPERATURE,
     DEVICE_CLASS_ILLUMINANCE,
     DEVICE_CLASS_PRESSURE,
+    DEVICE_CLASS_CO2,
     PERCENTAGE,
     LIGHT_LUX,
     TEMP_CELSIUS,
@@ -123,9 +124,21 @@ i2c_classes = {
         DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, None),  # сенсор встроенный в микросхему
     ],
     't67xx': [
-        DeviceType(None, CONCENTRATION_PARTS_PER_MILLION, None)  # для co2 нет класса в HA
+        DeviceType(DEVICE_CLASS_CO2, CONCENTRATION_PARTS_PER_MILLION, None)
     ],
     'tmp117': [
         DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, None),
-    ]
+    ],
+    'ads1115': [
+        DeviceType(None, None, 'ch0'),
+        DeviceType(None, None, 'ch1'),
+        DeviceType(None, None, 'ch2'),
+        DeviceType(None, None, 'ch3'),
+    ],
+    'ads1015': [
+        DeviceType(None, None, 'ch0'),
+        DeviceType(None, None, 'ch1'),
+        DeviceType(None, None, 'ch2'),
+        DeviceType(None, None, 'ch3'),
+    ],
 }
