@@ -64,7 +64,7 @@ LUX = 'lux'
 SINGLE_CLICK = 'single'
 DOUBLE_CLICK = 'double'
 
-PATT_FW = re.compile(r'fw:\s(.+)\)')
+PATT_FW = re.compile(r'fw:\s(.+?)\)')
 
 REMOVE_CONFIG = [
     'extenders',
