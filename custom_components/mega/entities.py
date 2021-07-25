@@ -296,7 +296,7 @@ class MegaOutPort(MegaPushEntity):
     def max_dim(self):
         if self.dimmer_scale == 1:
             return 255
-        elif self.dimmer == 16:
+        elif self.dimmer_scale == 16:
             return 4095
         else:
             return 255
