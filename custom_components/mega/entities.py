@@ -421,7 +421,7 @@ class MegaOutPort(MegaPushEntity):
         self._last_called = time.time()
         if not self.dimmer:
             transition = None
-        if not self.is_on:
+        if not self.is_on and (brightness is None or brightness == 0):
             brightness = self._restore_brightness
         brightness = brightness or self.brightness or 255
         _prev = safe_int(self.brightness) or 0
