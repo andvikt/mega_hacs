@@ -1,0 +1,31 @@
+site_name: MegaD HomeAssistant integration
+repo_url: https://github.com/andvikt/mega_hacs
+site_url: http://127.0.0.1:8000
+extra:
+  disqus: mega-hacs
+theme:
+  name: material
+markdown_extensions:
+  - toc:
+      permalink: "#"
+  - attr_list:
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - admonition
+plugins:
+  - search
+nav:
+  - Главное: index.md
+  - Конфигурация:
+    - В интерфейсе: settings.md
+    - Настройка обратной связи: http.md
+    - YAML-конфиг: yaml.md
+    - i2c: i2c.md
+    - Плавные переходы: smooth.md
+  - Автоматизация:
+    - Шаблоны (Blueprints): blueprints.md
+    - События: events.md
+    - Сервисы: services.md
+  - Неполадки: debug.md
+extra_javascript:
+  - "https://buttons.github.io/buttons.js"
