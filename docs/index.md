@@ -13,8 +13,6 @@
 
 Обновление прошивки MegaD можно делать прямо из HA с помощью [аддона](https://github.com/andvikt/mega_addon.git)
 
-Предложения по доработкам просьба писать в [discussions](https://github.com/andvikt/mega_hacs/discussions), о проблемах
-создавать [issue](https://github.com/andvikt/mega_hacs/issues/new/choose)
 ## Основные особенности {: #mains }
 - Настройка в [веб-интерфейсе](settings.md) + [yaml](yaml.md)
 - Все порты автоматически добавляются как устройства (для обычных релейных выходов создается 
