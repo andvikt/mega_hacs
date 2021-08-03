@@ -3,6 +3,9 @@ repo_url: https://github.com/andvikt/mega_hacs
 site_url: http://127.0.0.1:8000
 extra:
   disqus: mega-hacs
+  analytics:
+    provider: google
+    property: G-E3LX9D6959
 theme:
   name: material
 markdown_extensions:
