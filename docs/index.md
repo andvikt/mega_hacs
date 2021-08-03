@@ -4,7 +4,7 @@
 <a class="github-button" href="https://github.com/andvikt/mega_hacs" data-icon="octicon-star" data-show-count="true" aria-label="Star andvikt/mega_hacs on GitHub">Star</a>
 
 [Сообщить о проблеме](https://github.com/andvikt/mega_hacs/issues/new?assignees=&labels=&template=bug-report.md&title=){ .md-button .md-button--primary }
-[Идея на улучшение](https://github.com/andvikt/mega_hacs/issues/new?assignees=&labels=enhancement&template=enhance.md&title=){ .md-button .md-button--primary }
+[Предложение об улучшении](https://github.com/andvikt/mega_hacs/issues/new?assignees=&labels=enhancement&template=enhance.md&title=){ .md-button .md-button--primary }
 
 Интеграция с [MegaD-2561, MegaD-328](https://www.ab-log.ru/smart-house/ethernet/megad-2561)
 
