@@ -1,6 +1,6 @@
 ---
-name: Bug report
-about: Create a report to help us improve
+name: Проблема
+about: Обнаружен баг/проблема
 title: ''
 labels: ''
 assignees: ''
