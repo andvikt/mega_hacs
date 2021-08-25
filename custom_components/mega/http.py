@@ -117,7 +117,7 @@ class MegaView(HomeAssistantView):
                     _data = data.copy()
                     if e.startswith('ext'):
                         idx = e[3:]
-                        pt = f'{pt_orig}e{idx}'
+                        pt = f'{pt_orig}e{idx}' if not hub.new_naming else f'{pt_orig:02}e{idx:02}'
                         _data['pt_orig'] = pt_orig
                         _data['value'] = 'ON' if v == '1' else 'OFF'
                         _data['m'] = 1 if _data[e] == '0' else 0  # имитация поведения обычного входа, чтобы события обрабатывались аналогично
