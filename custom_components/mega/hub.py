@@ -538,7 +538,7 @@ class MegaD:
                 for n in range(len(values)):
                     ext_page = await self.request(pt=port, ext=n)
                     ext_cfg = parse_config(ext_page)
-                    pt = f'{port}e{n}' if not self.new_naming else f'{port:02}e{n:02}'
+                    pt = f'{port}e{n}' if not self.new_naming else f'{port:02d}e{n:02d}'
                     if ext_cfg.ety == '1':
                         ret['light'][pt].append({})
                     elif ext_cfg.ety == '0':
