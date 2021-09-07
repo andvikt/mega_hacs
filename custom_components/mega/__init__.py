@@ -7,7 +7,7 @@ import voluptuous as vol
 
 from homeassistant.const import (
     CONF_NAME, CONF_DOMAIN,
-    CONF_UNIT_OF_MEASUREMENT, CONF_VALUE_TEMPLATE, CONF_DEVICE_CLASS, CONF_PORT
+    CONF_UNIT_OF_MEASUREMENT, CONF_VALUE_TEMPLATE, CONF_DEVICE_CLASS, CONF_PORT, CONF_UNIQUE_ID
 )
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers.service import bind_hass
@@ -47,6 +47,13 @@ LED_LIGHT = \
                 vol.Optional(CONF_NAME): str,
             },
         )
+    }
+
+ENCODER = \
+    {
+        vol.Optional('int', description='int порт'): int,
+        vol.Required('scl', description='scl порт'): int,
+        vol.Optional('sync_to', description='entity_id с которым синхронизироваться'): str,
     }
 
 CUSTOMIZE_PORT = {
@@ -111,6 +118,7 @@ CONFIG_SCHEMA = vol.Schema(
                     CUSTOMIZE_PORT,
                     CUSTOMIZE_DS2413,
                 ),
+                vol.Optional('encoders'): {str: ENCODER}
             }
         }
     },
