@@ -210,7 +210,7 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     id = entry.data.get('id', entry.entry_id)
     hub: MegaD = hass.data[DOMAIN].get(id)
     if hub is None:
-        return
+        return True
     _LOGGER.debug(f'remove {id}')
     _hubs.pop(id, None)
     hass.data[DOMAIN].pop(id, None)
@@ -221,7 +221,7 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     if task is not None:
         task.cancel()
     if hub is None:
-        return
+        return True
     await hub.stop()
     return True
 
