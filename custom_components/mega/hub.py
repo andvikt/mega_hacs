@@ -566,6 +566,9 @@ class MegaD:
             elif cfg.pty == '4' and cfg.m == '2':
                 # scl исключаем из сканирования
                 continue
+            elif cfg.pty is None and nports < 30:
+                # вроде как это ADC на 328 меге
+                ret['sensor'][port].append(dict())
             elif cfg.pty in ('3', '2', '4'):
                 http_cmd = 'get'
                 if cfg.d == '5' and cfg.pty == '3':
