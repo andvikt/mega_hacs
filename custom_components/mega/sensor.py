@@ -166,6 +166,14 @@ class MegaI2C(FilterBadValues):
         return super().customize.get(self.id_suffix, {}) or {}
 
     @property
+    def extra_state_attributes(self):
+        attrs = super().extra_state_attributes or {}
+        attrs.update({
+            'i2c_id': self.id_suffix,
+        })
+        return attrs
+
+    @property
     def device_class(self):
         return self._device_class
 
