@@ -21,7 +21,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.template import Template
 from .entities import MegaPushEntity
 from .const import CONF_KEY, TEMP, HUM, W1, W1BUS, CONF_CONV_TEMPLATE, CONF_HEX_TO_FLOAT, DOMAIN, CONF_CUSTOM, \
-    CONF_SKIP, CONF_FILTER_VALUES, CONF_FILTER_SCALE
+    CONF_SKIP, CONF_FILTER_VALUES, CONF_FILTER_SCALE, CONF_FILTER_LOW, CONF_FILTER_HIGH
 from .hub import MegaD
 import re
 
@@ -116,6 +116,8 @@ class FilterBadValues(MegaPushEntity):
 
     def filter_value(self, value):
         if value in self.filter_values \
+           or (self.filter_low is not None and value < self.filter_low) \
+           or (self.filter_high is not None and value > self.filter_high) \
            or (
                 self._prev_value is not None
                 and self.filter_scale is not None
@@ -134,6 +136,14 @@ class FilterBadValues(MegaPushEntity):
     @property
     def filter_scale(self):
         return self.customize.get(CONF_FILTER_SCALE, self.mega.customize.get(CONF_FILTER_SCALE, None))
+
+    @property
+    def filter_low(self):
+        return self.customize.get(CONF_FILTER_LOW, self.mega.customize.get(CONF_FILTER_LOW, None))
+
+    @property
+    def filter_high(self):
+        return self.customize.get(CONF_FILTER_HIGH, self.mega.customize.get(CONF_FILTER_HIGH, None))
 
 
 class MegaI2C(FilterBadValues):

@@ -47,6 +47,8 @@ CONF_CHIP = 'chip'
 CONF_RANGE = 'range'
 CONF_FILTER_VALUES = 'filter_values'
 CONF_FILTER_SCALE = 'filter_scale'
+CONF_FILTER_LOW = 'filter_low'
+CONF_FILTER_HIGH = 'filter_high'
 PLATFORMS = [
     "light",
     "switch",
