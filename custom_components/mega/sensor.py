@@ -187,7 +187,7 @@ class MegaI2C(FilterBadValues):
         ret = self.mega.values.get(self._params)
         if self.customize.get(CONF_HEX_TO_FLOAT):
             try:
-                ret = struct.unpack('!f', bytes.fromhex('41973333'))[0]
+                ret = struct.unpack('!f', bytes.fromhex(ret))[0]
             except:
                 self.lg.warning(f'could not convert {ret} form hex to float')
         tmpl: Template = self.customize.get(CONF_CONV_TEMPLATE, self.customize.get(CONF_VALUE_TEMPLATE))
