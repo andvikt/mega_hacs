@@ -16,7 +16,8 @@ from homeassistant.config_entries import ConfigEntry
 from .const import DOMAIN, CONF_INVERT, CONF_RELOAD, PLATFORMS, CONF_PORTS, CONF_CUSTOM, CONF_SKIP, CONF_PORT_TO_SCAN, \
     CONF_MQTT_INPUTS, CONF_HTTP, CONF_RESPONSE_TEMPLATE, CONF_ACTION, CONF_GET_VALUE, CONF_ALLOW_HOSTS, \
     CONF_CONV_TEMPLATE, CONF_ALL, CONF_FORCE_D, CONF_DEF_RESPONSE, CONF_FORCE_I2C_SCAN, CONF_HEX_TO_FLOAT, \
-    RGB_COMBINATIONS, CONF_WS28XX, CONF_ORDER, CONF_SMOOTH, CONF_LED, CONF_WHITE_SEP, CONF_CHIP, CONF_RANGE
+    RGB_COMBINATIONS, CONF_WS28XX, CONF_ORDER, CONF_SMOOTH, CONF_LED, CONF_WHITE_SEP, CONF_CHIP, CONF_RANGE, \
+    CONF_FILTER_VALUES, CONF_FILTER_SCALE
 from .hub import MegaD
 from .config_flow import ConfigFlow
 from .http import MegaView
@@ -74,6 +75,8 @@ CUSTOMIZE_PORT = {
     vol.Optional(CONF_VALUE_TEMPLATE): cv.template,
     vol.Optional(CONF_FORCE_I2C_SCAN): bool,
     vol.Optional(CONF_HEX_TO_FLOAT): bool,
+    vol.Optional(CONF_FILTER_VALUES): [cv.positive_float],
+    vol.Optional(CONF_FILTER_SCALE): cv.positive_float,
     vol.Optional(CONF_SMOOTH): cv.time_period_seconds,
     # vol.Optional(CONF_RANGE): vol.ExactSequence([int, int]), TODO: сделать отбрасывание "плохих" значений
     vol.Optional(str): {
@@ -111,6 +114,8 @@ CONFIG_SCHEMA = vol.Schema(
                     CUSTOMIZE_PORT,
                     CUSTOMIZE_DS2413,
                 ),
+                vol.Optional(CONF_FILTER_VALUES): [cv.positive_float],
+                vol.Optional(CONF_FILTER_SCALE): cv.positive_float,
             }
         }
     },

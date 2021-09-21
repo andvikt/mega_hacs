@@ -20,7 +20,8 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.template import Template
 from .entities import MegaPushEntity
-from .const import CONF_KEY, TEMP, HUM, W1, W1BUS, CONF_CONV_TEMPLATE, CONF_HEX_TO_FLOAT, DOMAIN, CONF_CUSTOM, CONF_SKIP
+from .const import CONF_KEY, TEMP, HUM, W1, W1BUS, CONF_CONV_TEMPLATE, CONF_HEX_TO_FLOAT, DOMAIN, CONF_CUSTOM, \
+    CONF_SKIP, CONF_FILTER_VALUES, CONF_FILTER_SCALE
 from .hub import MegaD
 import re
 
@@ -107,7 +108,35 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     async_add_devices(devices)
 
 
-class MegaI2C(MegaPushEntity):
+class FilterBadValues(MegaPushEntity):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._prev_value = None
+
+    def filter_value(self, value):
+        if value in self.filter_values \
+           or (
+                self._prev_value is not None
+                and self.filter_scale is not None
+                and (
+                        abs(value - self._prev_value) / self._prev_value > self.filter_scale
+                )
+            ):
+            value = self._prev_value
+        self._prev_value = value
+        return value
+
+    @property
+    def filter_values(self):
+        return self.customize.get(CONF_FILTER_VALUES, self.mega.customize.get(CONF_FILTER_VALUES, []))
+
+    @property
+    def filter_scale(self):
+        return self.customize.get(CONF_FILTER_SCALE, self.mega.customize.get(CONF_FILTER_SCALE, None))
+
+
+class MegaI2C(FilterBadValues):
 
     def __init__(
             self,
@@ -151,6 +180,7 @@ class MegaI2C(MegaPushEntity):
                 ret = tmpl.async_render({'value': ret})
         except:
             ret = ret
+        ret = self.filter_value(ret)
         return str(ret)
 
     @property
@@ -158,7 +188,7 @@ class MegaI2C(MegaPushEntity):
         return self._device_class
 
 
-class Mega1WSensor(MegaPushEntity):
+class Mega1WSensor(FilterBadValues):
 
     def __init__(
             self,
@@ -247,6 +277,7 @@ class Mega1WSensor(MegaPushEntity):
                 ret = tmpl.async_render({'value': ret})
         except:
             pass
+        ret = self.filter_value(ret)
         return str(ret)
 
     @property

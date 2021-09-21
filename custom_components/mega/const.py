@@ -45,6 +45,8 @@ CONF_SMOOTH = 'smooth'
 CONF_WHITE_SEP = 'white_sep'
 CONF_CHIP = 'chip'
 CONF_RANGE = 'range'
+CONF_FILTER_VALUES = 'filter_values'
+CONF_FILTER_SCALE = 'filter_scale'
 PLATFORMS = [
     "light",
     "switch",
