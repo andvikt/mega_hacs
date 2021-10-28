@@ -228,6 +228,7 @@ class Mega1WSensor(FilterBadValues):
         self._device_class = device_class
         self._unit_of_measurement = unit_of_measurement
         self.mega.sensors.append(self)
+        self.prev_value = None
 
     @property
     def unit_of_measurement(self):
@@ -281,7 +282,8 @@ class Mega1WSensor(FilterBadValues):
             ret = float(ret)
             ret = str(ret)
         except:
-            ret = None
+            self.lg.warning(f'could not convert to float "{ret}"')
+            ret = self.prev_value
         if self.customize.get(CONF_HEX_TO_FLOAT):
             try:
                 ret = struct.unpack('!f', bytes.fromhex(ret))[0]
@@ -296,6 +298,7 @@ class Mega1WSensor(FilterBadValues):
         except:
             pass
         ret = self.filter_value(ret)
+        self.prev_value = ret
         return str(ret)
 
     @property
