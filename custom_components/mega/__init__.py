@@ -104,10 +104,11 @@ CONFIG_SCHEMA = vol.Schema(
     {
         DOMAIN: {
             vol.Optional(CONF_ALLOW_HOSTS): [str],
-            vol.Optional('entities'): vol.Any(
+            vol.Optional('entities'): {
+                vol.Optional(str): vol.Any(
                 CUSTOMIZE_PORT,
                 CUSTOMIZE_DS2413
-            ),
+            )},
             vol.Optional(vol.Any(str, int), description='id меги из веб-интерфейса'): {
                 vol.Optional(CONF_FORCE_D, description='Принудительно слать d после срабатывания входа', default=False): bool,
                 vol.Optional(
