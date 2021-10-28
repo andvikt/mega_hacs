@@ -164,6 +164,7 @@ class MegaD:
             hass.data[DOMAIN][CONF_HTTP].protected = protected
         except Exception:
             self.lg.exception('while setting allowed hosts')
+        self.binary_sensors = []
 
     async def start(self):
         pass

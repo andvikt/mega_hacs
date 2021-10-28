@@ -67,6 +67,7 @@ class MegaBinarySensor(BinarySensorEntity, MegaPushEntity):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.mega.binary_sensors.append(self.port)
         self._is_on = None
         self._attrs = None
         self._click_task = None

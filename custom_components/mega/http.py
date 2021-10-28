@@ -134,7 +134,7 @@ class MegaView(HomeAssistantView):
                         if ret == 'd' and act:
                             await hub.request(cmd=act.replace(':3', f':{v}'))
                         ret = 'd' if hub.force_d else ''
-            else:
+            elif port in hub.binary_sensors:
                 hub.values[port] = data
                 for cb in self.callbacks[hub.id][port]:
                     cb(data)
@@ -147,7 +147,7 @@ class MegaView(HomeAssistantView):
         _LOGGER.debug('response %s', ret)
         Response(body='' if hub.fake_response else ret, content_type='text/plain')
 
-        if hub.fake_response and 'value' not in data and 'pt' in data:
+        if hub.fake_response and 'value' not in data and 'pt' in data and port in hub.binary_sensors:
             if 'd' in ret:
                 await hub.request(pt=port, cmd=ret)
             else:
