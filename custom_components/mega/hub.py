@@ -310,8 +310,8 @@ class MegaD:
                             return ret
                 except asyncio.TimeoutError:
                     self.lg.warning(f'timeout while requesting {url}')
-                    raise
-                    # await asyncio.sleep(1)
+                    # raise
+                    await asyncio.sleep(1)
             raise asyncio.TimeoutError('after 3 tries')
 
     async def save(self):
