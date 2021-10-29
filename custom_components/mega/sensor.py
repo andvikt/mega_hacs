@@ -324,7 +324,10 @@ class Mega1WSensor(FilterBadValues):
         n = super().name
         c = self.customize.get(CONF_NAME, {})
         if isinstance(c, dict):
-            c = c.get(self.key)
+            try:
+                c = c.get(self.key)
+            except:
+                pass
         return c or n
 
 
