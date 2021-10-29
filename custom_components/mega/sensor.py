@@ -115,6 +115,10 @@ class FilterBadValues(MegaPushEntity):
         self._prev_value = None
 
     def filter_value(self, value):
+        self.lg.debug(
+            'value=%s filter_low=%s filter_high=%s filter_scale=%s prev_value=%s filter_values=%s',
+            (value, self.filter_low, self.filter_high, self.filter_scale, self._prev_value, self.filter_values)
+        )
         if value in self.filter_values \
            or (self.filter_low is not None and value < self.filter_low) \
            or (self.filter_high is not None and value > self.filter_high) \
