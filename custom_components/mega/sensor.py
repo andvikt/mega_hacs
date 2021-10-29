@@ -94,7 +94,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
                 hub.skip_ports |= {port}
                 continue
             for data in cfg:
-                hub.lg.debug(f'add sensor on port %s with data %s', port, data)
+                hub.lg.debug(f'add sensor on port %s with data %s, constructor: %s', port, data, _constructors[tp])
                 sensor = _constructors[tp](
                     mega=hub,
                     port=port,
@@ -111,15 +111,17 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
 class FilterBadValues(MegaPushEntity):
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
         self._prev_value = None
+        super().__init__(*args, **kwargs)
 
     def filter_value(self, value):
         self.lg.debug(
             'value=%s filter_low=%s filter_high=%s filter_scale=%s prev_value=%s filter_values=%s',
-            (value, self.filter_low, self.filter_high, self.filter_scale, self._prev_value, self.filter_values)
+            value, self.filter_low, self.filter_high, self.filter_scale, self._prev_value, self.filter_values
         )
-        if value in self.filter_values \
+        self.lg.debug(f'{self.customize} {self.entity_id}')
+        if value \
+                in self.filter_values \
            or (self.filter_low is not None and value < self.filter_low) \
            or (self.filter_high is not None and value > self.filter_high) \
            or (
@@ -227,8 +229,9 @@ class Mega1WSensor(FilterBadValues):
         :param patt: pattern to extract value, must have at least one group that will contain parsed value
         """
         super().__init__(*args, **kwargs)
-        self._value = None
         self.key = key
+        lg.debug(f'my key: {key}')
+        self._value = None
         self._device_class = device_class
         self._unit_of_measurement = unit_of_measurement
         self.mega.sensors.append(self)
@@ -251,7 +254,7 @@ class Mega1WSensor(FilterBadValues):
         if self.key:
             return super().unique_id + f'_{self.key}'
         else:
-            return super(Mega1WSensor, self).unique_id
+            return super().unique_id
 
     @property
     def device_class(self):
@@ -268,6 +271,8 @@ class Mega1WSensor(FilterBadValues):
     @property
     def state(self):
         ret = None
+        if not hasattr(self, 'key'):
+            return None
         if self.key:
             try:
                 ret = self.mega.values.get(self.port, {})
@@ -310,7 +315,10 @@ class Mega1WSensor(FilterBadValues):
         n = super().name
         c = self.customize.get(CONF_NAME, {})
         if isinstance(c, dict):
-            c = c.get(self.key)
+            try:
+                c = c.get(self.key)
+            except AttributeError:
+                lg.debug(dir(self))
         return c or n
 
 

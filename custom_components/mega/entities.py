@@ -54,7 +54,6 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
             smooth=None,
             **kwargs,
     ):
-        super().__init__(mega.updater)
         self._smooth = smooth
         self.http_cmd = http_cmd
         self._state: State = None
@@ -85,6 +84,8 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
         self._can_smooth_hard = None
         if self.http_cmd == 'ds2413':
             self.mega.ds2413_ports |= {self.port}
+        super().__init__(coordinator=mega.updater)
+
 
     @property
     def is_ws(self):
@@ -126,10 +127,14 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
     def customize(self):
         if self._customize is not None:
             return self._customize
-        if self.hass is None:
+        if self.hass is None or self.entity_id is None:
             return {}
         if self._customize is None:
-            c_entity_id = self.hass.data.get(DOMAIN, {}).get('entities', {}).get(self.entity_id, {})
+
+            c_entity_id = self.hass.data.get(DOMAIN, {}).get(CONF_CUSTOM).get('entities', {}).get(self.entity_id, {})
+            self.lg.debug(
+                'customize %s with %s', self.entity_id, c_entity_id
+            )
             c = self.hass.data.get(DOMAIN, {}).get(CONF_CUSTOM) or {}
             c = c.get(self._mega_id) or {}
             c = c.get(self.port) or {}
@@ -168,9 +173,9 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
 
     @property
     def lg(self) -> logging.Logger:
-        if self._lg is None:
-            self._lg = self.mega.lg.getChild(self._name or self.unique_id)
-        return self._lg
+        # if self._lg is None:
+        #     self._lg = self.mega.lg.getChild(self._name or self.unique_id)
+        return _LOGGER
 
     @property
     def available(self) -> bool:
