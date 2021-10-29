@@ -1,6 +1,7 @@
 """Platform for light integration."""
 import asyncio
 import logging
+import typing
 from datetime import timedelta, datetime
 from functools import partial
 

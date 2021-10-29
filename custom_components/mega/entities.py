@@ -12,7 +12,7 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers.restore_state import RestoreEntity
 from . import hub as h
 from .const import DOMAIN, CONF_CUSTOM, CONF_INVERT, EVENT_BINARY_SENSOR, LONG, \
-    LONG_RELEASE, RELEASE, PRESS, SINGLE_CLICK, DOUBLE_CLICK, EVENT_BINARY, CONF_SMOOTH
+    LONG_RELEASE, RELEASE, PRESS, SINGLE_CLICK, DOUBLE_CLICK, EVENT_BINARY, CONF_SMOOTH, CONF_RANGE
 
 _events_on = False
 _LOGGER = logging.getLogger(__name__)
@@ -309,34 +309,42 @@ class MegaOutPort(MegaPushEntity):
             return 255
 
     @property
+    def range(self) -> typing.List[int]:
+        return self.customize.get(CONF_RANGE, [0, 255])
+
+    @property
     def invert(self):
         return self.customize.get(CONF_INVERT, False)
 
     @property
     def brightness(self):
+        ret = None
         if not self.dimmer:
             return
         val = self.mega.values.get(self.port, {})
         if isinstance(val, dict) and len(val) == 0 and self._state is not None:
-            return self._state.attributes.get("brightness")
+            ret = safe_int(self._state.attributes.get("brightness"), def_on=self.max_dim, def_off=0, def_val=0)
+            ret = self._calc_brightness(ret)
         elif isinstance(self.port, str) and 'e' in self.port:
             if isinstance(val, str):
-                val = safe_int(val)
+                val = safe_int(val, def_on=self.max_dim, def_off=0, def_val=0)
             else:
                 val = 0
             if val == 0:
-                return self._brightness
+                ret = self._brightness
             elif isinstance(val, (int, float)):
-                return int(val / self.dimmer_scale)
+                ret = int(val / self.dimmer_scale)
         elif val is not None:
             val = val.get("value")
             if val is None:
                 return
             try:
                 val = int(val)
-                return val
+                ret = val
             except Exception:
                 pass
+        ret = self._cal_reverse_brightness(ret)
+        return ret
 
     @property
     def is_on(self) -> bool:
@@ -422,6 +430,24 @@ class MegaOutPort(MegaPushEntity):
             updater=partial(self.update_from_smooth, update_state=update_state),
         ))
 
+    def _calc_brightness(self, brightness):
+        pct = brightness / 255
+        pct = max((0, pct))
+        pct = min((pct, 1))
+        l, h = self.range
+        d = h - l
+        brightness = round(pct * d + l)
+        return brightness
+
+    def _cal_reverse_brightness(self, brightness):
+        l, h = self.range
+        d = h - l
+        pct = (brightness - l) / d
+        pct = max((0, pct))
+        pct = min((pct, 1))
+        brightness = round(pct * 255)
+        return brightness
+
     async def async_turn_on(self, brightness=None, transition=None, **kwargs):
         if (time.time() - self._last_called) < 0.1:
             return
@@ -431,6 +457,7 @@ class MegaOutPort(MegaPushEntity):
         if not self.is_on and (brightness is None or brightness == 0):
             brightness = self._restore_brightness
         brightness = brightness or self.brightness or 255
+        brightness = self._calc_brightness(brightness)
         _prev = safe_int(self.brightness) or 0
         self._brightness = brightness
         if self.dimmer and brightness == 0:
@@ -474,7 +501,7 @@ class MegaOutPort(MegaPushEntity):
         if (time.time() - self._last_called) < 0.1:
             return
         self._last_called = time.time()
-        self._restore_brightness = safe_int(self._brightness)
+        self._restore_brightness = self._cal_reverse_brightness(safe_int(self._brightness))
         if not self.dimmer:
             transition = None
         cmd = "0" if not self.invert else "1"
@@ -510,12 +537,12 @@ class MegaOutPort(MegaPushEntity):
 
 
 
-def safe_int(v):
+def safe_int(v, def_on=1, def_off=0, def_val=None):
     if v == 'ON':
-        return 1
+        return def_on
     elif v == 'OFF':
-        return 0
+        return def_off
     try:
         return int(v)
     except (ValueError, TypeError):
-        return None
+        return def_val

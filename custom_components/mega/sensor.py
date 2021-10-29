@@ -128,7 +128,7 @@ class FilterBadValues(MegaPushEntity):
                 self._prev_value is not None
                 and self.filter_scale is not None
                 and (
-                        abs(value - self._prev_value) / self._prev_value > self.filter_scale
+                    abs(value - self._prev_value) / self._prev_value > self.filter_scale
                 )
             ):
             value = self._prev_value

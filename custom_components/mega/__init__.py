@@ -52,6 +52,10 @@ LED_LIGHT = \
 
 CUSTOMIZE_PORT = {
     vol.Optional(CONF_SKIP, description='исключить порт из сканирования', default=False): bool,
+    vol.Optional(CONF_RANGE, description='диапазон диммирования'): [
+        vol.Range(0, 255),
+        vol.Range(0, 255),
+    ],
     vol.Optional(CONF_INVERT, default=False): bool,
     vol.Optional(CONF_NAME): vol.Any(str, {
         vol.Required(str): str
