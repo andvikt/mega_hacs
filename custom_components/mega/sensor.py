@@ -171,7 +171,12 @@ class MegaI2C(FilterBadValues):
 
     @property
     def customize(self):
-        return super().customize.get(self.id_suffix, {}) or {}
+        ret = super().customize
+        _old = ret.get(self.id_suffix)
+        if _old is not None:
+            ret = ret.copy()
+            ret.update(_old)
+        return ret
 
     @property
     def extra_state_attributes(self):
