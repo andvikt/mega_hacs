@@ -430,6 +430,8 @@ class MegaOutPort(MegaPushEntity):
         ))
 
     def _calc_brightness(self, brightness):
+        if brightness is None:
+            brightness = 0
         pct = brightness / 255
         pct = max((0, pct))
         pct = min((pct, 1))
@@ -439,6 +441,8 @@ class MegaOutPort(MegaPushEntity):
         return brightness
 
     def _cal_reverse_brightness(self, brightness):
+        if brightness is None:
+            brightness = 0
         l, h = self.range
         d = h - l
         pct = (brightness - l) / d
