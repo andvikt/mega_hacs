@@ -21,7 +21,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.template import Template
 from .entities import MegaPushEntity
 from .const import CONF_KEY, TEMP, HUM, W1, W1BUS, CONF_CONV_TEMPLATE, CONF_HEX_TO_FLOAT, DOMAIN, CONF_CUSTOM, \
-    CONF_SKIP, CONF_FILTER_VALUES, CONF_FILTER_SCALE, CONF_FILTER_LOW, CONF_FILTER_HIGH
+    CONF_SKIP, CONF_FILTER_VALUES, CONF_FILTER_SCALE, CONF_FILTER_LOW, CONF_FILTER_HIGH, CONF_FILL_NA
 from .hub import MegaD
 import re
 
@@ -115,11 +115,6 @@ class FilterBadValues(MegaPushEntity):
         super().__init__(*args, **kwargs)
 
     def filter_value(self, value):
-        self.lg.debug(
-            'value=%s filter_low=%s filter_high=%s filter_scale=%s prev_value=%s filter_values=%s',
-            value, self.filter_low, self.filter_high, self.filter_scale, self._prev_value, self.filter_values
-        )
-        self.lg.debug(f'{self.customize} {self.entity_id}')
         if value \
                 in self.filter_values \
            or (self.filter_low is not None and value < self.filter_low) \
@@ -131,7 +126,10 @@ class FilterBadValues(MegaPushEntity):
                     abs(value - self._prev_value) / self._prev_value > self.filter_scale
                 )
             ):
-            value = self._prev_value
+            if self.fill_na == 'last':
+                value = self._prev_value
+            else:
+                value = None
         self._prev_value = value
         return value
 
@@ -150,6 +148,10 @@ class FilterBadValues(MegaPushEntity):
     @property
     def filter_high(self):
         return self.customize.get(CONF_FILTER_HIGH, self.mega.customize.get(CONF_FILTER_HIGH, None))
+
+    @property
+    def fill_na(self):
+        return self.customize.get(CONF_FILL_NA, 'last')
 
 
 class MegaI2C(FilterBadValues):
@@ -189,7 +191,6 @@ class MegaI2C(FilterBadValues):
 
     @property
     def state(self):
-        # self.lg.debug(f'get % all states: %', self._params, self.mega.values)
         ret = self.mega.values.get(self._params)
         if self.customize.get(CONF_HEX_TO_FLOAT):
             try:
@@ -205,7 +206,8 @@ class MegaI2C(FilterBadValues):
         except:
             ret = ret
         ret = self.filter_value(ret)
-        return str(ret)
+        if ret is not None:
+            return str(ret)
 
     @property
     def device_class(self):
@@ -230,7 +232,6 @@ class Mega1WSensor(FilterBadValues):
         """
         super().__init__(*args, **kwargs)
         self.key = key
-        lg.debug(f'my key: {key}')
         self._value = None
         self._device_class = device_class
         self._unit_of_measurement = unit_of_measurement
@@ -285,13 +286,15 @@ class Mega1WSensor(FilterBadValues):
                 return
         else:
             ret = self.mega.values.get(self.port, {}).get('value')
-        if ret is None and self._state is not None:
+        if ret is None and self.fill_na == 'fill_na' and self.prev_value is not None:
+            ret = self.prev_value
+        elif ret is None and self.fill_na == 'fill_na' and self._state is not None:
             ret = self._state.state
         try:
             ret = float(ret)
             ret = str(ret)
         except:
-            self.lg.warning(f'could not convert to float "{ret}"')
+            self.lg.debug(f'could not convert to float "{ret}"')
             ret = self.prev_value
         if self.customize.get(CONF_HEX_TO_FLOAT):
             try:
@@ -308,17 +311,15 @@ class Mega1WSensor(FilterBadValues):
             pass
         ret = self.filter_value(ret)
         self.prev_value = ret
-        return str(ret)
+        if ret is not None:
+            return str(ret)
 
     @property
     def name(self):
         n = super().name
         c = self.customize.get(CONF_NAME, {})
         if isinstance(c, dict):
-            try:
-                c = c.get(self.key)
-            except AttributeError:
-                lg.debug(dir(self))
+            c = c.get(self.key)
         return c or n
 
 

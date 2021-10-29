@@ -17,7 +17,7 @@ from .const import DOMAIN, CONF_INVERT, CONF_RELOAD, PLATFORMS, CONF_PORTS, CONF
     CONF_MQTT_INPUTS, CONF_HTTP, CONF_RESPONSE_TEMPLATE, CONF_ACTION, CONF_GET_VALUE, CONF_ALLOW_HOSTS, \
     CONF_CONV_TEMPLATE, CONF_ALL, CONF_FORCE_D, CONF_DEF_RESPONSE, CONF_FORCE_I2C_SCAN, CONF_HEX_TO_FLOAT, \
     RGB_COMBINATIONS, CONF_WS28XX, CONF_ORDER, CONF_SMOOTH, CONF_LED, CONF_WHITE_SEP, CONF_CHIP, CONF_RANGE, \
-    CONF_FILTER_VALUES, CONF_FILTER_SCALE, CONF_FILTER_LOW, CONF_FILTER_HIGH
+    CONF_FILTER_VALUES, CONF_FILTER_SCALE, CONF_FILTER_LOW, CONF_FILTER_HIGH, CONF_FILL_NA
 from .hub import MegaD
 from .config_flow import ConfigFlow
 from .http import MegaView
@@ -52,6 +52,10 @@ LED_LIGHT = \
 
 CUSTOMIZE_PORT = {
     vol.Optional(CONF_SKIP, description='исключить порт из сканирования', default=False): bool,
+    vol.Optional(CONF_FILL_NA, default='last'): vol.Any(
+      'last',
+      'none'
+    ),
     vol.Optional(CONF_RANGE, description='диапазон диммирования'): [
         vol.Range(0, 255),
         vol.Range(0, 255),
