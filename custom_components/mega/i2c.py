@@ -1,4 +1,5 @@
-from dataclasses import dataclass, field
+import typing
+from dataclasses import dataclass, field, astuple
 from urllib.parse import parse_qsl, urlparse
 from bs4 import BeautifulSoup
 from homeassistant.const import (
@@ -15,7 +16,15 @@ from homeassistant.const import (
 )
 from collections import namedtuple
 
-DeviceType = namedtuple('DeviceType', 'device_class,unit_of_measurement,suffix')
+# DeviceType = namedtuple('DeviceType', 'device_class,unit_of_measurement,suffix')
+
+@dataclass
+class DeviceType:
+
+    device_class: typing.Optional[str] = None
+    unit_of_measurement: typing.Optional[str] = None
+    suffix: typing.Optional[str] = None
+    delay: typing.Optional[float] = None
 
 
 def parse_scan_page(page: str):
@@ -44,7 +53,9 @@ def parse_scan_page(page: str):
                 req.append(params)
                 continue
             elif isinstance(c, DeviceType):
-                c, m, suffix = c
+                c, m, suffix, delay = astuple(c)
+                if delay is not None:
+                    params['delay'] = delay
             else:
                 continue
             suffix = suffix or c
@@ -83,7 +94,7 @@ i2c_classes = {
         DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, None),
     ],
     'sht31': [
-        DeviceType(DEVICE_CLASS_HUMIDITY, PERCENTAGE, None),
+        DeviceType(DEVICE_CLASS_HUMIDITY, PERCENTAGE, None, delay=0.5),
         DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, None),
     ],
     'max44009': [

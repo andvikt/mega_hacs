@@ -1,6 +1,7 @@
 """The mega integration."""
 import asyncio
 import logging
+import typing
 from functools import partial
 
 import voluptuous as vol
@@ -83,10 +84,10 @@ CUSTOMIZE_PORT = {
     vol.Optional(CONF_VALUE_TEMPLATE): cv.template,
     vol.Optional(CONF_FORCE_I2C_SCAN): bool,
     vol.Optional(CONF_HEX_TO_FLOAT): bool,
-    vol.Optional(CONF_FILTER_VALUES): [cv.positive_float],
-    vol.Optional(CONF_FILTER_SCALE): cv.positive_float,
-    vol.Optional(CONF_FILTER_LOW): cv.positive_float,
-    vol.Optional(CONF_FILTER_HIGH): cv.positive_float,
+    vol.Optional(CONF_FILTER_VALUES): [vol.Coerce(float)],
+    vol.Optional(CONF_FILTER_SCALE): vol.Coerce(float),
+    vol.Optional(CONF_FILTER_LOW): vol.Coerce(float),
+    vol.Optional(CONF_FILTER_HIGH): vol.Coerce(float),
     vol.Optional(CONF_SMOOTH): cv.time_period_seconds,
     # vol.Optional(CONF_RANGE): vol.ExactSequence([int, int]), TODO: сделать отбрасывание "плохих" значений
     vol.Optional(str): {
