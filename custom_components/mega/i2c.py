@@ -41,41 +41,40 @@ def parse_scan_page(page: str):
             continue
         classes = i2c_classes.get(dev, [])
         for i, c in enumerate(classes):
+            _params = params.copy()
             if c is Skip:
                 continue
             elif c is Request:
-                req.append(params)
+                req.append(_params)
                 continue
             elif isinstance(c, Request):
                 if c.delay:
-                    params = params.copy()
-                    params['delay'] = c.delay
-                req.append(params)
+                    _params['delay'] = c.delay
+                req.append(_params)
                 continue
             elif isinstance(c, DeviceType):
                 c, m, suffix, delay = astuple(c)
                 if delay is not None:
-                    params['delay'] = delay
+                    _params['delay'] = delay
             else:
                 continue
             suffix = suffix or c
-            if 'addr' in params:
-                suffix += f"_{params['addr']}" if suffix else str(params['addr'])
+            if 'addr' in _params:
+                suffix += f"_{_params['addr']}" if suffix else str(_params['addr'])
             if suffix:
                 _dev = f'{dev}_{suffix}'
             else:
                 _dev = dev
-            params = params.copy()
             if i > 0:
-                params['i2c_par'] = i
+                _params['i2c_par'] = i
 
             ret.append({
                 'id_suffix': _dev,
                 'device_class': c,
-                'params': params,
+                'params': _params,
                 'unit_of_measurement': m,
             })
-            req.append(params)
+            req.append(_params)
     return req, ret
 
 

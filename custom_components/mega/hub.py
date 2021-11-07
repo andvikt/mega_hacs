@@ -427,7 +427,7 @@ class MegaD:
     def subscribe(self, port, callback):
         port = int_ignore(port)
         self.lg.debug(
-            f'subscribe %s %s', port, str(callback)
+            f'subscribe %s', port,
         )
         self.http.callbacks[self.id][port].append(callback)
 

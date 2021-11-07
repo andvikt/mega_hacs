@@ -86,7 +86,6 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
             self.mega.ds2413_ports |= {self.port}
         super().__init__(coordinator=mega.updater)
 
-
     @property
     def is_ws(self):
         return False
@@ -131,9 +130,6 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
             return {}
         if self._customize is None:
             c_entity_id = self.hass.data.get(DOMAIN, {}).get(CONF_CUSTOM).get('entities', {}).get(self.entity_id, {})
-            self.lg.debug(
-                'customize %s with %s', self.entity_id, c_entity_id
-            )
             c = self.hass.data.get(DOMAIN, {}).get(CONF_CUSTOM) or {}
             c = c.get(self._mega_id) or {}
             c = c.get(self.port) or {}
