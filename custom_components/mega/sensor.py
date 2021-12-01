@@ -6,7 +6,7 @@ import struct
 from homeassistant.components.sensor import (
     PLATFORM_SCHEMA as SENSOR_SCHEMA,
     DEVICE_CLASS_TEMPERATURE,
-    DEVICE_CLASS_HUMIDITY
+    DEVICE_CLASS_HUMIDITY, SensorEntity
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
@@ -108,30 +108,34 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     async_add_devices(devices)
 
 
-class FilterBadValues(MegaPushEntity):
+class FilterBadValues(MegaPushEntity, SensorEntity):
 
     def __init__(self, *args, **kwargs):
         self._prev_value = None
         super().__init__(*args, **kwargs)
 
     def filter_value(self, value):
-        if value \
-                in self.filter_values \
-           or (self.filter_low is not None and value < self.filter_low) \
-           or (self.filter_high is not None and value > self.filter_high) \
-           or (
-                self._prev_value is not None
-                and self.filter_scale is not None
-                and (
-                    abs(value - self._prev_value) / self._prev_value > self.filter_scale
-                )
-            ):
-            if self.fill_na == 'last':
-                value = self._prev_value
-            else:
-                value = None
-        self._prev_value = value
-        return value
+        try:
+            if value \
+                    in self.filter_values \
+               or (self.filter_low is not None and value < self.filter_low) \
+               or (self.filter_high is not None and value > self.filter_high) \
+               or (
+                    self._prev_value is not None
+                    and self.filter_scale is not None
+                    and (
+                        abs(value - self._prev_value) / self._prev_value > self.filter_scale
+                    )
+                ):
+                if self.fill_na == 'last':
+                    value = self._prev_value
+                else:
+                    value = None
+            self._prev_value = value
+            return value
+        except Exception as exc:
+            lg.exception(f'while parsing value')
+            return None
 
     @property
     def filter_values(self):
@@ -191,28 +195,32 @@ class MegaI2C(FilterBadValues):
         return self._device_class
 
     @property
-    def unit_of_measurement(self):
+    def native_unit_of_measurement(self):
         return self._unit_of_measurement
 
     @property
-    def state(self):
-        ret = self.mega.values.get(self._params)
-        if self.customize.get(CONF_HEX_TO_FLOAT):
-            try:
-                ret = struct.unpack('!f', bytes.fromhex(ret))[0]
-            except:
-                self.lg.warning(f'could not convert {ret} form hex to float')
-        tmpl: Template = self.customize.get(CONF_CONV_TEMPLATE, self.customize.get(CONF_VALUE_TEMPLATE))
+    def native_value(self):
         try:
-            ret = float(ret)
-            if tmpl is not None and self.hass is not None:
-                tmpl.hass = self.hass
-                ret = tmpl.async_render({'value': ret})
-        except:
-            ret = ret
-        ret = self.filter_value(ret)
-        if ret is not None:
-            return str(ret)
+            ret = self.mega.values.get(self._params)
+            if self.customize.get(CONF_HEX_TO_FLOAT):
+                try:
+                    ret = struct.unpack('!f', bytes.fromhex(ret))[0]
+                except:
+                    self.lg.warning(f'could not convert {ret} form hex to float')
+            tmpl: Template = self.customize.get(CONF_CONV_TEMPLATE, self.customize.get(CONF_VALUE_TEMPLATE))
+            try:
+                ret = float(ret)
+                if tmpl is not None and self.hass is not None:
+                    tmpl.hass = self.hass
+                    ret = tmpl.async_render({'value': ret})
+            except:
+                ret = ret
+            ret = self.filter_value(ret)
+            if ret is not None:
+                return str(ret)
+        except Exception:
+            lg.exception('while getting value')
+            return None
 
     @property
     def device_class(self):
@@ -244,7 +252,7 @@ class Mega1WSensor(FilterBadValues):
         self.prev_value = None
 
     @property
-    def unit_of_measurement(self):
+    def native_unit_of_measurement(self):
         _u = self.customize.get(CONF_UNIT_OF_MEASUREMENT, None)
         if _u is None:
             return self._unit_of_measurement
@@ -275,49 +283,53 @@ class Mega1WSensor(FilterBadValues):
             return self._device_class
 
     @property
-    def state(self):
-        ret = None
-        if not hasattr(self, 'key'):
-            return None
-        if self.key:
-            try:
-                ret = self.mega.values.get(self.port, {})
-                if isinstance(ret, dict):
-                    ret = ret.get('value', {})
+    def native_value(self):
+        try:
+            ret = None
+            if not hasattr(self, 'key'):
+                return None
+            if self.key:
+                try:
+                    ret = self.mega.values.get(self.port, {})
                     if isinstance(ret, dict):
-                        ret = ret.get(self.key)
-            except:
-                self.lg.error(self.mega.values.get(self.port, {}).get('value', {}))
-                return
-        else:
-            ret = self.mega.values.get(self.port, {}).get('value')
-        if ret is None and self.fill_na == 'fill_na' and self.prev_value is not None:
-            ret = self.prev_value
-        elif ret is None and self.fill_na == 'fill_na' and self._state is not None:
-            ret = self._state.state
-        try:
-            ret = float(ret)
-            ret = str(ret)
-        except:
-            self.lg.debug(f'could not convert to float "{ret}"')
-            ret = self.prev_value
-        if self.customize.get(CONF_HEX_TO_FLOAT):
+                        ret = ret.get('value', {})
+                        if isinstance(ret, dict):
+                            ret = ret.get(self.key)
+                except:
+                    self.lg.error(self.mega.values.get(self.port, {}).get('value', {}))
+                    return
+            else:
+                ret = self.mega.values.get(self.port, {}).get('value')
+            if ret is None and self.fill_na == 'fill_na' and self.prev_value is not None:
+                ret = self.prev_value
+            elif ret is None and self.fill_na == 'fill_na' and self._state is not None:
+                ret = self._state.state
             try:
-                ret = struct.unpack('!f', bytes.fromhex(ret))[0]
+                ret = float(ret)
+                ret = str(ret)
             except:
-                self.lg.warning(f'could not convert {ret} form hex to float')
-        tmpl: Template = self.customize.get(CONF_CONV_TEMPLATE, self.customize.get(CONF_VALUE_TEMPLATE))
-        try:
-            ret = float(ret)
-            if tmpl is not None and self.hass is not None:
-                tmpl.hass = self.hass
-                ret = tmpl.async_render({'value': ret})
-        except:
-            pass
-        ret = self.filter_value(ret)
-        self.prev_value = ret
-        if ret is not None:
-            return str(ret)
+                self.lg.debug(f'could not convert to float "{ret}"')
+                ret = self.prev_value
+            if self.customize.get(CONF_HEX_TO_FLOAT):
+                try:
+                    ret = struct.unpack('!f', bytes.fromhex(ret))[0]
+                except:
+                    self.lg.warning(f'could not convert {ret} form hex to float')
+            tmpl: Template = self.customize.get(CONF_CONV_TEMPLATE, self.customize.get(CONF_VALUE_TEMPLATE))
+            try:
+                ret = float(ret)
+                if tmpl is not None and self.hass is not None:
+                    tmpl.hass = self.hass
+                    ret = tmpl.async_render({'value': ret})
+            except:
+                pass
+            ret = self.filter_value(ret)
+            self.prev_value = ret
+            if ret is not None:
+                return str(ret)
+        except Exception:
+            lg.exception('while parsing state')
+            return None
 
     @property
     def name(self):
