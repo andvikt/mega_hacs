@@ -50,6 +50,8 @@ CONF_FILTER_VALUES = 'filter_values'
 CONF_FILTER_SCALE = 'filter_scale'
 CONF_FILTER_LOW = 'filter_low'
 CONF_FILTER_HIGH = 'filter_high'
+CONF_1WBUS = '1wbus'
+CONF_ADDR = 'addr'
 PLATFORMS = [
     "light",
     "switch",

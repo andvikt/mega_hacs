@@ -18,7 +18,8 @@ from .const import DOMAIN, CONF_INVERT, CONF_RELOAD, PLATFORMS, CONF_PORTS, CONF
     CONF_MQTT_INPUTS, CONF_HTTP, CONF_RESPONSE_TEMPLATE, CONF_ACTION, CONF_GET_VALUE, CONF_ALLOW_HOSTS, \
     CONF_CONV_TEMPLATE, CONF_ALL, CONF_FORCE_D, CONF_DEF_RESPONSE, CONF_FORCE_I2C_SCAN, CONF_HEX_TO_FLOAT, \
     RGB_COMBINATIONS, CONF_WS28XX, CONF_ORDER, CONF_SMOOTH, CONF_LED, CONF_WHITE_SEP, CONF_CHIP, CONF_RANGE, \
-    CONF_FILTER_VALUES, CONF_FILTER_SCALE, CONF_FILTER_LOW, CONF_FILTER_HIGH, CONF_FILL_NA
+    CONF_FILTER_VALUES, CONF_FILTER_SCALE, CONF_FILTER_LOW, CONF_FILTER_HIGH, CONF_FILL_NA, CONF_MEGA_ID, CONF_ADDR, \
+    CONF_1WBUS
 from .hub import MegaD
 from .config_flow import ConfigFlow
 from .http import MegaView
@@ -108,6 +109,11 @@ def extender(x):
     else:
         raise ValueError('must has "e" in port name')
 
+OWBUS = vol.Schema({
+    vol.Required(CONF_PORT): vol.Any(vol.Coerce(int), vol.Coerce(str)),
+    vol.Required(CONF_MEGA_ID): vol.Coerce(str),
+    vol.Required(CONF_ADDR): [str],
+})
 
 CONFIG_SCHEMA = vol.Schema(
     {
@@ -134,7 +140,8 @@ CONFIG_SCHEMA = vol.Schema(
                 vol.Optional(CONF_FILTER_SCALE): cv.positive_float,
                 vol.Optional(CONF_FILTER_LOW): cv.positive_float,
                 vol.Optional(CONF_FILTER_HIGH): cv.positive_float,
-            }
+            },
+            vol.Optional(CONF_1WBUS): [OWBUS]
         }
     },
     extra=vol.ALLOW_EXTRA,

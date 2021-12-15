@@ -161,15 +161,12 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
             ],
             "name": f'{self._mega_id} port {pt_idx}' if not isinstance(self.port, list) else f'{self._mega_id} {pt_idx}',
             "manufacturer": 'ab-log.ru',
-            # "model": self.light.productname,
             "sw_version": self.mega.fw,
             "via_device": (DOMAIN, self._mega_id),
         }
 
     @property
     def lg(self) -> logging.Logger:
-        # if self._lg is None:
-        #     self._lg = self.mega.lg.getChild(self._name or self.unique_id)
         return _LOGGER
 
     @property
