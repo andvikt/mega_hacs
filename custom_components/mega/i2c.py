@@ -93,7 +93,7 @@ i2c_classes = {
         DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, None),
     ],
     'sht31': [
-        DeviceType(DEVICE_CLASS_HUMIDITY, PERCENTAGE, None, delay=0.5),
+        DeviceType(DEVICE_CLASS_HUMIDITY, PERCENTAGE, None, delay=1.5),
         DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, None),
     ],
     'max44009': [
