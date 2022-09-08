@@ -1,4 +1,6 @@
 """Platform for light integration."""
+from __future__ import annotations
+
 import asyncio
 import logging
 import typing
@@ -14,8 +16,8 @@ from homeassistant.components.light import (
     SUPPORT_BRIGHTNESS,
     LightEntity,
     SUPPORT_TRANSITION,
-    SUPPORT_COLOR,
-    SUPPORT_WHITE_VALUE
+    SUPPORT_COLOR, ColorMode, LightEntityFeature,
+    # SUPPORT_WHITE_VALUE
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
@@ -116,6 +118,7 @@ class MegaRGBW(LightEntity, BaseMegaEntity):
         self._is_on = None
         self._brightness = None
         self._hs_color = None
+        self._rgb_color: tuple[int, int, int] | None = None
         self._white_value = None
         self._task: asyncio.Task = None
         self._restore = None
@@ -143,10 +146,34 @@ class MegaRGBW(LightEntity, BaseMegaEntity):
     def is_ws(self):
         return self.customize.get(CONF_WS28XX)
 
+
+    @property
+    def supported_color_modes(self) -> set[ColorMode] | set[str] | None:
+        return {
+            ColorMode.BRIGHTNESS,
+            ColorMode.RGB if len(self.port) != 4 else ColorMode.RGBW
+        }
+
+    @property
+    def color_mode(self) -> ColorMode | str | None:
+        if len(self.port) == 4:
+            return ColorMode.RGBW
+        else:
+            return ColorMode.RGB
+
     @property
     def white_value(self):
-        if self.supported_features & SUPPORT_WHITE_VALUE:
-            return float(self.get_attribute('white_value', 0))
+        # if self.supported_features & SUPPORT_WHITE_VALUE:
+        return float(self.get_attribute('white_value', 0))
+
+    @property
+    def rgb_color(self) -> tuple[int, int, int] | None:
+        return self._rgb_color
+
+    @property
+    def rgbw_color(self) -> tuple[int, int, int, int] | None:
+        if self._white_value is not None and self._rgb_color is not None:
+            return (*self._rgb_color, self._white_value)
 
     @property
     def brightness(self):
@@ -162,12 +189,7 @@ class MegaRGBW(LightEntity, BaseMegaEntity):
 
     @property
     def supported_features(self):
-        return (
-            SUPPORT_BRIGHTNESS |
-            SUPPORT_TRANSITION |
-            SUPPORT_COLOR |
-            (SUPPORT_WHITE_VALUE if len(self.port) == 4 else 0)
-        )
+        return LightEntityFeature.TRANSITION
 
     def get_rgbw(self):
         if not self.is_on:
@@ -225,6 +247,7 @@ class MegaRGBW(LightEntity, BaseMegaEntity):
         for item, value in kwargs.items():
             setattr(self, f'_{item}', value)
         _after = self.get_rgbw()
+        self._rgb_color = tuple(_after[:3])
         if transition is None:
             transition = self.smooth.total_seconds()
             ratio = self.calc_speed_ratio(_before, _after)
