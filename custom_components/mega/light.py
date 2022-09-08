@@ -14,8 +14,7 @@ from homeassistant.components.light import (
     SUPPORT_BRIGHTNESS,
     LightEntity,
     SUPPORT_TRANSITION,
-    SUPPORT_COLOR,
-    SUPPORT_WHITE_VALUE
+    SUPPORT_COLOR
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
@@ -145,7 +144,7 @@ class MegaRGBW(LightEntity, BaseMegaEntity):
 
     @property
     def white_value(self):
-        if self.supported_features & SUPPORT_WHITE_VALUE:
+        if self.supported_features:
             return float(self.get_attribute('white_value', 0))
 
     @property
@@ -165,8 +164,7 @@ class MegaRGBW(LightEntity, BaseMegaEntity):
         return (
             SUPPORT_BRIGHTNESS |
             SUPPORT_TRANSITION |
-            SUPPORT_COLOR |
-            (SUPPORT_WHITE_VALUE if len(self.port) == 4 else 0)
+            SUPPORT_COLOR
         )
 
     def get_rgbw(self):
