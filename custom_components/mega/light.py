@@ -131,7 +131,7 @@ class MegaRGBW(LightEntity, BaseMegaEntity):
     def max_values(self) -> list:
         if self._max_values is None:
             if self.is_ws:
-                self._max_values = [255] * 3
+                self._max_values = [255] * 4
             else:
                 self._max_values = [
                     255 if isinstance(x, int) else 4095 for x in self.port
