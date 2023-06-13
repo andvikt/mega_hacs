@@ -9,10 +9,10 @@ import re
 import json
 
 from bs4 import BeautifulSoup
+
+from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (
-    DEVICE_CLASS_TEMPERATURE, DEVICE_CLASS_HUMIDITY, DEVICE_CLASS_PRESSURE,
-    DEVICE_CLASS_ILLUMINANCE, TEMP_CELSIUS, PERCENTAGE, LIGHT_LUX
+from homeassistant.const import ( TEMP_CELSIUS, PERCENTAGE, LIGHT_LUX
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
@@ -45,10 +45,10 @@ UNITS = {
     LUX: LIGHT_LUX
 }
 CLASSES = {
-    TEMP: DEVICE_CLASS_TEMPERATURE,
-    HUM: DEVICE_CLASS_HUMIDITY,
-    PRESS: DEVICE_CLASS_PRESSURE,
-    LUX: DEVICE_CLASS_ILLUMINANCE
+    TEMP: SensorDeviceClass.TEMPERATURE,
+    HUM: SensorDeviceClass.HUMIDITY,
+    PRESS: SensorDeviceClass.PRESSURE,
+    LUX: SensorDeviceClass.ILLUMINANCE
 }
 I2C_DEVICE_TYPES = {
     "2":  LUX,  # BH1750
