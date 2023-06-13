@@ -229,8 +229,8 @@ class Mega1WSensor(FilterBadValues):
 
     def __init__(
             self,
-            unit_of_measurement,
-            device_class,
+            unit_of_measurement=None,
+            device_class=None,
             key=None,
             *args,
             **kwargs
