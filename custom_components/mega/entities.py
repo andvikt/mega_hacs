@@ -155,7 +155,7 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
         return DeviceInfo(
             identifiers={
                 # Serial numbers are unique identifiers within a specific domain
-                (DOMAIN, f'{self._mega_id}'), #pt_idx
+                (DOMAIN, f'{self._mega_id}:{pt_idx}')
             },
             name=self.name,
             manufacturer='ab-log.ru',
