@@ -1,0 +1,15 @@
+*sync-conflict*
+*.db
+*.log*
+*.yaml
+**/__pycache__
+test_*
+temp_*
+tr.py
+experiment_*
+example*
+.HA_VERSION
+.idea
+.storage
+site
+.DS_Store
