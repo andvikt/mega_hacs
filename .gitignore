@@ -13,3 +13,6 @@ example*
 .storage
 site
 .DS_Store
+.venv
+pyproject.toml
+poetry.lock
