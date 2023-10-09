@@ -8,6 +8,7 @@ from functools import partial
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
 from homeassistant.core import State
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers.restore_state import RestoreEntity
 from . import hub as h
@@ -142,7 +143,7 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
         return self._customize
 
     @property
-    def device_info(self):
+    def device_info(self) -> DeviceInfo:
         if isinstance(self.port, list):
             pt_idx = self.id_suffix
         else:
@@ -151,19 +152,16 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
                 pt_idx, _ = _pt.split('e')
             else:
                 pt_idx = _pt
-        return {
-            "identifiers": {
+        return DeviceInfo(
+            identifiers={
                 # Serial numbers are unique identifiers within a specific domain
-                (DOMAIN, f'{self._mega_id}', pt_idx),
+                (DOMAIN, f'{self._mega_id}', pt_idx)
             },
-            "config_entries": [
-                self.config_entry,
-            ],
-            "name": f'{self._mega_id} port {pt_idx}' if not isinstance(self.port, list) else f'{self._mega_id} {pt_idx}',
-            "manufacturer": 'ab-log.ru',
-            "sw_version": self.mega.fw,
-            "via_device": (DOMAIN, self._mega_id),
-        }
+            name=self.name,
+            manufacturer='ab-log.ru',
+            sw_version=self.mega.fw,
+            via_device=(DOMAIN, self._mega_id),
+        )
 
     @property
     def lg(self) -> logging.Logger:

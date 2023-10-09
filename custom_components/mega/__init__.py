@@ -136,10 +136,10 @@ CONFIG_SCHEMA = vol.Schema(
                     CUSTOMIZE_PORT,
                     CUSTOMIZE_DS2413,
                 ),
-                vol.Optional(CONF_FILTER_VALUES): [cv.positive_float],
-                vol.Optional(CONF_FILTER_SCALE): cv.positive_float,
-                vol.Optional(CONF_FILTER_LOW): cv.positive_float,
-                vol.Optional(CONF_FILTER_HIGH): cv.positive_float,
+                vol.Optional(CONF_FILTER_VALUES): [vol.Coerce(float)],
+                vol.Optional(CONF_FILTER_SCALE): vol.Coerce(float),
+                vol.Optional(CONF_FILTER_LOW): vol.Coerce(float),
+                vol.Optional(CONF_FILTER_HIGH): vol.Coerce(float),
             },
             vol.Optional(CONF_1WBUS): [OWBUS]
         }

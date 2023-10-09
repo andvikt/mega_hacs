@@ -1,13 +1,10 @@
 import typing
-from dataclasses import dataclass, field, astuple
+from dataclasses import dataclass, astuple
 from urllib.parse import parse_qsl, urlparse
 from bs4 import BeautifulSoup
+
+from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.const import (
-    DEVICE_CLASS_HUMIDITY,
-    DEVICE_CLASS_TEMPERATURE,
-    DEVICE_CLASS_ILLUMINANCE,
-    DEVICE_CLASS_PRESSURE,
-    DEVICE_CLASS_CO2,
     PERCENTAGE,
     LIGHT_LUX,
     TEMP_CELSIUS,
@@ -16,11 +13,11 @@ from homeassistant.const import (
 )
 from collections import namedtuple
 
+
 # DeviceType = namedtuple('DeviceType', 'device_class,unit_of_measurement,suffix')
 
 @dataclass
 class DeviceType:
-
     device_class: typing.Optional[str] = None
     unit_of_measurement: typing.Optional[str] = None
     suffix: typing.Optional[str] = None
@@ -89,55 +86,55 @@ class Request:
 
 i2c_classes = {
     'htu21d': [
-        DeviceType(DEVICE_CLASS_HUMIDITY, PERCENTAGE, None),
-        DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, None),
+        DeviceType(SensorDeviceClass.HUMIDITY, PERCENTAGE, None),
+        DeviceType(SensorDeviceClass.TEMPERATURE, TEMP_CELSIUS, None),
     ],
     'sht31': [
-        DeviceType(DEVICE_CLASS_HUMIDITY, PERCENTAGE, None, delay=1.5),
-        DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, None),
+        DeviceType(SensorDeviceClass.HUMIDITY, PERCENTAGE, None, delay=1.5),
+        DeviceType(SensorDeviceClass.TEMPERATURE, TEMP_CELSIUS, None),
     ],
     'max44009': [
-        DeviceType(DEVICE_CLASS_ILLUMINANCE, LIGHT_LUX, None)
+        DeviceType(SensorDeviceClass.ILLUMINANCE, LIGHT_LUX, None)
     ],
     'bh1750': [
-        DeviceType(DEVICE_CLASS_ILLUMINANCE, LIGHT_LUX, None)
+        DeviceType(SensorDeviceClass.ILLUMINANCE, LIGHT_LUX, None)
     ],
     'tsl2591': [
-        DeviceType(DEVICE_CLASS_ILLUMINANCE, LIGHT_LUX, None)
+        DeviceType(SensorDeviceClass.ILLUMINANCE, LIGHT_LUX, None)
     ],
     'bmp180': [
-        DeviceType(DEVICE_CLASS_PRESSURE, PRESSURE_BAR, None),
-        DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, None),
+        DeviceType(SensorDeviceClass.PRESSURE, PRESSURE_BAR, None),
+        DeviceType(SensorDeviceClass.TEMPERATURE, TEMP_CELSIUS, None),
     ],
     'bmx280': [
-        DeviceType(DEVICE_CLASS_PRESSURE, PRESSURE_BAR, None),
-        DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, None),
-        DeviceType(DEVICE_CLASS_HUMIDITY, PERCENTAGE, None)
+        DeviceType(SensorDeviceClass.PRESSURE, PRESSURE_BAR, None),
+        DeviceType(SensorDeviceClass.TEMPERATURE, TEMP_CELSIUS, None),
+        DeviceType(SensorDeviceClass.HUMIDITY, PERCENTAGE, None)
     ],
     'dps368': [
-        DeviceType(DEVICE_CLASS_PRESSURE, PRESSURE_BAR, None),
-        DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, None),
+        DeviceType(SensorDeviceClass.PRESSURE, PRESSURE_BAR, None),
+        DeviceType(SensorDeviceClass.TEMPERATURE, TEMP_CELSIUS, None),
     ],
     'mlx90614': [
         Skip,
-        DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, 'temp'),
-        DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, 'object'),
+        DeviceType(SensorDeviceClass.TEMPERATURE, TEMP_CELSIUS, 'temp'),
+        DeviceType(SensorDeviceClass.TEMPERATURE, TEMP_CELSIUS, 'object'),
     ],
     'ptsensor': [
         Skip,
         Request(delay=3),  # запрос на измерение
-        DeviceType(DEVICE_CLASS_PRESSURE, PRESSURE_BAR, None),
-        DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, None),
+        DeviceType(SensorDeviceClass.PRESSURE, PRESSURE_BAR, None),
+        DeviceType(SensorDeviceClass.TEMPERATURE, TEMP_CELSIUS, None),
     ],
     'mcp9600': [
-        DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, None),  # термопара
-        DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, None),  # сенсор встроенный в микросхему
+        DeviceType(SensorDeviceClass.TEMPERATURE, TEMP_CELSIUS, None),  # термопара
+        DeviceType(SensorDeviceClass.TEMPERATURE, TEMP_CELSIUS, None),  # сенсор встроенный в микросхему
     ],
     't67xx': [
-        DeviceType(DEVICE_CLASS_CO2, CONCENTRATION_PARTS_PER_MILLION, None)
+        DeviceType(SensorDeviceClass.CO2, CONCENTRATION_PARTS_PER_MILLION, None)
     ],
     'tmp117': [
-        DeviceType(DEVICE_CLASS_TEMPERATURE, TEMP_CELSIUS, None),
+        DeviceType(SensorDeviceClass.TEMPERATURE, TEMP_CELSIUS, None),
     ],
     'ads1115': [
         DeviceType(None, None, 'ch0'),

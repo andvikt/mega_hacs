@@ -4,9 +4,7 @@ import voluptuous as vol
 import struct
 
 from homeassistant.components.sensor import (
-    PLATFORM_SCHEMA as SENSOR_SCHEMA,
-    DEVICE_CLASS_TEMPERATURE,
-    DEVICE_CLASS_HUMIDITY, SensorEntity
+    PLATFORM_SCHEMA as SENSOR_SCHEMA, SensorEntity, SensorDeviceClass
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
@@ -40,8 +38,8 @@ UNITS = {
     HUM: '%'
 }
 CLASSES = {
-    TEMP: DEVICE_CLASS_TEMPERATURE,
-    HUM: DEVICE_CLASS_HUMIDITY
+    TEMP: SensorDeviceClass.TEMPERATURE,
+    HUM: SensorDeviceClass.HUMIDITY
 }
 # Validation of the user's configuration
 _ITEM = {
@@ -118,15 +116,15 @@ class FilterBadValues(MegaPushEntity, SensorEntity):
         try:
             if value \
                     in self.filter_values \
-               or (self.filter_low is not None and value < self.filter_low) \
-               or (self.filter_high is not None and value > self.filter_high) \
-               or (
+                    or (self.filter_low is not None and value < self.filter_low) \
+                    or (self.filter_high is not None and value > self.filter_high) \
+                    or (
                     self._prev_value is not None
                     and self.filter_scale is not None
                     and (
-                        abs(value - self._prev_value) / self._prev_value > self.filter_scale
+                            abs(value - self._prev_value) / self._prev_value > self.filter_scale
                     )
-                ):
+            ):
                 if self.fill_na == 'last':
                     value = self._prev_value
                 else:
@@ -231,8 +229,8 @@ class Mega1WSensor(FilterBadValues):
 
     def __init__(
             self,
-            unit_of_measurement,
-            device_class,
+            unit_of_measurement=None,
+            device_class=None,
             key=None,
             *args,
             **kwargs
