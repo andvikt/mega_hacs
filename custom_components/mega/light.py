@@ -244,9 +244,12 @@ class MegaRGBW(LightEntity, BaseMegaEntity):
     async def set_color(self, _before, **kwargs):
         transition = kwargs.get('transition')
         update_state = transition is not None and transition > 3
+        _after = None
         for item, value in kwargs.items():
             setattr(self, f'_{item}', value)
-        _after = self.get_rgbw()
+            if item == 'rgb_color':
+                _after = value
+        _after = _after or self.get_rgbw()
         self._rgb_color = tuple(_after[:3])
         if transition is None:
             transition = self.smooth.total_seconds()
