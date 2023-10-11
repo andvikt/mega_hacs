@@ -264,7 +264,7 @@ class MegaRGBW(LightEntity, BaseMegaEntity):
             if item == "rgb_color":
                 _after = map_reorder_rgb(value, RGB, self._color_order)
         _after = _after or self.get_rgbw()
-        self._rgb_color = tuple(_after[:3])
+        self._rgb_color = map_reorder_rgb(tuple(_after[:3]), self._color_order, RGB)
         if transition is None:
             transition = self.smooth.total_seconds()
             ratio = self.calc_speed_ratio(_before, _after)
