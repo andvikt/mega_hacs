@@ -263,6 +263,7 @@ class MegaRGBW(LightEntity, BaseMegaEntity):
             setattr(self, f"_{item}", value)
             if item == "rgb_color":
                 _after = map_reorder_rgb(value, RGB, self._color_order)
+                self._hs_color = colorsys.rgb_to_hsv(*value)
         _after = _after or self.get_rgbw()
         self._rgb_color = map_reorder_rgb(tuple(_after[:3]), self._color_order, RGB)
         if transition is None:
