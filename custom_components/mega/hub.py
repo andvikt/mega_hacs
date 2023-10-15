@@ -32,7 +32,7 @@ from .const import (
     CONF_FORCE_I2C_SCAN,
     REMOVE_CONFIG,
 )
-from .entities import set_events_off, BaseMegaEntity, MegaOutPort, safe_int
+from .entities import set_events_off, BaseMegaEntity, MegaOutPort, safe_int, safe_float
 from .exceptions import CannotConnect, NoPort
 from .i2c import parse_scan_page
 from .tools import make_ints, int_ignore, PriorityLock
@@ -168,6 +168,9 @@ class MegaD:
         except Exception:
             self.lg.exception("while setting allowed hosts")
         self.binary_sensors = []
+        self.sht31inited = (
+            set()
+        )  # список портов sht31 которые уже успешно проинициализированы были
 
     async def start(self):
         pass
@@ -487,16 +490,39 @@ class MegaD:
         :return:
         """
         pt = params.get("pt")
+        i2c_dev = params.get("i2c_dev", None)
+
         if pt in self.skip_ports:
             return
-        if pt is not None:
-            pass
+        if pt is None:
+            return
+
         _params = tuple(params.items())
+        if i2c_dev is not None and i2c_dev == "sht31" and pt not in self.sht31inited:
+            __params = params.copy()
+            __params["i2c_par"] = 9
+            # инициализация сенсора
+            await self.request(i2c_dev=i2c_dev, **__params)
+            await asyncio.sleep(0.1)
+            self.sht31inited |= pt
         delay = None
+        idx: int = params.pop("idx", None)
+        pt: int = params.get("pt", None)
         if "delay" in params:
             delay = params.pop("delay")
         try:
-            ret = {_params: await self.request(**params)}
+            if idx is None or idx == 0:
+                v: str = await self.request(**params)
+                # scd4x фактически отдает сразу 3 датчика на одном запросе, не ложится
+                # в общую архитектуру, поэтому используется такой костыль с кешем
+                self.values[f"chache_{pt}"] = v
+            elif idx is not None and idx > 0:
+                v: str = self.values.get(f"chache_{pt}")
+            if idx is not None:
+                v = safe_float(v.split("/")[idx])
+            ret = {_params: v}
+        except Exception:
+            self.lg.exception(f"while getting i2c {params=}")
         except asyncio.TimeoutError:
             return
         self.lg.debug("i2c response: %s", ret)

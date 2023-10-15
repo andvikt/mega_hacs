@@ -591,3 +591,10 @@ def safe_int(v, def_on=1, def_off=0, def_val=None):
         return int(v)
     except (ValueError, TypeError):
         return def_val
+
+
+def safe_float(v):
+    try:
+        return float(v)
+    except:
+        return None
