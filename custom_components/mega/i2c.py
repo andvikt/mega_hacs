@@ -159,11 +159,6 @@ i2c_classes = {
     "opt3001": [
         DeviceType(SensorDeviceClass.ILLUMINANCE, LIGHT_LUX, None),
     ],
-    "scd4x": [
-        DeviceType(SensorDeviceClass.CO2, CONCENTRATION_PARTS_PER_MILLION, None),
-        DeviceType(SensorDeviceClass.HUMIDITY, PERCENTAGE, None),
-        DeviceType(SensorDeviceClass.TEMPERATURE, TEMP_CELSIUS, None),
-    ],
     "ina226": [
         Skip,
         DeviceType(SensorDeviceClass.CURRENT, "A", None),
