@@ -477,7 +477,7 @@ class MegaD:
             return
         ret = {}
         for i, x in enumerate(values.split(";")):
-            ret[f"{port}e{i}"] = x
+            ret[f"{port}e{i}" if not self.new_naming else f"{port:02d}e{i:02d}"] = x
         return ret
 
     async def _update_i2c(self, params):
