@@ -134,6 +134,8 @@ class FilterBadValues(MegaPushEntity, SensorEntity):
         super().__init__(*args, **kwargs)
 
     def filter_value(self, value):
+        if value is None:
+            return
         try:
             if (
                 value in self.filter_values
