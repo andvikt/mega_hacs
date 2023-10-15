@@ -504,7 +504,7 @@ class MegaD:
             # инициализация сенсора
             await self.request(**__params)
             await asyncio.sleep(0.1)
-            self.sht31inited |= pt
+            self.sht31inited.add(pt)
         delay = None
         idx: int = params.pop("idx", None)
         pt: int = params.get("pt", None)
