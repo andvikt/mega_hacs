@@ -502,7 +502,7 @@ class MegaD:
             __params = params.copy()
             __params["i2c_par"] = 9
             # инициализация сенсора
-            await self.request(i2c_dev=i2c_dev, **__params)
+            await self.request(**__params)
             await asyncio.sleep(0.1)
             self.sht31inited |= pt
         delay = None
