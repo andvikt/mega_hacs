@@ -519,11 +519,14 @@ class MegaD:
             elif idx is not None and idx > 0:
                 v: str = self.values.get(f"chache_{pt}")
             if idx is not None:
-                v = safe_float(v.split("/")[idx])
-            ret = {_params: v}
+                vv = v.split("/")
+                if len(vv) == 3:
+                    v = vv[idx]
+                else:
+                    v: None
+            ret = {_params: safe_float(v)}
         except Exception:
             self.lg.exception(f"while getting i2c {params=}")
-        except asyncio.TimeoutError:
             return
         self.lg.debug("i2c response: %s", ret)
         if delay:
