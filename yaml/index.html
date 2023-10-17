@@ -1,0 +1,1194 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="http://127.0.0.1:8000/yaml/">
+      
+      
+        <link rel="prev" href="../http/">
+      
+      
+        <link rel="next" href="../i2c/">
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.0.6">
+    
+    
+      
+        <title>Кастомизация - MegaD HomeAssistant integration</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.558e4712.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.2505c338.min.css">
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+  
+
+
+  
+  
+
+
+  <script id="__analytics">function __md_analytics(){function n(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],n("js",new Date),n("config","G-E3LX9D6959"),document.addEventListener("DOMContentLoaded",function(){document.forms.search&&document.forms.search.query.addEventListener("blur",function(){this.value&&n("event","search",{search_term:this.value})}),document$.subscribe(function(){var a=document.forms.feedback;if(void 0!==a)for(var e of a.querySelectorAll("[type=submit]"))e.addEventListener("click",function(e){e.preventDefault();var t=document.location.pathname,e=this.getAttribute("data-md-value");n("event","feedback",{page:t,data:e}),a.firstElementChild.disabled=!0;e=a.querySelector(".md-feedback__note [data-md-value='"+e+"']");e&&(e.hidden=!1)}),a.hidden=!1}),location$.subscribe(function(e){n("config","G-E3LX9D6959",{page_path:e.pathname})})});var e=document.createElement("script");e.async=!0,e.src="https://www.googletagmanager.com/gtag/js?id=G-E3LX9D6959",document.getElementById("__analytics").insertAdjacentElement("afterEnd",e)}</script>
+
+  
+    <script>"undefined"!=typeof __md_analytics&&__md_analytics()</script>
+  
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent="">
+  
+    
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#_1" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="MegaD HomeAssistant integration" class="md-header__button md-logo" aria-label="MegaD HomeAssistant integration" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MegaD HomeAssistant integration
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Кастомизация
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/andvikt/mega_hacs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="MegaD HomeAssistant integration" class="md-nav__button md-logo" aria-label="MegaD HomeAssistant integration" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    MegaD HomeAssistant integration
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/andvikt/mega_hacs" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.2.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        Главное
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " data-md-toggle="__nav_2" type="checkbox" id="__nav_2" checked>
+      
+      
+      
+        <label class="md-nav__link" for="__nav_2" tabindex="0" aria-expanded="true">
+          Конфигурация
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Конфигурация" data-md-level="1">
+        <label class="md-nav__title" for="__nav_2">
+          <span class="md-nav__icon md-icon"></span>
+          Конфигурация
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../settings/" class="md-nav__link">
+        В интерфейсе
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../http/" class="md-nav__link">
+        Настройка обратной связи
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Кастомизация
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Кастомизация
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    Основное
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    Параметры устройств
+  </a>
+  
+    <nav class="md-nav" aria-label="Параметры устройств">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    Стандартный набор параметров
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    Реле
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ds2413" class="md-nav__link">
+    ds2413
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    Диммеры
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#megad-16r-xt-megad-16pwm" class="md-nav__link">
+    MegaD-16R-XT, MegaD-16PWM
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rgb" class="md-nav__link">
+    RGB+W
+  </a>
+  
+    <nav class="md-nav" aria-label="RGB+W">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    На диммерах
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ws281x" class="md-nav__link">
+    Адресные ленты на WS281X
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#binary" class="md-nav__link">
+    Бинарные сенсоры
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sensors" class="md-nav__link">
+    Датчики
+  </a>
+  
+    <nav class="md-nav" aria-label="Датчики">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dht1122" class="md-nav__link">
+    DHT11/22
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1w-bus" class="md-nav__link">
+    1W-BUS
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#i2c" class="md-nav__link">
+    i2c
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    Параметры контроллера
+  </a>
+  
+    <nav class="md-nav" aria-label="Параметры контроллера">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#def_response" class="md-nav__link">
+    def_response
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    Параметры интеграции
+  </a>
+  
+    <nav class="md-nav" aria-label="Параметры интеграции">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#allow_hosts" class="md-nav__link">
+    allow_hosts
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter_high" class="md-nav__link">
+    filter_high
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter_low" class="md-nav__link">
+    filter_low
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter_values" class="md-nav__link">
+    filter_values
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter_scale" class="md-nav__link">
+    filter_scale
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../i2c/" class="md-nav__link">
+        i2c
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../smooth/" class="md-nav__link">
+        Плавные переходы
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+      
+      
+      <input class="md-nav__toggle md-toggle " data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3" tabindex="0" aria-expanded="false">
+          Автоматизация
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Автоматизация" data-md-level="1">
+        <label class="md-nav__title" for="__nav_3">
+          <span class="md-nav__icon md-icon"></span>
+          Автоматизация
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../blueprints/" class="md-nav__link">
+        Шаблоны (Blueprints)
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../events/" class="md-nav__link">
+        События
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../services/" class="md-nav__link">
+        Сервисы
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../debug/" class="md-nav__link">
+        Неполадки
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    Основное
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    Параметры устройств
+  </a>
+  
+    <nav class="md-nav" aria-label="Параметры устройств">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    Стандартный набор параметров
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    Реле
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ds2413" class="md-nav__link">
+    ds2413
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_5" class="md-nav__link">
+    Диммеры
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#megad-16r-xt-megad-16pwm" class="md-nav__link">
+    MegaD-16R-XT, MegaD-16PWM
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rgb" class="md-nav__link">
+    RGB+W
+  </a>
+  
+    <nav class="md-nav" aria-label="RGB+W">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#_6" class="md-nav__link">
+    На диммерах
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ws281x" class="md-nav__link">
+    Адресные ленты на WS281X
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#binary" class="md-nav__link">
+    Бинарные сенсоры
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sensors" class="md-nav__link">
+    Датчики
+  </a>
+  
+    <nav class="md-nav" aria-label="Датчики">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dht1122" class="md-nav__link">
+    DHT11/22
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1w-bus" class="md-nav__link">
+    1W-BUS
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#i2c" class="md-nav__link">
+    i2c
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_7" class="md-nav__link">
+    Параметры контроллера
+  </a>
+  
+    <nav class="md-nav" aria-label="Параметры контроллера">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#def_response" class="md-nav__link">
+    def_response
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_8" class="md-nav__link">
+    Параметры интеграции
+  </a>
+  
+    <nav class="md-nav" aria-label="Параметры интеграции">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#allow_hosts" class="md-nav__link">
+    allow_hosts
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter_high" class="md-nav__link">
+    filter_high
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter_low" class="md-nav__link">
+    filter_low
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter_values" class="md-nav__link">
+    filter_values
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#filter_scale" class="md-nav__link">
+    filter_scale
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+  
+  
+
+
+
+  <h1>Кастомизация</h1>
+
+<p>С помощью yaml-конфигурации можно кастомизировать ваши устройства.</p>
+<h2 id="_1">Основное<a class="headerlink" href="#_1" title="Permanent link">#</a></h2>
+<div class="admonition note">
+<p class="admonition-title">Альтернативная адресация</p>
+<p>Начиная с v1.1.0 большинство параметров объектов можно записывать в более простой и понятной форме:
+<div class="highlight"><pre><span></span><code><span class="nt">mega</span><span class="p">:</span><span class="w"> </span><span class="c1"># название интеграции</span>
+<span class="w">  </span><span class="nt">entities</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">sensor.some_sensor</span><span class="p">:</span><span class="w"> </span><span class="c1">#entity_id как в интерфейсе HA</span>
+<span class="w">      </span><span class="nt">filter_low</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20</span>
+<span class="w">      </span><span class="nt">filter_high</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">40</span>
+</code></pre></div>
+Рекомендуется пользоваться именно этим способом, тк он более логичный и простой.</p>
+<p>Некоторые параметры по своей логике (влияют на entity_id) не могут быть записаны таким образом, среди них:
+- domain
+- skip
+- name</p>
+<p>Остальные параметры можно записывать используя новый entities</p>
+</div>
+<p>Конфиг записывается стандартным образом в файл <code>configuration.yaml</code>, начинаем с 
+указания названия интеграции:
+<div class="highlight"><pre><span></span><code><span class="hll"><span class="nt">mega</span><span class="p">:</span>
+</span><span class="w">  </span><span class="nt">megaid1</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">10</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">domain</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">switch</span>
+<span class="w">      </span><span class="nt">invert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">megaid2</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">14</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">hex_to_float</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div>
+Далее каждый новый контроллер добавляется с помощью указания его id, который вы
+придумали при установке интеграции
+<div class="highlight"><pre><span></span><code><span class="nt">mega</span><span class="p">:</span>
+<span class="hll"><span class="w">  </span><span class="nt">megaid1</span><span class="p">:</span>
+</span><span class="w">    </span><span class="nt">10</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">domain</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">switch</span>
+<span class="w">      </span><span class="nt">invert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="hll"><span class="w">  </span><span class="nt">megaid2</span><span class="p">:</span>
+</span><span class="w">    </span><span class="nt">14</span><span class="p">:</span>
+<span class="w">      </span><span class="nt">hex_to_float</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</code></pre></div></p>
+<p>Далее конфигурируются порты:
+<div class="highlight"><pre><span></span><code><span class="nt">mega</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">megaid1</span><span class="p">:</span>
+<span class="hll"><span class="w">    </span><span class="nt">10</span><span class="p">:</span>
+</span><span class="hll"><span class="w">      </span><span class="nt">domain</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">switch</span>
+</span><span class="hll"><span class="w">      </span><span class="nt">invert</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span><span class="w">  </span><span class="nt">megaid2</span><span class="p">:</span>
+<span class="hll"><span class="w">    </span><span class="nt">14</span><span class="p">:</span>
+</span><span class="hll"><span class="w">      </span><span class="nt">hex_to_float</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+</span></code></pre></div></p>
+<h2 id="_2">Параметры устройств<a class="headerlink" href="#_2" title="Permanent link">#</a></h2>
+<p>В зависимости от типа порта доступны разные параметры. Все параметры опциональные, в скобках приведены типы и дефолтные 
+значения.</p>
+<h3 id="_3">Стандартный набор параметров<a class="headerlink" href="#_3" title="Permanent link">#</a></h3>
+<p>Все устройства вне зависимости от типа</p>
+<div class="admonition note">
+<ul>
+<li><strong>skip</strong> (bool, false): пропустить или нет. Если true - устройство будет исключено из списка</li>
+<li><strong>name</strong> (str): имя, используется в интерфейсе</li>
+</ul>
+</div>
+<h3 id="_4">Реле<a class="headerlink" href="#_4" title="Permanent link">#</a></h3>
+<div class="admonition note">
+<ul>
+<li><strong>domain</strong> (str, light): тип устройства. Можно выбрать light или switch</li>
+<li><strong>invert</strong> (bool, false): инвертировать или нет.</li>
+</ul>
+</div>
+<h3 id="ds2413">ds2413<a class="headerlink" href="#ds2413" title="Permanent link">#</a></h3>
+<p>Те же параметры, что у реле, но записываются иначе:
+<div class="highlight"><pre><span></span><code><span class="nt">10</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">c6c439000000_a</span><span class="p">:</span><span class="w">  </span><span class="c1">#c6c439000000 - это адрес ds2413, a-первый канал</span>
+<span class="w">    </span><span class="c1"># параметры</span>
+<span class="w">  </span><span class="nt">c6c439000000_b</span><span class="p">:</span><span class="w">  </span><span class="c1">#b-второй канал</span>
+</code></pre></div></p>
+<h3 id="_5">Диммеры<a class="headerlink" href="#_5" title="Permanent link">#</a></h3>
+<div class="admonition note">
+<ul>
+<li><strong>smooth</strong> (float, 0): программное плавное диммирование. Это поле отвечает за кол-во секунд, за которое яркость
+диммера набирает от 0 до 100%</li>
+<li><strong>range</strong> (list[int, int], [0, 255]), <em>начиная с версии 1.1.0</em>: границы диммирования в абсолютных единицах 0..255. При диммировании 1%
+будет равен левой границе, 100% - правой.
+<div class="highlight"><pre><span></span><code><span class="nt">range</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">20</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">200</span><span class="p p-Indicator">]</span>
+</code></pre></div></li>
+</ul>
+</div>
+<p><a href="../smooth/">Подробнее про плавное диммирование</a></p>
+<h3 id="megad-16r-xt-megad-16pwm">MegaD-16R-XT, MegaD-16PWM<a class="headerlink" href="#megad-16r-xt-megad-16pwm" title="Permanent link">#</a></h3>
+<p>Порты расширителей MegaD-16R-XT, MegaD-16PWM конфигурируются аналогично обычным реле и диммерам, но адресация порта 
+выглядит так:
+<div class="highlight"><pre><span></span><code><span class="nt">33e1</span><span class="p">:</span><span class="w">  </span><span class="c1"># 33-основной порт, на котором сидит расширитель, e1-дополнительный порт расширителя</span>
+<span class="w">  </span><span class="c1"># стандартный конфиг порта</span>
+<span class="nt">33e2</span><span class="p">:</span>
+</code></pre></div></p>
+<h3 id="rgb">RGB+W<a class="headerlink" href="#rgb" title="Permanent link">#</a></h3>
+<p>Для настройки rgb(w) лент существует специальный раздел <code>led</code> в настройках каждого контроллера:
+<div class="highlight"><pre><span></span><code><span class="nt">mega</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">megaid1</span><span class="p">:</span>
+<span class="hll"><span class="w">    </span><span class="nt">led</span><span class="p">:</span>
+</span><span class="w">      </span><span class="nt">ledid1</span><span class="p">:</span><span class="w">  </span><span class="c1"># id, который вы придумываете сами</span>
+<span class="w">        </span><span class="c1"># конфиг</span>
+</code></pre></div>
+Далее интеграция имеет поддержку двух типов лент</p>
+<h4 id="_6">На диммерах<a class="headerlink" href="#_6" title="Permanent link">#</a></h4>
+<p>Интеграция может превратить любые 3 (или 4) диммера (актуально для мосфетов на pwm-расширителе или моноблоке)
+в rgb(w) контроллер с интерфейсом выбора цвета. Конфиг для такого типа ленты будет выглядеть так:</p>
+<div class="admonition note">
+<ul>
+<li><strong>ports</strong> (list[str]): список номеров портов, из которых составлять ленту, все порты должны быть типа PWM.
+Порядок цветов строго [R, G, B, W]. W указывается опционально</li>
+<li><strong>white_sep</strong> (bool, true): яркостью белого можно управлять в двух режимах - синхронно с яркостью RGB, либо 
+отдельно, по умолчанию стоит отдельно (true)</li>
+<li><strong>smooth</strong> (float, 1): скорость диммирования, от 0 до 100% за <smooth> секунд.</li>
+</ul>
+</div>
+<p>Пример:
+<div class="highlight"><pre><span></span><code><span class="nt">some_led1</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">ports</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">10</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">12</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">15</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">16</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">white_sep</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">smooth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+</code></pre></div></p>
+<h4 id="ws281x">Адресные ленты на WS281X<a class="headerlink" href="#ws281x" title="Permanent link">#</a></h4>
+<p>Подробно про поддержку контроллера таких лент рассказано в <a href="https://www.ab-log.ru/smart-house/ethernet/megad-2561#ws">инструкции</a>.
+Интеграция не привносит ничего нового - только помогает "пробросить" такие ленты в интерфейс HA.
+Конфиг таких лент выглядит так:</p>
+<div class="admonition note">
+<ul>
+<li><strong>ws28xx</strong> (bool, false): обязательное поле, необходимо установить true.</li>
+<li><strong>port</strong> (int): номер порта, на котором настроена лента.</li>
+<li><strong>order</strong> (str, "rgb"): последовательность каналов, допускаются любые комбинации букв r,g,b: rbg, bgr и тд</li>
+<li><strong>chip</strong> (int, 100): кол-во чипов в ленте, по умолчанию 100, если их меньше емеет смысл указать правильное кол-во 
+для увеличения скорости плавного диммирования</li>
+<li><strong>smooth</strong> (float, 1): скорость диммирования, от 0 до 100% за <smooth> секунд.</li>
+</ul>
+</div>
+<p>Пример:
+<div class="highlight"><pre><span></span><code><span class="nt">some_led2</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">ws28xx</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">port</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">36</span>
+<span class="w">  </span><span class="nt">order</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bgr</span>
+<span class="w">  </span><span class="nt">smooth</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+</code></pre></div></p>
+<h3 id="binary">Бинарные сенсоры<a class="headerlink" href="#binary" title="Permanent link">#</a></h3>
+<p>Или по-другому цифровые входы. Как правило используются для выключателей, кнопок, датчиков движения и тд.</p>
+<div class="admonition note">
+<ul>
+<li><strong>response_template</strong> (str): шаблон ответа на команды сервера. По-умолчанию d. 
+Про формат ответа подробно описано <a href="https://www.ab-log.ru/smart-house/ethernet/megad-2561#conf-in-act">тут</a>. 
+В шаблоне можно использовать параметры, которые передает контроллер (m, click, pt, mdid, mega_id).
+Про отладку шаблонов подробнее <a href="../http/#temp-debug">тут</a></li>
+</ul>
+</div>
+<div class="admonition note">
+<p class="admonition-title">на меге</p>
+<p>Для корректной работы binary_sensor имеет смысл использовать режим P&amp;R в настройках порта меги</p>
+</div>
+<p>Бинарные сенсоры так же отвечают за события типа <em>mega.binary</em>, <a href="../events/">об этом подробнее в разделе события</a></p>
+<p>Примеры шаблонов ответа:
+<div class="highlight"><pre><span></span><code><span class="nt">4</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">response_template</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;5:2&quot;</span><span class="w"> </span><span class="c1"># простейший пример без шаблона. Каждый раз когда будет приходить сообщение на этот порт, </span>
+<span class="w">                         </span><span class="c1"># будем менять состояние на противоположное</span>
+<span class="nt">5</span><span class="p">:</span>
+<span class="w">  </span><span class="c1"># пример с использованием шаблона, порт 1 будет выключен если он сейчас включен и включен с последней сохраненной </span>
+<span class="w">  </span><span class="c1"># яркостью если он сейчас выключен     </span>
+<span class="w">  </span><span class="nt">response_template</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<span class="w">    </span><span class="no">{% if is_state(&#39;light.some_port_1&#39;, &#39;on&#39;) %}</span>
+<span class="w">    </span><span class="no">1:0</span>
+<span class="w">    </span><span class="no">{% else %}</span>
+<span class="w">    </span><span class="no">1:{{state_attr(&#39;light.some_port_1&#39;, &#39;brightness&#39;)}}</span>
+<span class="w">    </span><span class="no">{% endif %}</span>
+<span class="nt">6</span><span class="p">:</span>
+<span class="w">  </span><span class="c1"># в шаблон так же передаются все параметры, которые передает контроллер (pt, cnt, m, click)</span>
+<span class="w">  </span><span class="c1"># эти параметры можно использовать в условиях или непосредственно в шаблоне в виде {{pt}}</span>
+<span class="w">  </span><span class="nt">response_template</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<span class="w">    </span><span class="no">{% if m==2 %}1:0{% else %}d{% endif %}</span>
+</code></pre></div></p>
+<h3 id="sensors">Датчики<a class="headerlink" href="#sensors" title="Permanent link">#</a></h3>
+<p>Любой датчик будь то i2c или аналоговый или 1-wire</p>
+<div class="admonition note">
+<ul>
+<li><strong>unit_of_measurement</strong> (str): единицы измерения, <a href="https://developers.home-assistant.io/docs/core/entity/sensor#available-device-classes">список доступных</a></li>
+<li><strong>value_template</strong> (str): шаблон для конвертации, например <code>{{(value|float)/100}}</code></li>
+<li><strong>device_class</strong> (str): класс устройства, <a href="https://developers.home-assistant.io/docs/core/entity/sensor#available-device-classes">список доступных</a></li>
+<li><strong>hex_to_float</strong> (bool, false): если ваш датчик возвращает float запакованный в HEX, интеграция его распакует (перед применением темплейта)</li>
+<li><strong>filter_high</strong> (float, none): верхняя граница значений, выше нее значения будут считаться ошибочными и отбрасываться. <a href="#filter_high">Доступно так же глобальное значение</a></li>
+<li><strong>filter_low</strong> (float, none): нижняя граница значений, ниже нее значения будут считаться ошибочными и отбрасываться. <a href="#filter_low">Доступно так же глобальное значение</a></li>
+<li><strong>filter_values</strong> ([float], none): список значений, которые считаются ошибочными. <a href="#filter_values">Доступно так же глобальное значение</a></li>
+<li><strong>filter_scale</strong> (float, none): значение отклонения от текущего значения, которое будет считаться выбросом и отфильтруется, например если
+установить 1, то это означает, что при росте показателя сенсора на 100% и больше или падении на 100% и больше, такое значение не будет отображаться.
+<a href="#filter_scale">Доступно так же глобальное значение</a></li>
+<li><strong>fill_na</strong> (str, last): чем заполнять пропуски, по-умолчанию last, что означает последнее значение, можно так же поставить none-тогда будут пропуски (разрывы на графике).</li>
+</ul>
+</div>
+<p>При этом есть так же особенности адресации, так для сенсора на одном порте с одним значением:
+<div class="highlight"><pre><span></span><code><span class="nt">36</span><span class="p">:</span>
+<span class="w">  </span><span class="c1"># конфиг</span>
+</code></pre></div></p>
+<h4 id="dht1122">DHT11/22<a class="headerlink" href="#dht1122" title="Permanent link">#</a></h4>
+<p>На этих сенсорах два значения, одно для температуры, второе для влажности, поэтому для них применяется
+особый вид адресации:
+<div class="highlight"><pre><span></span><code><span class="nt">35</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">name</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">hum</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;влажность&quot;</span>
+<span class="w">    </span><span class="nt">temp</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;температура&quot;</span>
+<span class="w">  </span><span class="c1"># и так далее для любого параметра сенсоров</span>
+</code></pre></div>
+Логика так себе ) Но так повелось в первых версиях.</p>
+<h4 id="1w-bus">1W-BUS<a class="headerlink" href="#1w-bus" title="Permanent link">#</a></h4>
+<p>Для датчиков установленных в шину 1-wire адресация кастомизации такая:
+<div class="highlight"><pre><span></span><code><span class="nt">35</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">addr</span><span class="p">:</span><span class="w">  </span><span class="c1"># адрес датчика, по-умолчанию entity_id будет состоять из адреса и типа</span>
+<span class="w">    </span><span class="c1"># конфиг</span>
+</code></pre></div></p>
+<h4 id="i2c">i2c<a class="headerlink" href="#i2c" title="Permanent link">#</a></h4>
+<p>Для сенсоров i2c нужно так же указать id сенсора, который можно посмотреть в атрибутах объекта на <a href="https://my.home-assistant.io/redirect/developer_states/">странице разработчика</a>.
+<div class="highlight"><pre><span></span><code><span class="nt">36</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">htu21d_humidity</span><span class="p">:</span><span class="w">  </span><span class="c1"># i2c_id</span>
+<span class="w">    </span><span class="c1"># конфиг</span>
+</code></pre></div>
+<a href="../i2c/">Подробнее про i2c</a></p>
+<h2 id="_7">Параметры контроллера<a class="headerlink" href="#_7" title="Permanent link">#</a></h2>
+<p>Некоторые параметры применяются для всего контроллера (одна мега)</p>
+<h3 id="def_response">def_response<a class="headerlink" href="#def_response" title="Permanent link">#</a></h3>
+<p>Шаблон ответа сервера по умолчанию. Если этот параметр указан, то настройка "d по умолчанию" 
+в UI игнорируется.</p>
+<p>Пример:
+<div class="highlight"><pre><span></span><code><span class="nt">mega</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">megaid1</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">def_response</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">&gt;-</span>
+<span class="w">      </span><span class="no">{% if m in [0, 1] %}d{% endif %}</span>
+</code></pre></div></p>
+<h2 id="_8">Параметры интеграции<a class="headerlink" href="#_8" title="Permanent link">#</a></h2>
+<h3 id="allow_hosts">allow_hosts<a class="headerlink" href="#allow_hosts" title="Permanent link">#</a></h3>
+<p>Отвечает за список хостов, с которых интеграция "слушает" сообщения. По умолчанию, в этот список
+входят все настроенные меги, а так же все запросы с локального хоста.</p>
+<p>Иногда, в целях отладки, требуется расширить этот список, что можно сделать следующим оьразом:
+<div class="highlight"><pre><span></span><code><span class="nt">mega</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">allow_hosts</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">192.168.1.20</span>
+</code></pre></div></p>
+<h3 id="filter_high">filter_high<a class="headerlink" href="#filter_high" title="Permanent link">#</a></h3>
+<p>Верхняя граница значений датчиков по-умолчанию, выше нее значения будут считаться ошибочными и отбрасываться</p>
+<h3 id="filter_low">filter_low<a class="headerlink" href="#filter_low" title="Permanent link">#</a></h3>
+<p>Нижняя граница значений датчиков по-умолчанию, ниже нее значения будут считаться ошибочными и отбрасываться</p>
+<h3 id="filter_values">filter_values<a class="headerlink" href="#filter_values" title="Permanent link">#</a></h3>
+<p>Список значений, которые считаются ошибочными, настройка по-умолчанию для всех датчиков. Удобно, если у вас много 
+  однотипных датчиков</p>
+<div class="highlight"><pre><span></span><code><span class="nt">mega</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">filter_values</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">-82</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">- 150</span><span class="p p-Indicator">]</span>
+</code></pre></div>
+<h3 id="filter_scale">filter_scale<a class="headerlink" href="#filter_scale" title="Permanent link">#</a></h3>
+<p>Значение отклонения от текущего значения, которое будет считаться выбросом и отфильтруется, например если
+установить 1, то это означает, что при росте показателя сенсора на 100% и больше или падении на 100% и больше, такое значение не будет отображаться.
+<div class="highlight"><pre><span></span><code><span class="nt">mega</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">filter_scale</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w">  </span><span class="c1"># 100%</span>
+</code></pre></div></p>
+
+
+  
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.e5c33ebb.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.51d95adb.min.js"></script>
+      
+        <script src="https://buttons.github.io/buttons.js"></script>
+      
+    
+  </body>
+</html>
