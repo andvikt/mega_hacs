@@ -489,6 +489,7 @@ class MegaD:
         :param params: параметры url
         :return:
         """
+        params = params.copy()
         pt = params.get("pt")
         i2c_dev = params.get("i2c_dev", None)
 
