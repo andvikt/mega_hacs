@@ -17,7 +17,14 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from . import hub as h
 from .entities import MegaOutPort
-from .const import CONF_DIMMER, CONF_SWITCH, DOMAIN, CONF_CUSTOM, CONF_SKIP
+from .const import (
+        CONF_DIMMER,
+        CONF_SWITCH,
+        DOMAIN,
+        CONF_CUSTOM,
+        CONF_SKIP,
+        CONF_PWM,
+)
 from .tools import int_ignore
 
 _LOGGER = lg = logging.getLogger(__name__)
@@ -56,6 +63,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         if c.get(CONF_SKIP, False) or c.get(CONF_DOMAIN, 'light') != 'switch':
             continue
         for data in cfg:
+            support_pwm = c.get(CONF_PWM, None)
+            if support_pwm is not None:
+                data["dimmer"] = support_pwm
+
             hub.lg.debug(f'add switch on port %s with data %s', port, data)
             light = MegaSwitch(mega=hub, port=port, config_entry=config_entry, **data)
             if '<' in light.name:

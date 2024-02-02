@@ -19,7 +19,7 @@ from .const import DOMAIN, CONF_INVERT, CONF_RELOAD, PLATFORMS, CONF_PORTS, CONF
     CONF_CONV_TEMPLATE, CONF_ALL, CONF_FORCE_D, CONF_DEF_RESPONSE, CONF_FORCE_I2C_SCAN, CONF_HEX_TO_FLOAT, \
     RGB_COMBINATIONS, CONF_WS28XX, CONF_ORDER, CONF_SMOOTH, CONF_LED, CONF_WHITE_SEP, CONF_CHIP, CONF_RANGE, \
     CONF_FILTER_VALUES, CONF_FILTER_SCALE, CONF_FILTER_LOW, CONF_FILTER_HIGH, CONF_FILL_NA, CONF_MEGA_ID, CONF_ADDR, \
-    CONF_1WBUS
+    CONF_1WBUS, CONF_PWM
 from .hub import MegaD
 from .config_flow import ConfigFlow
 from .http import MegaView
@@ -54,6 +54,7 @@ LED_LIGHT = \
 
 CUSTOMIZE_PORT = {
     vol.Optional(CONF_SKIP, description='исключить порт из сканирования', default=False): bool,
+    vol.Optional(CONF_PWM, description='порт поддерживает ШИМ'): bool,
     vol.Optional(CONF_FILL_NA, default='last'): vol.Any(
       'last',
       'none'
