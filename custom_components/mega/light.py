@@ -114,7 +114,10 @@ async def async_setup_entry(
             continue
         for data in cfg:
             support_pwm = c.get(CONF_PWM, None)
-            if support_pwm is not None:
+            if support_pwm == False:
+                # Разрешаем только выключать ШИМ
+                # потому что нельзя включить ШИМ у порта, у которого его изначально нет
+                # (что определяется при сканировании портов при инициализации)
                 data["dimmer"] = support_pwm
 
             hub.lg.debug(f"add light on port %s with data %s", port, data)
