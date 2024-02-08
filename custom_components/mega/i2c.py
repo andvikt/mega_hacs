@@ -85,6 +85,12 @@ class Request:
 
 
 i2c_classes = {
+    'scd4x': [
+        Skip,
+        DeviceType(SensorDeviceClass.CO2, CONCENTRATION_PARTS_PER_MILLION, None),
+        DeviceType(SensorDeviceClass.TEMPERATURE, TEMP_CELSIUS, None),
+        DeviceType(SensorDeviceClass.HUMIDITY, PERCENTAGE, None),
+    ],
     'htu21d': [
         DeviceType(SensorDeviceClass.HUMIDITY, PERCENTAGE, None),
         DeviceType(SensorDeviceClass.TEMPERATURE, TEMP_CELSIUS, None),
