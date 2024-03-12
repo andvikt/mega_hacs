@@ -18,6 +18,7 @@ from homeassistant.core import HomeAssistant
 from . import hub as h
 from .entities import MegaOutPort
 from .const import (
+        CONF_PWM_DEFAULT,
         CONF_DIMMER,
         CONF_SWITCH,
         DOMAIN,
@@ -63,12 +64,15 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
         if c.get(CONF_SKIP, False) or c.get(CONF_DOMAIN, 'light') != 'switch':
             continue
         for data in cfg:
-            support_pwm = c.get(CONF_PWM, None)
-            if support_pwm == False:
-                # Разрешаем только выключать ШИМ
-                # потому что нельзя включить ШИМ у порта, у которого его изначально нет
-                # (что определяется при сканировании портов при инициализации)
-                data["dimmer"] = support_pwm
+            default_pwm: bool = customize.get(CONF_PWM_DEFAULT, True)
+            pwm_possible: bool = data.get("dimmer", False)
+            port_pwm_custom = c.get(CONF_PWM, None)
+
+            if pwm_possible:
+                if port_pwm_custom is not None:
+                    data["dimmer"] = port_pwm_custom
+                else:
+                    data["dimmer"] = default_pwm
 
             hub.lg.debug(f'add switch on port %s with data %s', port, data)
             light = MegaSwitch(mega=hub, port=port, config_entry=config_entry, **data)
