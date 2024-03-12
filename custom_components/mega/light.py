@@ -34,7 +34,9 @@ from .entities import MegaOutPort, BaseMegaEntity, safe_int
 
 from .hub import MegaD
 from .const import (
+    CONF_PWM_DEFAULT,
     CONF_DIMMER,
+    CONF_PWM,
     CONF_SWITCH,
     DOMAIN,
     CONF_CUSTOM,
@@ -112,6 +114,16 @@ async def async_setup_entry(
         ):
             continue
         for data in cfg:
+            default_pwm: bool = customize.get(CONF_PWM_DEFAULT, True)
+            pwm_possible: bool = data.get("dimmer", False)
+            port_pwm_custom = c.get(CONF_PWM, None)
+
+            if pwm_possible:
+                if port_pwm_custom is not None:
+                    data["dimmer"] = port_pwm_custom
+                else:
+                    data["dimmer"] = default_pwm
+
             hub.lg.debug(f"add light on port %s with data %s", port, data)
             light = MegaLight(mega=hub, port=port, config_entry=config_entry, **data)
             if "<" in light.name:

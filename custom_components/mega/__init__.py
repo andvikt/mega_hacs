@@ -14,12 +14,12 @@ from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers.service import bind_hass
 from homeassistant.helpers import config_validation as cv
 from homeassistant.config_entries import ConfigEntry
-from .const import DOMAIN, CONF_INVERT, CONF_RELOAD, PLATFORMS, CONF_PORTS, CONF_CUSTOM, CONF_SKIP, CONF_PORT_TO_SCAN, \
+from .const import CONF_PWM_DEFAULT, DOMAIN, CONF_INVERT, CONF_RELOAD, PLATFORMS, CONF_PORTS, CONF_CUSTOM, CONF_SKIP, CONF_PORT_TO_SCAN, \
     CONF_MQTT_INPUTS, CONF_HTTP, CONF_RESPONSE_TEMPLATE, CONF_ACTION, CONF_GET_VALUE, CONF_ALLOW_HOSTS, \
     CONF_CONV_TEMPLATE, CONF_ALL, CONF_FORCE_D, CONF_DEF_RESPONSE, CONF_FORCE_I2C_SCAN, CONF_HEX_TO_FLOAT, \
     RGB_COMBINATIONS, CONF_WS28XX, CONF_ORDER, CONF_SMOOTH, CONF_LED, CONF_WHITE_SEP, CONF_CHIP, CONF_RANGE, \
     CONF_FILTER_VALUES, CONF_FILTER_SCALE, CONF_FILTER_LOW, CONF_FILTER_HIGH, CONF_FILL_NA, CONF_MEGA_ID, CONF_ADDR, \
-    CONF_1WBUS
+    CONF_1WBUS, CONF_PWM
 from .hub import MegaD
 from .config_flow import ConfigFlow
 from .http import MegaView
@@ -54,6 +54,7 @@ LED_LIGHT = \
 
 CUSTOMIZE_PORT = {
     vol.Optional(CONF_SKIP, description='исключить порт из сканирования', default=False): bool,
+    vol.Optional(CONF_PWM, description='порт поддерживает ШИМ'): bool,
     vol.Optional(CONF_FILL_NA, default='last'): vol.Any(
       'last',
       'none'
@@ -126,6 +127,7 @@ CONFIG_SCHEMA = vol.Schema(
             )},
             vol.Optional(vol.Any(str, int), description='id меги из веб-интерфейса'): {
                 vol.Optional(CONF_FORCE_D, description='Принудительно слать d после срабатывания входа', default=False): bool,
+                vol.Optional(CONF_PWM_DEFAULT, description='Включена ли функция диммирования у портов, поддерживающих ШИМ', default=True): bool,
                 vol.Optional(
                     CONF_DEF_RESPONSE,
                     description='Ответ по умолчанию',
