@@ -17,7 +17,7 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.template import Template
-from .const import EVENT_BINARY_SENSOR, DOMAIN, CONF_CUSTOM, CONF_SKIP, CONF_INVERT, CONF_RESPONSE_TEMPLATE
+from .const import DOMAIN, CONF_CUSTOM, CONF_SKIP, CONF_INVERT
 from .entities import  MegaPushEntity
 from .hub import MegaD
 from .tools import int_ignore

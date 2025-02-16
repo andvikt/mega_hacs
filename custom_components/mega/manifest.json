@@ -12,8 +12,9 @@
   "homekit": {},
   "after_dependencies": ["mqtt"],
   "codeowners": [
-    "@andvikt"
+    "@andvikt",
+    "@den-dmitriev"
   ],
   "issue_tracker": "https://github.com/andvikt/mega_hacs/issues",
-  "version": "v1.1.8b12"
+  "version": "v1.1.8b13"
 }
