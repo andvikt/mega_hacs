@@ -16,6 +16,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers.service import bind_hass
 from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers import device_registry as dr
 from homeassistant.config_entries import ConfigEntry
 from .const import (
     DOMAIN,
@@ -254,11 +255,20 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     _hubs[entry.entry_id] = hub
     _subs[entry.entry_id] = entry.add_update_listener(updater)
     await hub.start()
-    for platform in PLATFORMS:
-        hass.async_create_task(
-            hass.config_entries.async_forward_entry_setup(entry, platform)
-        )
+    # for platform in PLATFORMS:
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     await hub.updater.async_refresh()
+
+    device_registry = dr.async_get(hass)
+    device_registry.async_get_or_create(
+        config_entry_id=entry.entry_id,
+        identifiers={(DOMAIN, hub.id)},
+        name=f"MegaD Hub ({hub.id})",
+        manufacturer="ab-log.ru",
+        model=hub.model,
+        sw_version=hub.fw
+    )
+
     return True
 
 
@@ -314,8 +324,7 @@ async def async_migrate_entry(hass, config_entry: ConfigEntry):
     await hub.stop()
     new.update(cfg)
     _LOGGER.debug(f"new config: %s", new)
-    config_entry.data = new
-    config_entry.version = ConfigFlow.VERSION
+    hass.config_entries.async_update_entry(config_entry, data=new, version=ConfigFlow.VERSION)
 
     _LOGGER.info("Migration to version %s successful", config_entry.version)
 
