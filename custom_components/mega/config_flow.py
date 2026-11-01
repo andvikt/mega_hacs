@@ -5,7 +5,6 @@ import logging
 import voluptuous as vol
 
 from homeassistant import config_entries, core
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_ID, CONF_PASSWORD, CONF_SCAN_INTERVAL
 from homeassistant.core import callback, HomeAssistant
 from .const import DOMAIN, CONF_RELOAD, \
@@ -64,7 +63,6 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for mega."""
 
     VERSION = 26
-    CONNECTION_CLASS = config_entries.CONN_CLASS_ASSUMED
 
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
@@ -105,13 +103,10 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(config_entry):
-        return OptionsFlowHandler(config_entry)
+        return OptionsFlowHandler()
 
 
 class OptionsFlowHandler(config_entries.OptionsFlow):
-
-    def __init__(self, config_entry: ConfigEntry):
-        self.config_entry = config_entry
 
     async def async_step_init(self, user_input=None):
         """Manage the options."""
@@ -121,7 +116,7 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
             cfg = dict(self.config_entry.data)
             cfg.update(user_input)
             cfg['new_naming'] = new_naming
-            self.config_entry.data = cfg
+            self.hass.config_entries.async_update_entry(self.config_entry, data=cfg)
             await get_hub(self.hass, cfg)
 
             if reload:

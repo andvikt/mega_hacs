@@ -13,10 +13,7 @@ import time
 
 from homeassistant.components.light import (
     PLATFORM_SCHEMA as LIGHT_SCHEMA,
-    SUPPORT_BRIGHTNESS,
     LightEntity,
-    SUPPORT_TRANSITION,
-    SUPPORT_COLOR,
     ColorMode,
     LightEntityFeature,
     # SUPPORT_WHITE_VALUE
@@ -124,9 +121,15 @@ async def async_setup_entry(
 class MegaLight(MegaOutPort, LightEntity):
     @property
     def supported_features(self):
-        return (SUPPORT_BRIGHTNESS if self.dimmer else 0) | (
-            SUPPORT_TRANSITION if self.dimmer else 0
-        )
+        return LightEntityFeature.TRANSITION if self.dimmer else LightEntityFeature(0)
+
+    @property
+    def supported_color_modes(self) -> set[ColorMode]:
+        return {ColorMode.BRIGHTNESS} if self.dimmer else {ColorMode.ONOFF}
+
+    @property
+    def color_mode(self) -> ColorMode:
+        return ColorMode.BRIGHTNESS if self.dimmer else ColorMode.ONOFF
 
 
 class MegaRGBW(LightEntity, BaseMegaEntity):
@@ -166,7 +169,6 @@ class MegaRGBW(LightEntity, BaseMegaEntity):
     @property
     def supported_color_modes(self) -> set[ColorMode] | set[str] | None:
         return {
-            ColorMode.BRIGHTNESS,
             ColorMode.RGB if len(self.port) != 4 else ColorMode.RGBW,
         }
 
