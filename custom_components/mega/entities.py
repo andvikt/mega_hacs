@@ -8,7 +8,8 @@ from functools import partial
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_NAME
 from homeassistant.core import State
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers.restore_state import RestoreEntity
 from . import hub as h
@@ -152,7 +153,7 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
                 pt_idx, _ = _pt.split('e')
             else:
                 pt_idx = _pt
-        return DeviceInfo(
+        info = DeviceInfo(
             identifiers={
                 # Serial numbers are unique identifiers within a specific domain
                 (DOMAIN, f'{self._mega_id}', pt_idx)
@@ -160,8 +161,19 @@ class BaseMegaEntity(CoordinatorEntity, RestoreEntity):
             name=self.name,
             manufacturer='ab-log.ru',
             sw_version=self.mega.fw,
-            via_device=(DOMAIN, self._mega_id),
         )
+        via_device = (DOMAIN, self._mega_id)
+        registry = dr.async_get(self.hass)
+        if hasattr(registry, 'async_get_device_by_identifier'):
+            # HA 2026.8+: via_device is deprecated in favour of via_device_id
+            parent = registry.async_get_device_by_identifier(
+                via_device, self.platform.config_entry.entry_id
+            )
+            if parent is not None:
+                info['via_device_id'] = parent.id
+        else:
+            info['via_device'] = via_device
+        return info
 
     @property
     def lg(self) -> logging.Logger:
